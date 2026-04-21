@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: waga-scope-backend
+    environment:
+      DATABASE_URL: file:./dev.db
+      NODE_ENV: development
+      PORT: 8902
+      TZ: Asia/Tokyo
+      DATA_PROVIDER: ${DATA_PROVIDER:-csv}
+      JQUANTS_MAIL_ADDRESS: ${JQUANTS_MAIL_ADDRESS:-}
+      JQUANTS_PASSWORD: ${JQUANTS_PASSWORD:-}
+      JQUANTS_REFRESH_TOKEN: ${JQUANTS_REFRESH_TOKEN:-}
+      MARKET_CAP_MAX_YEN: ${MARKET_CAP_MAX_YEN:-50000000000}
+      NET_CASH_RATIO_MIN: ${NET_CASH_RATIO_MIN:-0.3}
+      MVP_STOCK_LIMIT: ${MVP_STOCK_LIMIT:-30}
+      PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING: 1
+    ports:
+      - "8902:8902"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+      - ./backend/seed:/app/seed
+      - backend_data:/app/prisma/migrations
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: waga-scope-frontend
+    ports:
+      - "3902:3902"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src
+    environment:
+      VITE_API_URL: http://backend:8902
+
+volumes:
+  backend_data:

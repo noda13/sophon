@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Stock {
+  code          String   @id
+  name          String
+  sector33Code  String?
+  sector33Name  String?
+  sector17Code  String?
+  marketSegment String?
+  scaleCategory String?
+  updatedAt     DateTime @updatedAt
+
+  statements FinancialStatement[]
+  prices     DailyPrice[]
+  snapshots  ScreeningSnapshot[]
+
+  @@map("stocks")
+}
+
+model FinancialStatement {
+  id                  String   @id @default(cuid())
+  code                String
+  fiscalYear          Int
+  typeOfCurrentPeriod String
+  disclosedDate       DateTime
+  periodEndDate       DateTime
+  netSales            Float?
+  operatingProfit     Float?
+  ordinaryProfit      Float?
+  profit              Float?
+  totalAssets         Float?
+  equity              Float?
+  cashAndEquivalents  Float?
+  sharesOutstanding   Float?
+
+  stock Stock @relation(fields: [code], references: [code])
+
+  @@unique([code, fiscalYear, typeOfCurrentPeriod])
+  @@index([code, disclosedDate])
+  @@map("financial_statements")
+}
+
+model DailyPrice {
+  code  String
+  date  DateTime
+  close Float
+
+  stock Stock @relation(fields: [code], references: [code])
+
+  @@id([code, date])
+  @@index([date])
+  @@map("daily_prices")
+}
+
+model ScreeningSnapshot {
+  id             String   @id @default(cuid())
+  code           String
+  snapshotAt     DateTime
+  marketCap      Float
+  netCash        Float
+  netCashRatio   Float
+  cashNeutralPer Float?
+  per            Float?
+  pbr            Float?
+
+  stock Stock @relation(fields: [code], references: [code])
+
+  @@index([snapshotAt, netCashRatio])
+  @@index([snapshotAt, cashNeutralPer])
+  @@map("screening_snapshots")
+}
+
+model CollectionLog {
+  id               String    @id @default(cuid())
+  jobType          String
+  status           String
+  message          String?
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+  recordsProcessed Int       @default(0)
+
+  @@index([startedAt])
+  @@map("collection_logs")
+}
