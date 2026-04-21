@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import type { DataProvider, StockInfo, StatementRaw, PriceRaw } from './DataProvider.js';
 import { config } from '../lib/config.js';
 
@@ -9,58 +6,22 @@ import { config } from '../lib/config.js';
 // 12 weeks (84 days) behind real-time. This is expected and acceptable
 // for monthly/quarterly screening (清原流 investment cadence).
 
-const JQUANTS_BASE = 'https://api.jquants.com';
+// J-Quants V2 API (released 2025-12-22)
+// Auth: x-api-key header (NO Bearer, NO Authorization)
+// Base URL: https://api.jquants.com/v2
+// Response wrapper: { "data": [...], "pagination_key": "..." }
 
-// ---------------------------------------------------------------------------
-// Token cache (stored on disk to survive process restarts)
-// ---------------------------------------------------------------------------
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CACHE_DIR = path.resolve(__dirname, '../../../.cache');
-const CACHE_FILE = path.join(CACHE_DIR, 'jquants-token.json');
-
-/** 60-second buffer: treat token as expired this many seconds before actual expiry */
-const EXPIRY_BUFFER_SEC = 60;
-
-interface TokenCache {
-  refreshToken: string;
-  refreshTokenExpiresAt: string; // ISO 8601
-  idToken: string;
-  idTokenExpiresAt: string; // ISO 8601
-}
-
-function readCache(): TokenCache | null {
-  try {
-    const raw = fs.readFileSync(CACHE_FILE, 'utf-8');
-    return JSON.parse(raw) as TokenCache;
-  } catch {
-    return null;
-  }
-}
-
-function writeCache(cache: TokenCache): void {
-  try {
-    if (!fs.existsSync(CACHE_DIR)) {
-      fs.mkdirSync(CACHE_DIR, { recursive: true });
-    }
-    fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('[jquants] failed to write token cache:', err);
-  }
-}
-
-function isValid(expiresAt: string): boolean {
-  const exp = new Date(expiresAt).getTime();
-  return exp - EXPIRY_BUFFER_SEC * 1000 > Date.now();
-}
+const JQUANTS_BASE_V2 = 'https://api.jquants.com/v2';
 
 // ---------------------------------------------------------------------------
 // HTTP helpers
 // ---------------------------------------------------------------------------
 
 /** Parse numeric string; return null for empty/NaN */
-function parseNum(v: string | undefined | null): number | null {
-  if (!v || v.trim() === '') return null;
+function parseNum(v: string | number | undefined | null): number | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number') return isNaN(v) ? null : v;
+  if (v.trim() === '') return null;
   const n = parseFloat(v);
   return isNaN(n) ? null : n;
 }
@@ -70,25 +31,110 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Adaptive rate limiter tuned for J-Quants tier limits (official docs):
+//   Free:     5 req/min   = 1 req per 12s  → use 13s interval (+1s safety)
+//   Light:    60 req/min  = 1 req per 1s   → use 1.1s interval
+//   Standard: 120 req/min = 1 req per 0.5s → use 0.6s interval
+//
+// Policy doc also warns: "significantly exceeding the limit may block access
+// for approximately 5 minutes." So we are careful never to burst.
+//
+// JQUANTS_REQ_INTERVAL_MS can override (for Light/Standard tier users).
+// Default assumes Free tier.
+const NORMAL_INTERVAL_MS = parseInt(process.env.JQUANTS_REQ_INTERVAL_MS ?? '13000', 10);
+const SLOW_INTERVAL_MS = Math.max(NORMAL_INTERVAL_MS * 2, 20000); // double on 429
+const SLOW_DURATION_MS = 10 * 60 * 1000; // 10 min cooldown after 429
+const CONSECUTIVE_OK_TO_SPEEDUP = 30;
+
+let lastRequestAt = 0;
+let slowModeUntil = 0;
+let consecutiveOk = 0;
+let pacingChain: Promise<void> = Promise.resolve();
+
+function currentInterval(): number {
+  return Date.now() < slowModeUntil ? SLOW_INTERVAL_MS : NORMAL_INTERVAL_MS;
+}
+
+/** Serialized throttle: awaits prior queue entry + minimum interval */
+function throttle(): Promise<void> {
+  const next = pacingChain.then(async () => {
+    const interval = currentInterval();
+    const waitMs = interval - (Date.now() - lastRequestAt);
+    if (waitMs > 0) await sleep(waitMs);
+    lastRequestAt = Date.now();
+  });
+  pacingChain = next.catch(() => undefined);
+  return next;
+}
+
+function noteRateLimit(): void {
+  consecutiveOk = 0;
+  const until = Date.now() + SLOW_DURATION_MS;
+  if (until > slowModeUntil) {
+    slowModeUntil = until;
+    console.error(
+      `[jquants] entering slow mode (${SLOW_INTERVAL_MS}ms interval) for ${SLOW_DURATION_MS / 1000}s`
+    );
+  }
+}
+
+function noteSuccess(): void {
+  consecutiveOk++;
+  if (consecutiveOk >= CONSECUTIVE_OK_TO_SPEEDUP && Date.now() < slowModeUntil) {
+    slowModeUntil = 0;
+    console.error('[jquants] resuming normal pace after sustained successes');
+  }
+}
+
 /**
- * Raw HTTP fetch with retry logic.
- * - 429 / 5xx: exponential backoff (1s, 2s, 4s), max 3 retries
+ * Raw HTTP fetch with retry logic (V2 version).
+ * - Pre-request throttle: min 600ms interval between requests
+ * - 429: exponential backoff (10s, 30s, 60s), max 3 retries
+ * - 5xx: exponential backoff (2s, 4s, 8s), max 3 retries
  * - Other non-2xx: fail immediately
- * Does NOT inject auth header — used only for auth endpoints.
+ * Injects x-api-key header automatically.
  */
-async function fetchWithRetry(url: string, options: RequestInit, label?: string): Promise<Response> {
+async function fetchV2(
+  path: string,
+  queryParams?: Record<string, string>,
+  label?: string
+): Promise<unknown> {
   const MAX_RETRIES = 3;
   let lastErr: Error | null = null;
 
-  for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
-    const res = await fetch(url, options);
+  const url = new URL(`${JQUANTS_BASE_V2}${path}`);
+  if (queryParams) {
+    for (const [k, v] of Object.entries(queryParams)) {
+      url.searchParams.set(k, v);
+    }
+  }
 
-    if (res.ok) return res;
+  const headers: Record<string, string> = {
+    'x-api-key': config.jquants.apiKey,
+  };
+
+  for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
+    await throttle();
+    const res = await fetch(url.toString(), { method: 'GET', headers });
+
+    if (res.ok) {
+      noteSuccess();
+      return res.json();
+    }
 
     if (res.status === 429 || res.status >= 500) {
+      if (res.status === 429) noteRateLimit();
+
       if (attempt <= MAX_RETRIES) {
-        const wait = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
-        console.error(`[jquants] rate limited or server error (${res.status}), retrying in ${wait / 1000}s (attempt ${attempt}/${MAX_RETRIES})${label ? ` [${label}]` : ''}`);
+        // 429: long patient waits (10s, 30s, 60s) — slow mode is also active
+        // 5xx: shorter waits (2s, 4s, 8s)
+        const wait =
+          res.status === 429
+            ? [10_000, 30_000, 60_000][attempt - 1]
+            : [2_000, 4_000, 8_000][attempt - 1];
+        console.error(
+          `[jquants] ${res.status} ${label ? `[${label}] ` : ''}retrying in ${wait / 1000}s (attempt ${attempt}/${MAX_RETRIES})`
+        );
         await sleep(wait);
         lastErr = new Error(`HTTP ${res.status}`);
         continue;
@@ -97,155 +143,228 @@ async function fetchWithRetry(url: string, options: RequestInit, label?: string)
 
     // Non-retryable error or exhausted retries
     const body = await res.text().catch(() => '');
-    throw new Error(`[jquants] HTTP ${res.status} ${res.statusText}${label ? ` [${label}]` : ''}: ${body.slice(0, 200)}`);
+    throw new Error(
+      `[jquants] HTTP ${res.status} ${res.statusText}${label ? ` [${label}]` : ''}: ${body.slice(0, 200)}`
+    );
   }
 
   throw lastErr ?? new Error('[jquants] request failed after retries');
 }
 
+/**
+ * Paginated GET for V2.
+ * V2 always wraps items in `{ "data": [...], "pagination_key": "..." }`.
+ * Loops until no pagination_key, concatenating all data arrays.
+ */
+async function getPaginated<TItem>(
+  path: string,
+  queryParams?: Record<string, string>
+): Promise<TItem[]> {
+  const results: TItem[] = [];
+  const params: Record<string, string> = { ...(queryParams ?? {}) };
+
+  for (;;) {
+    const response = (await fetchV2(path, params, path)) as Record<string, unknown>;
+
+    const items = response['data'] as TItem[] | undefined;
+    if (items && Array.isArray(items)) {
+      results.push(...items);
+    }
+
+    const paginationKey = response['pagination_key'] as string | undefined;
+    if (!paginationKey) break;
+
+    params['pagination_key'] = paginationKey;
+  }
+
+  return results;
+}
+
 // ---------------------------------------------------------------------------
-// JQuantsProvider
+// JQuantsProvider (V2)
 // ---------------------------------------------------------------------------
 
 export class JQuantsProvider implements DataProvider {
   readonly name = 'jquants';
 
-  private idTokenCache: string | null = null;
+  // In-memory caches populated by prefetchAll().
+  // Keys are 4-digit codes. Values are arrays of raw records.
+  private statementCache: Map<string, StatementRaw[]> = new Map();
+  private priceCache: Map<string, PriceRaw[]> = new Map();
+  private prefetched = false;
 
-  private ensureCredentials(): void {
-    if (!config.jquants.mail || !config.jquants.password) {
+  private ensureApiKey(): void {
+    if (!config.jquants.apiKey) {
       throw new Error(
-        'J-Quants credentials not set. Register at https://jpx-jquants.com/ ' +
-          'and set JQUANTS_MAIL_ADDRESS and JQUANTS_PASSWORD in backend/.env'
+        'J-Quants API key not set. Register at https://jpx-jquants.com/ ' +
+          'and set JQUANTS_API_KEY in backend/.env\n' +
+          '(V2 API, released 2025-12-22, uses API key instead of mail+password)'
       );
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Token management
-  // -------------------------------------------------------------------------
-
   /**
-   * Returns a valid idToken, refreshing or re-authenticating as needed.
-   * Credentials are NEVER logged.
+   * Pre-load bulk data using J-Quants V2 date-based batch endpoints.
+   * Dramatically reduces API calls: ~60-120 calls vs ~8000 for per-code sync.
+   *
+   * Strategy:
+   *   1. Call /v2/equities/bars/daily?date=<latest-available> ONCE (gets all stocks' prices)
+   *   2. Iterate weekdays over historyDays window, calling /v2/fins/summary?date=YYYYMMDD per day
+   *      (each call returns 0-200 disclosures, aggregate across codes)
+   *   3. Store in statementCache / priceCache keyed by 4-digit code
+   *
+   * After this, fetchStatements(code) and fetchPrices(code) read from cache
+   * without hitting the API.
    */
-  private async getIdToken(): Promise<string> {
-    const cache = readCache();
+  async prefetchAll(opts?: { historyDays?: number }): Promise<{
+    statementsCached: number;
+    pricesCached: number;
+    apiCalls: number;
+  }> {
+    this.ensureApiKey();
 
-    // 1. Cached idToken still valid
-    if (cache && isValid(cache.idTokenExpiresAt)) {
-      const hoursLeft = Math.round((new Date(cache.idTokenExpiresAt).getTime() - Date.now()) / 3_600_000);
-      console.error(`[jquants] using cached idToken (expires in ${hoursLeft}h)`);
-      return cache.idToken;
+    const historyDays = opts?.historyDays ?? 120;
+    const MS_PER_DAY = 24 * 3_600_000;
+    const FREE_TIER_LAG_DAYS = 84; // 12 weeks
+    const freeTierCeil = new Date(Date.now() - FREE_TIER_LAG_DAYS * MS_PER_DAY);
+
+    // Walk back to nearest weekday (Mon–Fri)
+    const latestTradingDay = new Date(freeTierCeil);
+    while (latestTradingDay.getDay() === 0 || latestTradingDay.getDay() === 6) {
+      latestTradingDay.setTime(latestTradingDay.getTime() - MS_PER_DAY);
     }
 
-    // 2. Cached refreshToken still valid — get new idToken
-    if (cache && isValid(cache.refreshTokenExpiresAt)) {
-      console.error('[jquants] refreshing idToken from cached refreshToken...');
-      const idToken = await this.fetchIdToken(cache.refreshToken);
-      writeCache({
-        ...cache,
-        idToken,
-        idTokenExpiresAt: new Date(Date.now() + 24 * 3_600_000).toISOString(),
-      });
-      console.error('[jquants] authenticated, idToken valid for 24h');
-      return idToken;
-    }
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
 
-    // 3. Full re-authentication
-    console.error('[jquants] authenticating...');
-    const refreshToken = await this.fetchRefreshToken();
-    const idToken = await this.fetchIdToken(refreshToken);
-    writeCache({
-      refreshToken,
-      refreshTokenExpiresAt: new Date(Date.now() + 7 * 24 * 3_600_000).toISOString(),
-      idToken,
-      idTokenExpiresAt: new Date(Date.now() + 24 * 3_600_000).toISOString(),
+    let apiCalls = 0;
+
+    // --- 1. Fetch all prices for the latest available trading day (1 API call) ---
+    console.error(`[jquants] prefetch: prices for ${fmt(latestTradingDay)} (all stocks, 1 API call)`);
+    type JQuantsBar = Record<string, string | number | undefined>;
+    const priceItems = await getPaginated<JQuantsBar>('/equities/bars/daily', {
+      date: fmt(latestTradingDay),
     });
-    console.error('[jquants] authenticated, idToken valid for 24h');
-    return idToken;
-  }
+    apiCalls++;
+    for (const item of priceItems) {
+      const rawCode = String(item['Code'] ?? '');
+      const code =
+        rawCode.length === 5 && rawCode.endsWith('0')
+          ? rawCode.slice(0, 4)
+          : rawCode.slice(0, 4);
+      const closeRaw = item['C'] ?? item['Close'];
+      const close = parseNum(closeRaw as string | number | undefined);
+      const dateStr = item['Date'] as string | undefined;
+      if (!close || !dateStr) continue;
+      const priceRaw: PriceRaw = {
+        code,
+        date: new Date(dateStr),
+        close,
+      };
+      const arr = this.priceCache.get(code) ?? [];
+      arr.push(priceRaw);
+      this.priceCache.set(code, arr);
+    }
+    console.error(`[jquants] prefetch: got ${priceItems.length} prices for ${this.priceCache.size} unique codes`);
 
-  /** POST /v1/token/auth_user — returns refreshToken (valid 1 week) */
-  private async fetchRefreshToken(): Promise<string> {
-    const res = await fetchWithRetry(
-      `${JQUANTS_BASE}/v1/token/auth_user`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // Credentials deliberately not logged
-        body: JSON.stringify({
-          mailaddress: config.jquants.mail,
-          password: config.jquants.password,
-        }),
-      },
-      'auth_user'
-    );
-    const data = (await res.json()) as { refreshToken?: string };
-    if (!data.refreshToken) throw new Error('[jquants] auth_user response missing refreshToken');
-    return data.refreshToken;
-  }
-
-  /** POST /v1/token/auth_refresh — returns idToken (valid 24h) */
-  private async fetchIdToken(refreshToken: string): Promise<string> {
-    const res = await fetchWithRetry(
-      `${JQUANTS_BASE}/v1/token/auth_refresh?refreshtoken=${encodeURIComponent(refreshToken)}`,
-      { method: 'POST' },
-      'auth_refresh'
-    );
-    const data = (await res.json()) as { idToken?: string };
-    if (!data.idToken) throw new Error('[jquants] auth_refresh response missing idToken');
-    return data.idToken;
-  }
-
-  // -------------------------------------------------------------------------
-  // Authenticated request helper
-  // -------------------------------------------------------------------------
-
-  /**
-   * Make an authenticated GET request to J-Quants API.
-   * Handles rate-limit retry and pagination key chaining.
-   */
-  private async get<T>(path: string): Promise<T> {
-    const idToken = await this.getIdToken();
-    const url = path.startsWith('http') ? path : `${JQUANTS_BASE}${path}`;
-    const res = await fetchWithRetry(
-      url,
-      {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${idToken}` },
-      },
-      path
-    );
-    return res.json() as Promise<T>;
-  }
-
-  /**
-   * Paginated GET: follows pagination_key until exhausted.
-   * `extractItems` pulls the array out of each page's response object.
-   * `pageKey` is the JSON key that holds items (e.g. "info", "statements").
-   */
-  private async getPaginated<TItem>(
-    basePath: string,
-    pageKey: string
-  ): Promise<TItem[]> {
-    const results: TItem[] = [];
-    let path = basePath;
-
-    for (;;) {
-      const data = await this.get<Record<string, unknown>>(path);
-      const items = data[pageKey] as TItem[] | undefined;
-      if (items) results.push(...items);
-
-      const paginationKey = data['pagination_key'] as string | undefined;
-      if (!paginationKey) break;
-
-      // Append pagination_key as query param
-      const sep = basePath.includes('?') ? '&' : '?';
-      path = `${basePath}${sep}pagination_key=${encodeURIComponent(paginationKey)}`;
+    // --- 2. Fetch statements for each weekday in the history window ---
+    const fromDate = new Date(latestTradingDay.getTime() - historyDays * MS_PER_DAY);
+    const tradingDays: Date[] = [];
+    for (
+      let d = new Date(fromDate);
+      d.getTime() <= latestTradingDay.getTime();
+      d = new Date(d.getTime() + MS_PER_DAY)
+    ) {
+      if (d.getDay() !== 0 && d.getDay() !== 6) {
+        tradingDays.push(new Date(d));
+      }
     }
 
-    return results;
+    console.error(
+      `[jquants] prefetch: statements over ${tradingDays.length} weekdays (${fmt(fromDate)} → ${fmt(latestTradingDay)})`
+    );
+
+    type JQuantsSummary = Record<string, string | number | undefined>;
+    let totalStatements = 0;
+    for (const [idx, day] of tradingDays.entries()) {
+      const items = await getPaginated<JQuantsSummary>('/fins/summary', { date: fmt(day) });
+      apiCalls++;
+      for (const item of items) {
+        const rawCode = String(item['Code'] ?? '');
+        const code =
+          rawCode.length === 5 && rawCode.endsWith('0')
+            ? rawCode.slice(0, 4)
+            : rawCode.slice(0, 4);
+
+        const docType =
+          (item['DocType'] as string | undefined) ??
+          (item['TypeOfDocument'] as string | undefined) ??
+          '';
+        if (!docType.includes('FinancialStatements')) continue;
+
+        const issued = parseNum(
+          (item['ShOutFY'] ??
+            item['NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock']) as
+            | string
+            | undefined
+        );
+        const treasury = parseNum(
+          (item['TrShFY'] ?? item['NumberOfTreasuryStockAtTheEndOfFiscalYear']) as
+            | string
+            | undefined
+        );
+        const sharesOutstanding =
+          issued !== null && treasury !== null ? issued - treasury : issued;
+
+        const disclosedDate = (item['DiscDate'] ?? item['DisclosedDate']) as string | undefined;
+        const periodEndDate = (item['CurPerEn'] ?? item['CurrentPeriodEndDate']) as
+          | string
+          | undefined;
+        const typeOfPeriod = (item['CurPerType'] ?? item['TypeOfCurrentPeriod']) as
+          | string
+          | undefined;
+
+        const stmt: StatementRaw = {
+          code,
+          fiscalYear: periodEndDate ? new Date(periodEndDate).getFullYear() : 0,
+          typeOfCurrentPeriod: typeOfPeriod ?? '',
+          disclosedDate: disclosedDate ? new Date(disclosedDate) : new Date(0),
+          periodEndDate: periodEndDate ? new Date(periodEndDate) : new Date(0),
+          netSales: parseNum((item['Sales'] ?? item['NetSales']) as string | undefined),
+          operatingProfit: parseNum(
+            (item['OP'] ?? item['OperatingProfit']) as string | undefined
+          ),
+          ordinaryProfit: parseNum(
+            (item['OdP'] ?? item['OrdinaryProfit']) as string | undefined
+          ),
+          profit: parseNum((item['NP'] ?? item['Profit']) as string | undefined),
+          totalAssets: parseNum((item['TA'] ?? item['TotalAssets']) as string | undefined),
+          equity: parseNum((item['Eq'] ?? item['Equity']) as string | undefined),
+          cashAndEquivalents: parseNum(
+            (item['CashEq'] ?? item['CashAndEquivalents']) as string | undefined
+          ),
+          sharesOutstanding,
+        };
+        const arr = this.statementCache.get(code) ?? [];
+        arr.push(stmt);
+        this.statementCache.set(code, arr);
+        totalStatements++;
+      }
+
+      // Progress every 20 days
+      if ((idx + 1) % 20 === 0 || idx === tradingDays.length - 1) {
+        console.error(
+          `[jquants] prefetch: ${idx + 1}/${tradingDays.length} days done, ${totalStatements} statements, ${this.statementCache.size} unique codes`
+        );
+      }
+    }
+
+    this.prefetched = true;
+    return {
+      statementsCached: totalStatements,
+      pricesCached: priceItems.length,
+      apiCalls,
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -254,112 +373,136 @@ export class JQuantsProvider implements DataProvider {
 
   /**
    * List all currently listed stocks.
+   * V2 endpoint: GET /v2/equities/master
    *
-   * J-Quants Free tier: no date restriction needed for /v1/listed/info
-   * (the endpoint returns the current listing status; no 12-week lag applies here).
-   *
-   * NOTE: Stock prices and financial data still have a 12-week lag.
+   * NOTE: Stock prices and financial data have a 12-week lag (Free tier).
    */
   async listStocks(): Promise<StockInfo[]> {
-    this.ensureCredentials();
+    this.ensureApiKey();
 
-    type JQuantsInfo = {
-      Code: string;
-      CompanyName: string;
-      CompanyNameEnglish: string;
-      Sector17Code: string;
-      Sector17CodeName: string;
-      Sector33Code: string;
-      Sector33CodeName: string;
-      ScaleCategory: string;
-      MarketCode: string;
-      MarketCodeName: string;
-    };
+    // V2 field names believed to match V1 capitalized names.
+    // Using tolerant access in case any field differs.
+    type JQuantsMaster = Record<string, string | undefined>;
 
-    const items = await this.getPaginated<JQuantsInfo>('/v1/listed/info', 'info');
+    const items = await getPaginated<JQuantsMaster>('/equities/master');
 
-    return items.map((item) => ({
-      // J-Quants returns 5-digit codes with trailing 0 (e.g. "72030" for トヨタ 7203).
+    if (items.length === 0) {
+      console.warn('[jquants] /equities/master returned 0 items — check API key and plan');
+    } else {
+      // Warn if expected fields are missing (first item check)
+      const first = items[0];
+      if (!first['Code']) {
+        console.warn('[jquants] /equities/master: "Code" field missing from first item. Keys:', Object.keys(first));
+      }
+    }
+
+    return items.map((item) => {
+      const rawCode = item['Code'] ?? '';
+      // J-Quants returns 5-digit codes (e.g. "72030" for トヨタ 7203, "13010" for 極洋 1301).
       // Our schema uses 4-digit codes — strip the trailing 0.
-      code: item.Code.slice(0, 4),
-      name: item.CompanyName,
-      sector33Code: item.Sector33Code ?? null,
-      sector33Name: item.Sector33CodeName ?? null,
-      sector17Code: item.Sector17Code ?? null,
-      marketSegment: item.MarketCodeName ?? null,
-      scaleCategory: item.ScaleCategory ?? null,
-      // sharesOutstanding is not available from /v1/listed/info;
-      // it is populated per-statement in fetchStatements().
-      sharesOutstanding: 0,
-    }));
+      const code =
+        rawCode.length === 5 && rawCode.endsWith('0')
+          ? rawCode.slice(0, 4)
+          : rawCode.slice(0, 4);
+
+      // V2 field names are abbreviated: CoName, S33, S33Nm, S17, Mkt, MktNm, ScaleCat
+      // Keep V1 full names as fallback for safety
+      return {
+        code,
+        name: item['CoName'] ?? item['CompanyName'] ?? item['Name'] ?? '',
+        sector33Code: item['S33'] ?? item['Sector33Code'] ?? undefined,
+        sector33Name: item['S33Nm'] ?? item['Sector33CodeName'] ?? undefined,
+        sector17Code: item['S17'] ?? item['Sector17Code'] ?? undefined,
+        marketSegment:
+          item['MktNm'] ?? item['MarketCodeName'] ?? item['MarketSegment'] ?? undefined,
+        scaleCategory: item['ScaleCat'] ?? item['ScaleCategory'] ?? undefined,
+        // sharesOutstanding is not available from /equities/master;
+        // it is populated per-statement in fetchStatements().
+        sharesOutstanding: 0,
+      };
+    });
   }
 
   /**
    * Fetch financial statements for a given 4-digit stock code.
+   * V2 endpoint: GET /v2/fins/summary?code={code}0
    *
    * NOTE: J-Quants Free tier provides financial data with a ~12-week lag.
-   * The most recently disclosed statement visible may be 12 weeks old.
    */
   async fetchStatements(code: string): Promise<StatementRaw[]> {
-    this.ensureCredentials();
+    this.ensureApiKey();
+
+    // If prefetchAll() was called, serve from cache without any API request.
+    if (this.prefetched) {
+      return this.statementCache.get(code) ?? [];
+    }
 
     // J-Quants expects 5-digit codes (append trailing 0)
     const jqCode = `${code}0`;
 
-    type JQuantsStatement = {
-      DisclosedDate: string;
-      DisclosedTime: string;
-      LocalCode: string;
-      TypeOfDocument: string;
-      TypeOfCurrentPeriod: string;
-      CurrentPeriodStartDate: string;
-      CurrentPeriodEndDate: string;
-      CurrentFiscalYearStartDate: string;
-      CurrentFiscalYearEndDate: string;
-      NetSales: string;
-      OperatingProfit: string;
-      OrdinaryProfit: string;
-      Profit: string;
-      EarningsPerShare: string;
-      TotalAssets: string;
-      Equity: string;
-      CashAndEquivalents: string;
-      NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock: string;
-      NumberOfTreasuryStockAtTheEndOfFiscalYear: string;
-      AverageNumberOfShares: string;
-    };
+    type JQuantsSummary = Record<string, string | number | undefined>;
 
-    const items = await this.getPaginated<JQuantsStatement>(
-      `/v1/fins/statements?code=${jqCode}`,
-      'statements'
-    );
+    const items = await getPaginated<JQuantsSummary>('/fins/summary', { code: jqCode });
 
+    // V2 field name: DocType (V1 was TypeOfDocument)
     // Filter to actual financial statements (exclude dividend forecasts, etc.)
-    const filtered = items.filter((item) =>
-      item.TypeOfDocument.includes('FinancialStatements')
-    );
+    const filtered = items.filter((item) => {
+      const tod =
+        (item['DocType'] as string | undefined) ??
+        (item['TypeOfDocument'] as string | undefined) ??
+        '';
+      return tod.includes('FinancialStatements');
+    });
+
+    if (items.length > 0 && filtered.length === 0) {
+      console.warn(
+        `[jquants] /fins/summary code=${jqCode}: ${items.length} items returned but none matched DocType.includes("FinancialStatements"). ` +
+          `Sample DocType values: ${items
+            .slice(0, 3)
+            .map((i) => i['DocType'] ?? i['TypeOfDocument'])
+            .join(', ')}`
+      );
+    }
 
     return filtered.map((item) => {
+      // V2 field names: ShOutFY (issued), TrShFY (treasury)
       const issued = parseNum(
-        item.NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock
+        (item['ShOutFY'] ??
+          item['NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock']) as
+          | string
+          | undefined
       );
-      const treasury = parseNum(item.NumberOfTreasuryStockAtTheEndOfFiscalYear);
+      const treasury = parseNum(
+        (item['TrShFY'] ?? item['NumberOfTreasuryStockAtTheEndOfFiscalYear']) as string | undefined
+      );
       const sharesOutstanding =
         issued !== null && treasury !== null ? issued - treasury : issued;
 
+      // V2 field names: DiscDate, CurPerEn, CurPerType
+      const disclosedDate = (item['DiscDate'] ?? item['DisclosedDate']) as string | undefined;
+      const periodEndDate = (item['CurPerEn'] ?? item['CurrentPeriodEndDate']) as
+        | string
+        | undefined;
+      const typeOfPeriod = (item['CurPerType'] ?? item['TypeOfCurrentPeriod']) as
+        | string
+        | undefined;
+
       return {
         code,
-        fiscalYear: new Date(item.CurrentFiscalYearEndDate).getFullYear(),
-        typeOfCurrentPeriod: item.TypeOfCurrentPeriod, // 'FY' | '1Q' | '2Q' | '3Q'
-        disclosedDate: new Date(item.DisclosedDate),
-        periodEndDate: new Date(item.CurrentPeriodEndDate),
-        netSales: parseNum(item.NetSales),
-        operatingProfit: parseNum(item.OperatingProfit),
-        ordinaryProfit: parseNum(item.OrdinaryProfit),
-        profit: parseNum(item.Profit),
-        totalAssets: parseNum(item.TotalAssets),
-        equity: parseNum(item.Equity),
-        cashAndEquivalents: parseNum(item.CashAndEquivalents),
+        fiscalYear: periodEndDate ? new Date(periodEndDate).getFullYear() : 0,
+        typeOfCurrentPeriod: typeOfPeriod ?? '',
+        disclosedDate: disclosedDate ? new Date(disclosedDate) : new Date(0),
+        periodEndDate: periodEndDate ? new Date(periodEndDate) : new Date(0),
+        // V2 field names: Sales, OP, OdP, NP (NetProfit), TA, Eq, CashEq
+        netSales: parseNum((item['Sales'] ?? item['NetSales']) as string | undefined),
+        operatingProfit: parseNum((item['OP'] ?? item['OperatingProfit']) as string | undefined),
+        ordinaryProfit: parseNum((item['OdP'] ?? item['OrdinaryProfit']) as string | undefined),
+        profit: parseNum((item['NP'] ?? item['Profit']) as string | undefined),
+        totalAssets: parseNum((item['TA'] ?? item['TotalAssets']) as string | undefined),
+        equity: parseNum((item['Eq'] ?? item['Equity']) as string | undefined),
+        cashAndEquivalents: parseNum(
+          (item['CashEq'] ?? item['CashAndEquivalents']) as string | undefined
+        ),
         sharesOutstanding,
       };
     });
@@ -367,21 +510,35 @@ export class JQuantsProvider implements DataProvider {
 
   /**
    * Fetch daily price quotes for a given 4-digit stock code.
+   * V2 endpoint: GET /v2/equities/bars/daily?code={code}0&from=...&to=...
+   *
+   * V2 uses abbreviated field names: O/H/L/C/Vo instead of Open/High/Low/Close/Volume.
+   * We use tolerant fallback: item.C ?? item.Close
    *
    * NOTE: J-Quants Free tier has a 12-week data lag.
-   * We query from 20 weeks ago to today; the API will return data up to
-   * the most recent available date (i.e., roughly 12 weeks ago).
-   * The caller (syncOrchestrator) picks the latest close price.
    */
   async fetchPrices(code: string, opts?: { from?: Date; to?: Date }): Promise<PriceRaw[]> {
-    this.ensureCredentials();
+    this.ensureApiKey();
+
+    // If prefetchAll() was called, serve from cache without any API request.
+    if (this.prefetched) {
+      return this.priceCache.get(code) ?? [];
+    }
 
     // J-Quants expects 5-digit codes (append trailing 0)
     const jqCode = `${code}0`;
 
-    const toDate = opts?.to ?? new Date();
-    // Default: query 20 weeks back to ensure we capture data despite the 12-week Free tier lag
-    const fromDate = opts?.from ?? new Date(toDate.getTime() - 20 * 7 * 24 * 3_600_000);
+    // J-Quants Free tier subscription window: from ~2 years ago to ~12 weeks before today.
+    // Requesting beyond (today-12w) returns HTTP 400 with a plan-upgrade message.
+    // Cap `to` at today - 12 weeks (84 days) to stay inside the subscription window.
+    const MS_PER_DAY = 24 * 3_600_000;
+    const FREE_TIER_LAG_DAYS = 84; // 12 weeks
+    const freeTierCeil = new Date(Date.now() - FREE_TIER_LAG_DAYS * MS_PER_DAY);
+
+    let toDate = opts?.to ?? freeTierCeil;
+    if (toDate > freeTierCeil) toDate = freeTierCeil;
+    // Default: query 4 weeks before `toDate` to get ~20 trading days around the ceiling
+    const fromDate = opts?.from ?? new Date(toDate.getTime() - 4 * 7 * MS_PER_DAY);
 
     const fmt = (d: Date) =>
       `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
@@ -389,26 +546,46 @@ export class JQuantsProvider implements DataProvider {
     const from = fmt(fromDate);
     const to = fmt(toDate);
 
-    type JQuantsQuote = {
-      Date: string;
-      Code: string;
-      Open: string;
-      High: string;
-      Low: string;
-      Close: string;
-      Volume: string;
-      TurnoverValue: string;
-    };
+    // V2 uses abbreviated field names: O/H/L/C/Vo
+    // Tolerant: try abbreviated first, fall back to full names (in case V2 changes)
+    type JQuantsBar = Record<string, string | number | undefined>;
 
-    const items = await this.getPaginated<JQuantsQuote>(
-      `/v1/prices/daily_quotes?code=${jqCode}&from=${from}&to=${to}`,
-      'daily_quotes'
-    );
+    const items = await getPaginated<JQuantsBar>('/equities/bars/daily', {
+      code: jqCode,
+      from,
+      to,
+    });
 
-    return items.map((item) => ({
-      code,
-      date: new Date(item.Date),
-      close: parseFloat(item.Close),
-    }));
+    if (items.length > 0) {
+      const first = items[0];
+      // Detect if abbreviated or full field names are in use
+      const hasAbbrev = first['C'] !== undefined;
+      const hasFull = first['Close'] !== undefined;
+      if (!hasAbbrev && !hasFull) {
+        console.warn(
+          `[jquants] /equities/bars/daily code=${jqCode}: neither "C" nor "Close" found. ` +
+            `Keys in first item: ${Object.keys(first).join(', ')}`
+        );
+      }
+    }
+
+    // Map then filter: skip entries where close is null (holidays, trading halts, etc.)
+    const mapped = items.map((item) => {
+      // V2 abbreviation: C (close), fallback to Close
+      const closeRaw = item['C'] ?? item['Close'];
+      const close = parseNum(closeRaw as string | number | undefined);
+
+      const dateStr = item['Date'] as string | undefined;
+
+      return {
+        code,
+        date: dateStr ? new Date(dateStr) : new Date(0),
+        close,
+      };
+    });
+
+    return mapped
+      .filter((p): p is PriceRaw & { close: number } => p.close !== null && !isNaN(p.close))
+      .map((p) => ({ code: p.code, date: p.date, close: p.close }));
   }
 }

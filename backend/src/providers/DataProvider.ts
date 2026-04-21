@@ -36,4 +36,16 @@ export interface DataProvider {
   listStocks(): Promise<StockInfo[]>;
   fetchStatements(code: string, opts?: { limit?: number }): Promise<StatementRaw[]>;
   fetchPrices(code: string, opts?: { from?: Date; to?: Date }): Promise<PriceRaw[]>;
+  /**
+   * Optional: pre-load bulk data for many codes to reduce per-code API calls.
+   * Providers that support date-range batch endpoints (e.g., J-Quants V2)
+   * implement this to dramatically cut API call counts during full sync.
+   * After prefetch, fetchStatements/fetchPrices should be served from an
+   * internal cache rather than hitting the API per code.
+   */
+  prefetchAll?(opts?: { historyDays?: number }): Promise<{
+    statementsCached: number;
+    pricesCached: number;
+    apiCalls: number;
+  }>;
 }

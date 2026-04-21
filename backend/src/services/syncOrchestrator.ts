@@ -19,11 +19,41 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
   let snapshotsCreated = 0;
 
   try {
-    const stockList = await provider.listStocks();
-    // Use all stocks (mvpStockLimit was only for early dev)
-    const limited = stockList;
+    // If provider supports batch prefetch (e.g., JQuantsProvider V2),
+    // use it to minimize per-code API calls.
+    if (provider.prefetchAll) {
+      console.log('[sync] prefetching bulk data via batch endpoints...');
+      const pre = await provider.prefetchAll({ historyDays: 120 });
+      console.log(
+        `[sync] prefetch done: ${pre.statementsCached} statements, ${pre.pricesCached} prices, ${pre.apiCalls} API calls`
+      );
+    }
 
-    for (const info of limited) {
+    const stockList = await provider.listStocks();
+
+    // Filter out ETFs / REITs / other funds (sector33Code = '9999' / 'その他')
+    // — these don't have meaningful NetCash calculations for 清原流 screening
+    const ordinaryStocks = stockList.filter((s) => {
+      const code = s.sector33Code;
+      const name = s.sector33Name;
+      return code !== '9999' && name !== 'その他';
+    });
+
+    // Cap at MVP_STOCK_LIMIT for fast iteration / smoke testing.
+    // Set to a large number (e.g. 10000) in .env to process all listed stocks.
+    const limited =
+      config.mvpStockLimit > 0 && ordinaryStocks.length > config.mvpStockLimit
+        ? ordinaryStocks.slice(0, config.mvpStockLimit)
+        : ordinaryStocks;
+
+    console.log(
+      `[sync] total=${stockList.length}, ordinary=${ordinaryStocks.length}, processing=${limited.length} (MVP_STOCK_LIMIT=${config.mvpStockLimit})`
+    );
+
+    for (const [idx, info] of limited.entries()) {
+      if ((idx + 1) % 10 === 0 || idx === limited.length - 1) {
+        console.log(`[sync] ${idx + 1}/${limited.length} (${info.code} ${info.name})`);
+      }
       // Upsert stock
       await prisma.stock.upsert({
         where: { code: info.code },

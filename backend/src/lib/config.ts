@@ -10,8 +10,8 @@ export const config = {
   netCashRatioMin: parseFloat(process.env.NET_CASH_RATIO_MIN || '0.3'),
   mvpStockLimit: parseInt(process.env.MVP_STOCK_LIMIT || '30', 10),
   jquants: {
-    mail: process.env.JQUANTS_MAIL_ADDRESS || '',
-    password: process.env.JQUANTS_PASSWORD || '',
-    refreshToken: process.env.JQUANTS_REFRESH_TOKEN || '',
+    apiKey: process.env.JQUANTS_API_KEY || '',
+    mail: process.env.JQUANTS_MAIL_ADDRESS || '',      // deprecated (V1 only)
+    password: process.env.JQUANTS_PASSWORD || '',      // deprecated (V1 only)
   },
 };

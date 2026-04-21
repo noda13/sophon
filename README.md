@@ -60,8 +60,7 @@ DATA_PROVIDER=jquants     # 実データ（Phase 1b 実装後）
 J-Quants を使うには https://jpx-jquants.com/ でFree tier 登録後、`.env` に設定：
 
 ```
-JQUANTS_MAIL_ADDRESS=your@email.com
-JQUANTS_PASSWORD=yourpassword
+JQUANTS_API_KEY=<ダッシュボードで発行したAPIキー>
 ```
 
 ## Strategy パターン
@@ -110,42 +109,61 @@ export class GrahamStrategy implements InvestmentStrategy {
 | `deploy.yml` | `collect.yml` 完了後、main push | Vite ビルド → GitHub Pages デプロイ |
 
 `collect.yml` は `DATA_PROVIDER=csv` で動作するため、J-Quants 未登録でも動く。  
-Secrets `JQUANTS_MAIL_ADDRESS` + `JQUANTS_PASSWORD` を設定すれば自動で `jquants` モードに切替。
+Secrets `JQUANTS_API_KEY` を設定すれば自動で `jquants` モードに切替（V2 API）。
 
-## J-Quants 実データモード
+## J-Quants 実データモード（V2 API）
 
-### 認証形式
+J-Quants は 2025-12-22 以降 V2 API に移行し、認証方式が **API Key** に変更されました。
 
-J-Quants は **APIキー方式ではありません**。メアド＋パスワードで認証します：
+### セットアップ
 
-```
-mail + password
-  → POST /v1/token/auth_user       → refreshToken（1週間有効）
-  → POST /v1/token/auth_refresh    → idToken（24h有効、実際のAPI呼出用）
-```
-
-`JQuantsProvider` は refreshToken と idToken を `backend/.cache/jquants-token.json` に自動永続化するため、毎回再認証は走りません。
-
-### 初回セットアップ
-
-1. https://jpx-jquants.com/ で Free tier 登録（メアド・パスワード設定のみ、クレカ不要）
-2. `backend/.env` に以下を追記：
+1. https://jpx-jquants.com/ で Free tier 登録 → メール認証完了
+2. ダッシュボード左メニュー「API Key」→「API Keyを発行」ボタン
+3. 発行されたキーをコピーし `backend/.env` に追記：
    ```
    DATA_PROVIDER=jquants
-   JQUANTS_MAIL_ADDRESS=<あなたのメアド>
-   JQUANTS_PASSWORD=<あなたのパスワード>
+   JQUANTS_API_KEY=<コピーしたキー>
    ```
-3. 接続テスト：
+4. 接続確認（実レスポンス構造の確認）：
+   ```bash
+   pnpm -C backend exec tsx scripts/test-jquants.ts --discover
+   ```
+5. 本番テスト：
    ```bash
    pnpm -C backend exec tsx scripts/test-jquants.ts
    ```
-   → トヨタ（7203）の最新財務・株価が取得できれば成功
-4. 全同期：
+6. 全銘柄同期：
    ```bash
    curl -X POST http://localhost:8902/api/admin/sync
    ```
 
-**注意**：J-Quants Free tier は株価・財務とも **12週遅延** です。清原流のチェック頻度（月次〜四半期）なら実用上問題ありません。直近値が必要なら Light tier（月1,089円）へ。
+### レート制限・プラン別所要時間
+
+J-Quants API の公式レート制限（[docs](https://jpx-jquants.com/en/spec/rate-limits)）：
+
+| Plan | 制限 | JQUANTS_REQ_INTERVAL_MS | 全銘柄同期（約3,900銘柄）|
+|---|---|---|---|
+| **Free**（デフォルト）| **5 req/min** | 13000 | 約18〜20分 |
+| Light（¥1,089/月）| 60 req/min | 1100 | 約2分 |
+| Standard | 120 req/min | 600 | 約1分 |
+
+**重要**：「significantly exceeding the rate limit」で **5分間の完全ブロック**が発生します。上記の間隔を守ってください（defaultの `13000ms` は Free tier 用の安全値）。
+
+Light tier 以上を使う場合：
+```
+# backend/.env
+JQUANTS_API_KEY=<key>
+JQUANTS_REQ_INTERVAL_MS=1100   # Light tier用
+```
+
+### データ遅延
+
+- **Free / Light**: 株価・財務ともに **12週遅延**
+- **Standard / Premium**: より短い遅延（プラン詳細参照）
+
+### バッチエンドポイント活用（Free tier でも実用）
+
+`syncOrchestrator` は `/v2/fins/summary?date=YYYYMMDD` と `/v2/equities/bars/daily?date=YYYYMMDD` の**日付ベース**バッチで、1 API callあたり数千銘柄分のデータを取得します。これにより per-code で 8000 API call 必要なところを約90 call に圧縮しています（Free tier で全市場同期が現実的になる）。
 
 ## 楽天証券データ取得手順（スモールスタート運用）
 
@@ -158,14 +176,17 @@ mail + password
 | 条件 | 推奨値 | 理由 |
 |---|---|---|
 | 時価総額 | 500億円以下 | 清原流の小型株ユニバース |
-| PBR | 2.0以下 | バリュー株の基本ライン |
-| 営業利益 | プラス | 赤字企業除外（CNPER計算不能を避ける） |
-| 自己資本比率 | 40%以上（任意） | 財務健全性の初期スクリーン |
+| 当期純利益 or 営業利益 | プラス | 赤字企業除外（CNPER計算不能を避けるため） |
+| 自己資本比率（任意） | 40%以上 | 財務健全性の初期スクリーン |
+| 現金同等物/時価総額（あれば） | 高いほど良い | NCR の擬似指標、楽天にこの項目があれば有効活用 |
+
+**重要**：清原流は **PBR / ROE / 配当利回り を主軸にしません**（PBRは「帳簿上の純資産は信用できない、現金だけが信頼できる」という思想と相反する）。楽天スクリーナーは**時価総額＋利益プラス**の粗い足切りで十分、**本選別は waga-scope の NCR ランキング**で行います。
 
 **手順**：
 
 1. 楽天証券にログイン（https://www.rakuten-sec.co.jp/）
-2. メニュー「**投資情報**」→「**スーパースクリーナー**」を開く
+2. グローバルメニュー「**国内株式**」→「**スーパースクリーナー**」を開く
+   （※楽天証券はUI変更が多いので、見つからなければ検索ボックスで「スクリーナー」検索）
 3. 条件を設定：
    - 時価総額：`5,000,000百万円以下` （500億）
    - PBR（実績）：`2.0以下`

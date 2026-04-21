@@ -1,12 +1,14 @@
 /**
- * Smoke test for JQuantsProvider.
+ * Smoke test and discovery tool for JQuantsProvider (V2 API).
  *
- * Usage:
+ * Usage (smoke test):
  *   pnpm -C backend exec tsx scripts/test-jquants.ts
  *
- * Requires backend/.env (or exported env vars):
- *   JQUANTS_MAIL_ADDRESS=your@email.com
- *   JQUANTS_PASSWORD=yourpassword
+ * Usage (discovery — dump raw first item from each endpoint):
+ *   pnpm -C backend exec tsx scripts/test-jquants.ts --discover
+ *
+ * Requires backend/.env:
+ *   JQUANTS_API_KEY=<your key from https://jpx-jquants.com/ dashboard>
  *   DATA_PROVIDER=jquants
  */
 
@@ -18,21 +20,86 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-const mail = process.env.JQUANTS_MAIL_ADDRESS;
-const password = process.env.JQUANTS_PASSWORD;
+const apiKey = process.env.JQUANTS_API_KEY;
+const discover = process.argv.includes('--discover');
 
-if (!mail || !password) {
+if (!apiKey) {
   console.error(
-    'set JQUANTS_MAIL_ADDRESS and JQUANTS_PASSWORD in backend/.env to test'
+    '\n[jquants] JQUANTS_API_KEY is not set.\n' +
+      'Set it in backend/.env:\n' +
+      '  JQUANTS_API_KEY=<your key from https://jpx-jquants.com/ dashboard>\n\n' +
+      'V2 API (released 2025-12-22) uses an API key instead of mail+password.\n'
   );
   process.exit(0);
 }
+
+// ---------------------------------------------------------------------------
+// Discovery mode: raw fetch, dump first item of each endpoint
+// ---------------------------------------------------------------------------
+
+if (discover) {
+  const BASE = 'https://api.jquants.com/v2';
+  const headers = { 'x-api-key': apiKey };
+
+  const toDate = new Date();
+  const fromDate = new Date(toDate.getTime() - 20 * 7 * 24 * 3_600_000);
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+
+  const endpoints: Array<{ label: string; url: string }> = [
+    { label: '/v2/equities/master', url: `${BASE}/equities/master` },
+    { label: '/v2/fins/summary (code=72030)', url: `${BASE}/fins/summary?code=72030` },
+    {
+      label: '/v2/equities/bars/daily (code=72030)',
+      url: `${BASE}/equities/bars/daily?code=72030&from=${fmt(fromDate)}&to=${fmt(toDate)}`,
+    },
+  ];
+
+  console.log('=== J-Quants V2 API Discovery Mode ===\n');
+  console.log('Hitting each endpoint once and dumping the first item of data[].\n');
+  console.log('Share this output to verify field names match expected values.\n');
+
+  for (const ep of endpoints) {
+    console.log(`=== ${ep.label} ===`);
+    try {
+      const res = await fetch(ep.url, { method: 'GET', headers });
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        console.error(`  HTTP ${res.status} ${res.statusText}: ${body.slice(0, 200)}`);
+        continue;
+      }
+      const json = (await res.json()) as Record<string, unknown>;
+      const data = json['data'] as unknown[] | undefined;
+      if (!data || data.length === 0) {
+        console.log('  data[] is empty or missing. Full response:');
+        console.log(JSON.stringify(json, null, 2));
+      } else {
+        console.log(`  data[] length: ${data.length}`);
+        console.log('  First item:');
+        console.log(JSON.stringify(data[0], null, 2));
+      }
+      if (json['pagination_key']) {
+        console.log(`  pagination_key present: ${json['pagination_key']}`);
+      }
+    } catch (err) {
+      console.error('  fetch error:', err);
+    }
+    console.log('');
+  }
+
+  console.log('=== Discovery complete ===');
+  process.exit(0);
+}
+
+// ---------------------------------------------------------------------------
+// Smoke test: use JQuantsProvider
+// ---------------------------------------------------------------------------
 
 // Dynamic import after env is loaded
 const { JQuantsProvider } = await import('../src/providers/JQuantsProvider.js');
 const provider = new JQuantsProvider();
 
-console.log('=== JQuantsProvider smoke test ===\n');
+console.log('=== JQuantsProvider V2 smoke test ===\n');
 
 // 1. listStocks
 console.log('--- listStocks() (first 3 results) ---');
