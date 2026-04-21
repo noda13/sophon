@@ -1,6 +1,7 @@
 import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma.js';
+import { getStockStrategyScores } from '../services/screener.js';
 
 const router: RouterType = Router();
 
@@ -60,6 +61,43 @@ router.get('/:code', async (req, res) => {
     res.json(stock);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
+    res.status(500).json({ error: message });
+  }
+});
+
+// GET /api/stocks/:code/history — up to 8 most recent financial statements
+router.get('/:code/history', async (req, res) => {
+  try {
+    const { code } = req.params;
+    const stock = await prisma.stock.findUnique({ where: { code } });
+    if (!stock) {
+      res.status(404).json({ error: `Stock ${code} not found` });
+      return;
+    }
+    const statements = await prisma.financialStatement.findMany({
+      where: { code },
+      orderBy: { disclosedDate: 'desc' },
+      take: 8,
+    });
+    res.json(statements);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    res.status(500).json({ error: message });
+  }
+});
+
+// GET /api/stocks/:code/strategies — all active strategy scores for this stock
+router.get('/:code/strategies', async (req, res) => {
+  try {
+    const { code } = req.params;
+    const scores = await getStockStrategyScores(code);
+    res.json(scores);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    if (message.includes('not found')) {
+      res.status(404).json({ error: message });
+      return;
+    }
     res.status(500).json({ error: message });
   }
 });

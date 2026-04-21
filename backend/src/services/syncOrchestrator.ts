@@ -20,7 +20,8 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
 
   try {
     const stockList = await provider.listStocks();
-    const limited = stockList.slice(0, config.mvpStockLimit);
+    // Use all stocks (mvpStockLimit was only for early dev)
+    const limited = stockList;
 
     for (const info of limited) {
       // Upsert stock

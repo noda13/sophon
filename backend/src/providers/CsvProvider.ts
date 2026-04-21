@@ -67,15 +67,31 @@ export class CsvProvider implements DataProvider {
   private rows: CsvRow[];
 
   constructor() {
-    // Resolve relative to this file's location or process.cwd()
+    // Resolve CSV path — try multiple locations for monorepo compatibility
     const __dirname = dirname(fileURLToPath(import.meta.url));
-    // Try relative to project root (process.cwd()/seed/stocks.csv first, then relative to this file)
-    let csvPath: string;
-    try {
-      csvPath = resolve(process.cwd(), 'seed', 'stocks.csv');
-      readFileSync(csvPath); // test if readable
-    } catch {
-      csvPath = resolve(__dirname, '..', '..', '..', 'seed', 'stocks.csv');
+    const candidates = [
+      // When running from backend/ dir
+      resolve(process.cwd(), 'seed', 'stocks.csv'),
+      // When running from monorepo root (scripts/collect-static.ts)
+      resolve(process.cwd(), 'backend', 'seed', 'stocks.csv'),
+      // Relative to CsvProvider.ts: backend/src/providers/ → ../../seed/
+      resolve(__dirname, '..', '..', 'seed', 'stocks.csv'),
+    ];
+
+    let csvPath: string | null = null;
+    for (const candidate of candidates) {
+      try {
+        readFileSync(candidate); // test if readable
+        csvPath = candidate;
+        break;
+      } catch {
+        // try next
+      }
+    }
+    if (!csvPath) {
+      throw new Error(
+        `stocks.csv not found. Tried:\n${candidates.join('\n')}`
+      );
     }
     const content = readFileSync(csvPath, 'utf-8');
     this.rows = parseCsv(content);
