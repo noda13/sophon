@@ -52,6 +52,9 @@ DATA_PROVIDER=csv bash scripts/full-sync.sh
 
 # 静的JSON生成をスキップ
 SKIP_STATIC=1 bash scripts/full-sync.sh
+
+# 静的JSON生成 → git push → GitHub Pages デプロイまで一発
+PUSH_STATIC=1 bash scripts/full-sync.sh
 ```
 
 Ctrl+C でバックエンドごと安全に停止。ログは `backend/.cache/{backend,sync}.log`。
