@@ -36,6 +36,26 @@ pnpm -C frontend dev
 curl -X POST http://localhost:8902/api/admin/sync
 ```
 
+## ワンショット同期スクリプト
+
+バックエンド起動 → `/api/admin/sync` 発火 → 30秒おきに進捗表示 → 完了後に静的JSON生成 → バックエンド停止 を一括で実行：
+
+```bash
+# デフォルト（jquants, 全銘柄）
+bash scripts/full-sync.sh
+
+# 部分同期で動作確認
+MVP_STOCK_LIMIT=50 bash scripts/full-sync.sh
+
+# CSV でローカル確認（J-Quants 不要）
+DATA_PROVIDER=csv bash scripts/full-sync.sh
+
+# 静的JSON生成をスキップ
+SKIP_STATIC=1 bash scripts/full-sync.sh
+```
+
+Ctrl+C でバックエンドごと安全に停止。ログは `backend/.cache/{backend,sync}.log`。
+
 ## 静的JSON生成（GitHub Pages 用）
 
 ```bash
