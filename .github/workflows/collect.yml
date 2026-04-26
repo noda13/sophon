@@ -2,8 +2,8 @@ name: Collect Static Data
 
 on:
   schedule:
-    # 月・木 09:00 JST (00:00 UTC)
-    - cron: '0 0 * * 1,4'
+    # 毎週日曜 09:00 JST (00:00 UTC)
+    - cron: '0 0 * * 0'
   workflow_dispatch:
 
 permissions:
@@ -14,12 +14,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # J-Quants credentials: set in repo secrets to switch to real data
-      # If both secrets are set, use jquants; otherwise use csv (safe default)
-      DATA_PROVIDER: ${{ secrets.JQUANTS_MAIL_ADDRESS != '' && secrets.JQUANTS_PASSWORD != '' && 'jquants' || 'csv' }}
-      JQUANTS_MAIL_ADDRESS: ${{ secrets.JQUANTS_MAIL_ADDRESS }}
-      JQUANTS_PASSWORD: ${{ secrets.JQUANTS_PASSWORD }}
-      JQUANTS_REFRESH_TOKEN: ${{ secrets.JQUANTS_REFRESH_TOKEN }}
+      # JQUANTS_API_KEY シークレットが設定されていれば jquants モード、なければ csv (50銘柄サンプル)
+      DATA_PROVIDER: ${{ secrets.JQUANTS_API_KEY != '' && 'jquants' || 'csv' }}
+      JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -30,14 +27,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Generate static JSON
-        run: DATA_PROVIDER=csv pnpm exec tsx scripts/collect-static.ts
+        run: pnpm exec tsx scripts/collect-static.ts
 
       - name: Commit and push updated data
         run: |
