@@ -144,11 +144,13 @@ if [ "$last_status" != "success" ]; then
 fi
 
 # ---- 静的JSON生成（任意） ----
+# DATA_PROVIDER=db ならDBから実データを、csv なら50銘柄サンプルを出力する
+STATIC_PROVIDER="${STATIC_PROVIDER:-db}"
 if [ "$SKIP_STATIC" = "1" ]; then
   log "SKIP_STATIC=1 — skipping static JSON generation."
 else
-  log "generating static JSON (DATA_PROVIDER=csv)..."
-  DATA_PROVIDER=csv pnpm exec tsx scripts/collect-static.ts
+  log "generating static JSON (DATA_PROVIDER=$STATIC_PROVIDER)..."
+  DATABASE_URL="$DATABASE_URL" DATA_PROVIDER="$STATIC_PROVIDER" pnpm exec tsx scripts/collect-static.ts
 
   # ---- GitHub Pages へ push（任意） ----
   if [ "$PUSH_STATIC" = "1" ]; then

@@ -63,6 +63,12 @@ async function main() {
   const provider = resolveProvider();
   console.log(`  provider: ${provider.name}`);
 
+  // Pre-load all data in bulk to avoid per-stock queries (especially for db/jquants)
+  if (provider.prefetchAll) {
+    const result = await provider.prefetchAll();
+    console.log(`  prefetched: statements=${result.statementsCached}, prices=${result.pricesCached}, apiCalls=${result.apiCalls}`);
+  }
+
   // 1. List stocks
   const stockInfos = await provider.listStocks();
   console.log(`  found ${stockInfos.length} stocks`);
@@ -89,7 +95,7 @@ async function main() {
 
     const metrics = computeMetrics({
       marketCap,
-      cashAndEquivalents: latestStmt.cashAndEquivalents ?? null,
+      currentAssets: latestStmt.currentAssets ?? null,
       totalAssets: latestStmt.totalAssets ?? null,
       equity: latestStmt.equity ?? null,
       investmentSecurities: null,
@@ -156,7 +162,7 @@ async function main() {
     const metricsForSnapshot = latestStmt
       ? computeMetrics({
           marketCap,
-          cashAndEquivalents: latestStmt.cashAndEquivalents ?? null,
+          currentAssets: latestStmt.currentAssets ?? null,
           totalAssets: latestStmt.totalAssets ?? null,
           equity: latestStmt.equity ?? null,
           investmentSecurities: null,
