@@ -59,7 +59,24 @@ PUSH_STATIC=1 bash scripts/full-sync.sh
 
 Ctrl+C でバックエンドごと安全に停止。ログは `backend/.cache/{backend,sync}.log`。
 
-## 静的JSON生成（GitHub Pages 用）
+## GitHub Pages 更新（週次デプロイ）
+
+Pages は静的JSON（CSV 50銘柄サンプル）をビルドして配信する。GHA の `deploy.yml` が `frontend/` への push を検知してデプロイする。
+
+**週次更新の手順（ローカルで実行するだけ）：**
+
+```bash
+# 静的JSON生成 → git push → GitHub Pages デプロイ（推奨）
+DATA_PROVIDER=csv PUSH_STATIC=1 bash scripts/full-sync.sh
+
+# または直接（J-Quants 同期なしで最速）
+DATA_PROVIDER=csv pnpm exec tsx scripts/collect-static.ts
+git add frontend/public/data/ && git commit -m "chore: update static data" && git push origin main
+```
+
+push すると GHA `deploy.yml` が自動起動し、数分で GitHub Pages に反映される。
+
+## 静的JSON生成（単体）
 
 ```bash
 # CsvProvider で動作（J-Quants 未登録でもOK）
@@ -128,10 +145,10 @@ export class GrahamStrategy implements InvestmentStrategy {
 
 | ワークフロー | トリガ | 処理 |
 |---|---|---|
-| `collect.yml` | 月・木 09:00 JST、手動 | 静的JSON生成 → main にコミット |
-| `deploy.yml` | `collect.yml` 完了後、main push | Vite ビルド → GitHub Pages デプロイ |
+| `collect.yml` | 手動のみ（`workflow_dispatch`） | 静的JSON生成 → main にコミット（GHA節約のため無効化中） |
+| `deploy.yml` | `frontend/` への push、手動 | Vite ビルド → GitHub Pages デプロイ |
 
-`collect.yml` は `DATA_PROVIDER=csv` で動作するため、J-Quants 未登録でも動く。  
+静的JSONの更新は手元で行い、push すると `deploy.yml` が自動起動する（上記「GitHub Pages 更新」参照）。  
 Secrets `JQUANTS_API_KEY` を設定すれば自動で `jquants` モードに切替（V2 API）。
 
 ## J-Quants 実データモード（V2 API）
