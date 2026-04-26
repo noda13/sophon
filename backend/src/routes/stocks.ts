@@ -5,6 +5,8 @@ import { getStockStrategyScores } from '../services/screener.js';
 
 const router: RouterType = Router();
 
+const codeSchema = z.string().regex(/^\d{4}$/, 'Stock code must be a 4-digit number');
+
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   maxMarketCap: z.coerce.number().positive().optional(),
@@ -40,7 +42,12 @@ router.get('/', async (req, res) => {
 
 router.get('/:code', async (req, res) => {
   try {
-    const { code } = req.params;
+    const parsed = codeSchema.safeParse(req.params.code);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const code = parsed.data;
     const stock = await prisma.stock.findUnique({
       where: { code },
       include: {
@@ -68,7 +75,12 @@ router.get('/:code', async (req, res) => {
 // GET /api/stocks/:code/history — up to 8 most recent financial statements
 router.get('/:code/history', async (req, res) => {
   try {
-    const { code } = req.params;
+    const parsed = codeSchema.safeParse(req.params.code);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const code = parsed.data;
     const stock = await prisma.stock.findUnique({ where: { code } });
     if (!stock) {
       res.status(404).json({ error: `Stock ${code} not found` });
@@ -89,7 +101,12 @@ router.get('/:code/history', async (req, res) => {
 // GET /api/stocks/:code/strategies — all active strategy scores for this stock
 router.get('/:code/strategies', async (req, res) => {
   try {
-    const { code } = req.params;
+    const parsed = codeSchema.safeParse(req.params.code);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const code = parsed.data;
     const scores = await getStockStrategyScores(code);
     res.json(scores);
   } catch (err) {

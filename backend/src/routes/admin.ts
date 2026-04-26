@@ -1,25 +1,23 @@
 import { Router, type Router as RouterType } from 'express';
 import prisma from '../lib/prisma.js';
-import { runSync } from '../services/syncOrchestrator.js';
+import { runSync, isSyncing } from '../services/syncOrchestrator.js';
+import { requireAdminToken } from '../lib/adminAuth.js';
 
 const router: RouterType = Router();
 
-let syncInProgress = false;
+router.use(requireAdminToken);
 
 router.post('/sync', async (_req, res) => {
-  if (syncInProgress) {
+  if (isSyncing()) {
     res.status(409).json({ error: 'Sync already in progress' });
     return;
   }
-  syncInProgress = true;
   try {
     const result = await runSync();
     res.json({ success: true, ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     res.status(500).json({ error: message });
-  } finally {
-    syncInProgress = false;
   }
 });
 
@@ -31,7 +29,7 @@ router.get('/status', async (_req, res) => {
     const stocks = await prisma.stock.count();
     const snapshots = await prisma.screeningSnapshot.count();
     res.json({
-      syncInProgress,
+      syncInProgress: isSyncing(),
       lastLog,
       counts: { stocks, snapshots },
     });
@@ -41,5 +39,4 @@ router.get('/status', async (_req, res) => {
   }
 });
 
-export { syncInProgress };
 export default router;

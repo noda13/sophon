@@ -49,21 +49,22 @@ function ScoreBar({ label, scoreObj }: { label: string; scoreObj: StrategyScore 
 function ExternalLinks({ code }: { code: string }) {
   const today = new Date();
   const yyyymmdd = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+  const safeCode = encodeURIComponent(code);
 
   const links = [
     {
       label: 'kabutan',
-      url: `https://kabutan.jp/stock/?code=${code}`,
+      url: `https://kabutan.jp/stock/?code=${safeCode}`,
       description: '株価・ニュース',
     },
     {
       label: 'IR BANK',
-      url: `https://irbank.net/E${code}/financials`,
+      url: `https://irbank.net/E${safeCode}/financials`,
       description: '財務データ推移',
     },
     {
       label: 'EDINET',
-      url: `https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx?bikou2=${code}`,
+      url: `https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx?bikou2=${safeCode}`,
       description: '有価証券報告書',
     },
     {

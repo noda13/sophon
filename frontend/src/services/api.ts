@@ -16,6 +16,7 @@ const isStatic = import.meta.env.VITE_STATIC_DATA === 'true' || !import.meta.env
 
 const api = axios.create({
   baseURL: '/api',
+  timeout: 15_000,
 });
 
 // --- Static JSON fetchers ---

@@ -1,24 +1,19 @@
 import cron from 'node-cron';
-import { runSync } from '../services/syncOrchestrator.js';
-
-let schedulerRunning = false;
+import { runSync, isSyncing } from '../services/syncOrchestrator.js';
 
 // Daily at 17:00 JST (08:00 UTC when TZ=Asia/Tokyo)
 export function startScheduler(): void {
   cron.schedule('0 17 * * *', async () => {
-    if (schedulerRunning) {
+    if (isSyncing()) {
       console.log('[scheduler] Skipping — sync already in progress');
       return;
     }
-    schedulerRunning = true;
     console.log('[scheduler] Starting daily sync...');
     try {
       const result = await runSync();
       console.log(`[scheduler] Sync complete: ${result.stocks} stocks, ${result.snapshots} snapshots`);
     } catch (err) {
       console.error('[scheduler] Sync failed:', err);
-    } finally {
-      schedulerRunning = false;
     }
   }, {
     timezone: 'Asia/Tokyo',

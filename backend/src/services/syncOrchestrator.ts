@@ -4,7 +4,14 @@ import { resolveProvider } from '../providers/index.js';
 import type { DataProvider } from '../providers/DataProvider.js';
 import { computeMarketCap, computeMetrics } from './metricCalculator.js';
 
+let _syncInProgress = false;
+
+export function isSyncing(): boolean {
+  return _syncInProgress;
+}
+
 export async function runSync(opts?: { provider?: DataProvider }): Promise<{ stocks: number; snapshots: number }> {
+  _syncInProgress = true;
   const provider = opts?.provider ?? resolveProvider();
 
   const log = await prisma.collectionLog.create({
@@ -190,5 +197,7 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
       },
     });
     throw err;
+  } finally {
+    _syncInProgress = false;
   }
 }

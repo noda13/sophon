@@ -1,6 +1,10 @@
 import prisma from '../lib/prisma.js';
 import { config } from '../lib/config.js';
-import type { StockMetrics, RankingRow as StrategyRankingRow, RankingOpts } from '../strategies/InvestmentStrategy.js';
+import type {
+  StockMetrics,
+  RankingRow as StrategyRankingRow,
+  RankingOpts,
+} from '../strategies/InvestmentStrategy.js';
 import { getStrategy, activeStrategies } from '../strategies/index.js';
 import type { InvestmentStrategy } from '../strategies/InvestmentStrategy.js';
 
@@ -21,35 +25,28 @@ export interface RankingRow {
 }
 
 /**
- * Fetch latest snapshots from DB and build StockMetrics array
+ * Fetch latest snapshots from DB and build StockMetrics array.
+ * Uses 2 queries total (down from 2N+1) via distinct+orderBy.
  */
-async function fetchStockMetrics(maxMarketCap?: number): Promise<StockMetrics[]> {
-  const cap = maxMarketCap ?? config.marketCapMaxYen;
-
-  const codes = await prisma.screeningSnapshot.findMany({
-    select: { code: true },
+async function fetchStockMetrics(): Promise<StockMetrics[]> {
+  const snapshots = await prisma.screeningSnapshot.findMany({
+    orderBy: { snapshotAt: 'desc' },
     distinct: ['code'],
+    include: { stock: true },
   });
 
-  if (codes.length === 0) return [];
+  if (snapshots.length === 0) return [];
 
-  const metrics: StockMetrics[] = [];
+  const stmtList = await prisma.financialStatement.findMany({
+    orderBy: { disclosedDate: 'desc' },
+    distinct: ['code'],
+    select: { code: true, profit: true, equity: true },
+  });
+  const stmtMap = new Map(stmtList.map(s => [s.code, s]));
 
-  for (const { code } of codes) {
-    const snapshot = await prisma.screeningSnapshot.findFirst({
-      where: { code },
-      orderBy: { snapshotAt: 'desc' },
-      include: { stock: true },
-    });
-    if (!snapshot) continue;
-
-    // Fetch profit and equity from latest statement for strategy scoring
-    const stmt = await prisma.financialStatement.findFirst({
-      where: { code },
-      orderBy: { disclosedDate: 'desc' },
-    });
-
-    metrics.push({
+  return snapshots.map(snapshot => {
+    const stmt = stmtMap.get(snapshot.code);
+    return {
       code: snapshot.code,
       name: snapshot.stock.name,
       sector33Name: snapshot.stock.sector33Name,
@@ -62,10 +59,8 @@ async function fetchStockMetrics(maxMarketCap?: number): Promise<StockMetrics[]>
       pbr: snapshot.pbr,
       profit: stmt?.profit ?? null,
       equity: stmt?.equity ?? null,
-    });
-  }
-
-  return metrics;
+    };
+  });
 }
 
 /**
@@ -75,7 +70,7 @@ export async function rankByStrategy(
   strategy: InvestmentStrategy,
   opts?: RankingOpts & { maxMarketCap?: number }
 ): Promise<StrategyRankingRow[]> {
-  const allMetrics = await fetchStockMetrics(opts?.maxMarketCap);
+  const allMetrics = await fetchStockMetrics();
   return strategy.rank(allMetrics, opts);
 }
 
