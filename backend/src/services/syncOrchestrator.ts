@@ -97,6 +97,7 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
             profit: stmt.profit ?? null,
             totalAssets: stmt.totalAssets ?? null,
             equity: stmt.equity ?? null,
+            currentAssets: stmt.currentAssets ?? null,
             cashAndEquivalents: stmt.cashAndEquivalents ?? null,
             sharesOutstanding: stmt.sharesOutstanding ?? null,
           },
@@ -111,6 +112,7 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
             profit: stmt.profit ?? null,
             totalAssets: stmt.totalAssets ?? null,
             equity: stmt.equity ?? null,
+            currentAssets: stmt.currentAssets ?? null,
             cashAndEquivalents: stmt.cashAndEquivalents ?? null,
             sharesOutstanding: stmt.sharesOutstanding ?? null,
           },
@@ -153,7 +155,7 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
 
       const metrics = computeMetrics({
         marketCap,
-        cashAndEquivalents: latestStmt.cashAndEquivalents,
+        currentAssets: latestStmt.currentAssets,
         totalAssets: latestStmt.totalAssets,
         equity: latestStmt.equity,
         investmentSecurities: null,

@@ -21,6 +21,7 @@ export interface StatementRaw {
   profit?: number | null;
   totalAssets?: number | null;
   equity?: number | null;
+  currentAssets?: number | null;
   cashAndEquivalents?: number | null;
   sharesOutstanding?: number | null;
 }

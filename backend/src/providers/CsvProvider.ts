@@ -20,6 +20,7 @@ interface CsvRow {
   profit: number | null;
   totalAssets: number | null;
   equity: number | null;
+  currentAssets: number | null;
   cashAndEquivalents: number | null;
 }
 
@@ -57,7 +58,8 @@ function parseCsv(content: string): CsvRow[] {
       profit: parseNum(cols[13]),
       totalAssets: parseNum(cols[14]),
       equity: parseNum(cols[15]),
-      cashAndEquivalents: parseNum(cols[16]),
+      currentAssets: parseNum(cols[16]),
+      cashAndEquivalents: parseNum(cols[17]),
     };
   });
 }
@@ -129,6 +131,7 @@ export class CsvProvider implements DataProvider {
         profit: r.profit,
         totalAssets: r.totalAssets,
         equity: r.equity,
+        currentAssets: r.currentAssets,
         cashAndEquivalents: r.cashAndEquivalents,
         sharesOutstanding: r.sharesOutstanding,
       }));

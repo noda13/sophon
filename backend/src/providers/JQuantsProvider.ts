@@ -340,6 +340,7 @@ export class JQuantsProvider implements DataProvider {
           profit: parseNum((item['NP'] ?? item['Profit']) as string | undefined),
           totalAssets: parseNum((item['TA'] ?? item['TotalAssets']) as string | undefined),
           equity: parseNum((item['Eq'] ?? item['Equity']) as string | undefined),
+          currentAssets: parseNum((item['CA'] ?? item['CurrentAssets']) as string | undefined),
           cashAndEquivalents: parseNum(
             (item['CashEq'] ?? item['CashAndEquivalents']) as string | undefined
           ),
@@ -500,6 +501,7 @@ export class JQuantsProvider implements DataProvider {
         profit: parseNum((item['NP'] ?? item['Profit']) as string | undefined),
         totalAssets: parseNum((item['TA'] ?? item['TotalAssets']) as string | undefined),
         equity: parseNum((item['Eq'] ?? item['Equity']) as string | undefined),
+        currentAssets: parseNum((item['CA'] ?? item['CurrentAssets']) as string | undefined),
         cashAndEquivalents: parseNum(
           (item['CashEq'] ?? item['CashAndEquivalents']) as string | undefined
         ),
