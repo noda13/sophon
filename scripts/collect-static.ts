@@ -73,12 +73,18 @@ async function main() {
   const stockInfos = await provider.listStocks();
   console.log(`  found ${stockInfos.length} stocks`);
 
+  // Cache fetch results from the metrics pass to avoid double-fetching in the detail pass
+  const statementsCache = new Map<string, import('../backend/src/providers/DataProvider.js').StatementRaw[]>();
+  const pricesCache = new Map<string, import('../backend/src/providers/DataProvider.js').PriceRaw[]>();
+
   // 2. Build StockMetrics for all stocks
   const allMetrics: StockMetrics[] = [];
 
   for (const info of stockInfos) {
     const statements = await provider.fetchStatements(info.code);
     const prices = await provider.fetchPrices(info.code);
+    statementsCache.set(info.code, statements);
+    pricesCache.set(info.code, prices);
 
     if (statements.length === 0 || prices.length === 0) continue;
 
@@ -132,7 +138,7 @@ async function main() {
 
   // 6. Write stock-{code}.json for each stock
   for (const info of stockInfos) {
-    const statements = await provider.fetchStatements(info.code);
+    const statements = statementsCache.get(info.code) ?? [];
 
     // Sort statements newest first for history
     const history = statements
@@ -152,7 +158,7 @@ async function main() {
 
     // Build a minimal profile (matches StockProfile shape)
     const latestStmt = history[0] ?? null;
-    const prices = await provider.fetchPrices(info.code);
+    const prices = pricesCache.get(info.code) ?? [];
     const latestPrice = prices.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     )[0];

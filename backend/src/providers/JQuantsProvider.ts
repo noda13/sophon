@@ -46,138 +46,8 @@ const SLOW_INTERVAL_MS = Math.max(NORMAL_INTERVAL_MS * 2, 20000); // double on 4
 const SLOW_DURATION_MS = 10 * 60 * 1000; // 10 min cooldown after 429
 const CONSECUTIVE_OK_TO_SPEEDUP = 30;
 
-let lastRequestAt = 0;
-let slowModeUntil = 0;
-let consecutiveOk = 0;
-let pacingChain: Promise<void> = Promise.resolve();
-
-function currentInterval(): number {
-  return Date.now() < slowModeUntil ? SLOW_INTERVAL_MS : NORMAL_INTERVAL_MS;
-}
-
-/** Serialized throttle: awaits prior queue entry + minimum interval */
-function throttle(): Promise<void> {
-  const next = pacingChain.then(async () => {
-    const interval = currentInterval();
-    const waitMs = interval - (Date.now() - lastRequestAt);
-    if (waitMs > 0) await sleep(waitMs);
-    lastRequestAt = Date.now();
-  });
-  pacingChain = next.catch(() => undefined);
-  return next;
-}
-
-function noteRateLimit(): void {
-  consecutiveOk = 0;
-  const until = Date.now() + SLOW_DURATION_MS;
-  if (until > slowModeUntil) {
-    slowModeUntil = until;
-    console.error(
-      `[jquants] entering slow mode (${SLOW_INTERVAL_MS}ms interval) for ${SLOW_DURATION_MS / 1000}s`
-    );
-  }
-}
-
-function noteSuccess(): void {
-  consecutiveOk++;
-  if (consecutiveOk >= CONSECUTIVE_OK_TO_SPEEDUP && Date.now() < slowModeUntil) {
-    slowModeUntil = 0;
-    console.error('[jquants] resuming normal pace after sustained successes');
-  }
-}
-
-/**
- * Raw HTTP fetch with retry logic (V2 version).
- * - Pre-request throttle: min 600ms interval between requests
- * - 429: exponential backoff (10s, 30s, 60s), max 3 retries
- * - 5xx: exponential backoff (2s, 4s, 8s), max 3 retries
- * - Other non-2xx: fail immediately
- * Injects x-api-key header automatically.
- */
-async function fetchV2(
-  path: string,
-  queryParams?: Record<string, string>,
-  label?: string
-): Promise<unknown> {
-  const MAX_RETRIES = 3;
-  let lastErr: Error | null = null;
-
-  const url = new URL(`${JQUANTS_BASE_V2}${path}`);
-  if (queryParams) {
-    for (const [k, v] of Object.entries(queryParams)) {
-      url.searchParams.set(k, v);
-    }
-  }
-
-  const headers: Record<string, string> = {
-    'x-api-key': config.jquants.apiKey,
-  };
-
-  for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
-    await throttle();
-    const res = await fetch(url.toString(), { method: 'GET', headers });
-
-    if (res.ok) {
-      noteSuccess();
-      return res.json();
-    }
-
-    if (res.status === 429 || res.status >= 500) {
-      if (res.status === 429) noteRateLimit();
-
-      if (attempt <= MAX_RETRIES) {
-        // 429: long patient waits (10s, 30s, 60s) — slow mode is also active
-        // 5xx: shorter waits (2s, 4s, 8s)
-        const wait =
-          res.status === 429
-            ? [10_000, 30_000, 60_000][attempt - 1]
-            : [2_000, 4_000, 8_000][attempt - 1];
-        console.error(
-          `[jquants] ${res.status} ${label ? `[${label}] ` : ''}retrying in ${wait / 1000}s (attempt ${attempt}/${MAX_RETRIES})`
-        );
-        await sleep(wait);
-        lastErr = new Error(`HTTP ${res.status}`);
-        continue;
-      }
-    }
-
-    // Non-retryable error or exhausted retries
-    const body = await res.text().catch(() => '');
-    throw new Error(
-      `[jquants] HTTP ${res.status} ${res.statusText}${label ? ` [${label}]` : ''}: ${body.slice(0, 200)}`
-    );
-  }
-
-  throw lastErr ?? new Error('[jquants] request failed after retries');
-}
-
-/**
- * Paginated GET for V2.
- * V2 always wraps items in `{ "data": [...], "pagination_key": "..." }`.
- * Loops until no pagination_key, concatenating all data arrays.
- */
-async function getPaginated<TItem>(
-  path: string,
-  queryParams?: Record<string, string>
-): Promise<TItem[]> {
-  const results: TItem[] = [];
-  const params: Record<string, string> = { ...(queryParams ?? {}) };
-
-  for (;;) {
-    const response = (await fetchV2(path, params, path)) as Record<string, unknown>;
-
-    const items = response['data'] as TItem[] | undefined;
-    if (items && Array.isArray(items)) {
-      results.push(...items);
-    }
-
-    const paginationKey = response['pagination_key'] as string | undefined;
-    if (!paginationKey) break;
-
-    params['pagination_key'] = paginationKey;
-  }
-
-  return results;
+function normalizeCode(rawCode: string): string {
+  return rawCode.slice(0, 4);
 }
 
 // ---------------------------------------------------------------------------
@@ -192,6 +62,140 @@ export class JQuantsProvider implements DataProvider {
   private statementCache: Map<string, StatementRaw[]> = new Map();
   private priceCache: Map<string, PriceRaw[]> = new Map();
   private prefetched = false;
+
+  // Rate limiter state (moved from module level)
+  private lastRequestAt = 0;
+  private slowModeUntil = 0;
+  private consecutiveOk = 0;
+  private pacingChain: Promise<void> = Promise.resolve();
+
+  private currentInterval(): number {
+    return Date.now() < this.slowModeUntil ? SLOW_INTERVAL_MS : NORMAL_INTERVAL_MS;
+  }
+
+  private throttle(): Promise<void> {
+    const next = this.pacingChain.then(async () => {
+      const interval = this.currentInterval();
+      const waitMs = interval - (Date.now() - this.lastRequestAt);
+      if (waitMs > 0) await sleep(waitMs);
+      this.lastRequestAt = Date.now();
+    });
+    this.pacingChain = next.catch(() => undefined);
+    return next;
+  }
+
+  private noteRateLimit(): void {
+    this.consecutiveOk = 0;
+    const until = Date.now() + SLOW_DURATION_MS;
+    if (until > this.slowModeUntil) {
+      this.slowModeUntil = until;
+      console.error(
+        `[jquants] entering slow mode (${SLOW_INTERVAL_MS}ms interval) for ${SLOW_DURATION_MS / 1000}s`
+      );
+    }
+  }
+
+  private noteSuccess(): void {
+    this.consecutiveOk++;
+    if (this.consecutiveOk >= CONSECUTIVE_OK_TO_SPEEDUP && Date.now() < this.slowModeUntil) {
+      this.slowModeUntil = 0;
+      console.error('[jquants] resuming normal pace after sustained successes');
+    }
+  }
+
+  /**
+   * Raw HTTP fetch with retry logic (V2 version).
+   * - Pre-request throttle: min 600ms interval between requests
+   * - 429: exponential backoff (10s, 30s, 60s), max 3 retries
+   * - 5xx: exponential backoff (2s, 4s, 8s), max 3 retries
+   * - Other non-2xx: fail immediately
+   * Injects x-api-key header automatically.
+   */
+  private async fetchV2(
+    path: string,
+    queryParams?: Record<string, string>,
+    label?: string
+  ): Promise<unknown> {
+    const MAX_RETRIES = 3;
+    let lastErr: Error | null = null;
+
+    const url = new URL(`${JQUANTS_BASE_V2}${path}`);
+    if (queryParams) {
+      for (const [k, v] of Object.entries(queryParams)) {
+        url.searchParams.set(k, v);
+      }
+    }
+
+    const headers: Record<string, string> = {
+      'x-api-key': config.jquants.apiKey,
+    };
+
+    for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
+      await this.throttle();
+      const res = await fetch(url.toString(), { method: 'GET', headers });
+
+      if (res.ok) {
+        this.noteSuccess();
+        return res.json();
+      }
+
+      if (res.status === 429 || res.status >= 500) {
+        if (res.status === 429) this.noteRateLimit();
+
+        if (attempt <= MAX_RETRIES) {
+          // 429: long patient waits (10s, 30s, 60s) — slow mode is also active
+          // 5xx: shorter waits (2s, 4s, 8s)
+          const wait =
+            res.status === 429
+              ? [10_000, 30_000, 60_000][attempt - 1]
+              : [2_000, 4_000, 8_000][attempt - 1];
+          console.error(
+            `[jquants] ${res.status} ${label ? `[${label}] ` : ''}retrying in ${wait / 1000}s (attempt ${attempt}/${MAX_RETRIES})`
+          );
+          await sleep(wait);
+          lastErr = new Error(`HTTP ${res.status}`);
+          continue;
+        }
+      }
+
+      // Non-retryable error or exhausted retries
+      const body = await res.text().catch(() => '');
+      throw new Error(
+        `[jquants] HTTP ${res.status} ${res.statusText}${label ? ` [${label}]` : ''}: ${body.slice(0, 200)}`
+      );
+    }
+
+    throw lastErr ?? new Error('[jquants] request failed after retries');
+  }
+
+  /**
+   * Paginated GET for V2.
+   * V2 always wraps items in `{ "data": [...], "pagination_key": "..." }`.
+   * Loops until no pagination_key, concatenating all data arrays.
+   */
+  private async getPaginated<TItem>(
+    path: string,
+    queryParams?: Record<string, string>
+  ): Promise<TItem[]> {
+    const results: TItem[] = [];
+    const params: Record<string, string> = { ...(queryParams ?? {}) };
+
+    for (;;) {
+      const response = (await this.fetchV2(path, params, path)) as Record<string, unknown>;
+
+      const items = response['data'] as TItem[] | undefined;
+      if (items && Array.isArray(items)) {
+        results.push(...items);
+      }
+
+      const paginationKey = response['pagination_key'] as string | undefined;
+      if (!paginationKey) break;
+
+      params['pagination_key'] = paginationKey;
+    }
+
+    return results;
+  }
 
   private ensureApiKey(): void {
     if (!config.jquants.apiKey) {
@@ -242,16 +246,12 @@ export class JQuantsProvider implements DataProvider {
     // --- 1. Fetch all prices for the latest available trading day (1 API call) ---
     console.error(`[jquants] prefetch: prices for ${fmt(latestTradingDay)} (all stocks, 1 API call)`);
     type JQuantsBar = Record<string, string | number | undefined>;
-    const priceItems = await getPaginated<JQuantsBar>('/equities/bars/daily', {
+    const priceItems = await this.getPaginated<JQuantsBar>('/equities/bars/daily', {
       date: fmt(latestTradingDay),
     });
     apiCalls++;
     for (const item of priceItems) {
-      const rawCode = String(item['Code'] ?? '');
-      const code =
-        rawCode.length === 5 && rawCode.endsWith('0')
-          ? rawCode.slice(0, 4)
-          : rawCode.slice(0, 4);
+      const code = normalizeCode(String(item['Code'] ?? ''));
       const closeRaw = item['C'] ?? item['Close'];
       const close = parseNum(closeRaw as string | number | undefined);
       const dateStr = item['Date'] as string | undefined;
@@ -287,14 +287,10 @@ export class JQuantsProvider implements DataProvider {
     type JQuantsSummary = Record<string, string | number | undefined>;
     let totalStatements = 0;
     for (const [idx, day] of tradingDays.entries()) {
-      const items = await getPaginated<JQuantsSummary>('/fins/summary', { date: fmt(day) });
+      const items = await this.getPaginated<JQuantsSummary>('/fins/summary', { date: fmt(day) });
       apiCalls++;
       for (const item of items) {
-        const rawCode = String(item['Code'] ?? '');
-        const code =
-          rawCode.length === 5 && rawCode.endsWith('0')
-            ? rawCode.slice(0, 4)
-            : rawCode.slice(0, 4);
+        const code = normalizeCode(String(item['Code'] ?? ''));
 
         const docType =
           (item['DocType'] as string | undefined) ??
@@ -385,7 +381,7 @@ export class JQuantsProvider implements DataProvider {
     // Using tolerant access in case any field differs.
     type JQuantsMaster = Record<string, string | undefined>;
 
-    const items = await getPaginated<JQuantsMaster>('/equities/master');
+    const items = await this.getPaginated<JQuantsMaster>('/equities/master');
 
     if (items.length === 0) {
       console.warn('[jquants] /equities/master returned 0 items — check API key and plan');
@@ -398,13 +394,9 @@ export class JQuantsProvider implements DataProvider {
     }
 
     return items.map((item) => {
-      const rawCode = item['Code'] ?? '';
       // J-Quants returns 5-digit codes (e.g. "72030" for トヨタ 7203, "13010" for 極洋 1301).
       // Our schema uses 4-digit codes — strip the trailing 0.
-      const code =
-        rawCode.length === 5 && rawCode.endsWith('0')
-          ? rawCode.slice(0, 4)
-          : rawCode.slice(0, 4);
+      const code = normalizeCode(item['Code'] ?? '');
 
       // V2 field names are abbreviated: CoName, S33, S33Nm, S17, Mkt, MktNm, ScaleCat
       // Keep V1 full names as fallback for safety
@@ -443,7 +435,7 @@ export class JQuantsProvider implements DataProvider {
 
     type JQuantsSummary = Record<string, string | number | undefined>;
 
-    const items = await getPaginated<JQuantsSummary>('/fins/summary', { code: jqCode });
+    const items = await this.getPaginated<JQuantsSummary>('/fins/summary', { code: jqCode });
 
     // V2 field name: DocType (V1 was TypeOfDocument)
     // Filter to actual financial statements (exclude dividend forecasts, etc.)
@@ -552,7 +544,7 @@ export class JQuantsProvider implements DataProvider {
     // Tolerant: try abbreviated first, fall back to full names (in case V2 changes)
     type JQuantsBar = Record<string, string | number | undefined>;
 
-    const items = await getPaginated<JQuantsBar>('/equities/bars/daily', {
+    const items = await this.getPaginated<JQuantsBar>('/equities/bars/daily', {
       code: jqCode,
       from,
       to,

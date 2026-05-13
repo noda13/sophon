@@ -9,6 +9,9 @@ export const config = {
   marketCapMaxYen: parseFloat(process.env.MARKET_CAP_MAX_YEN || '50000000000'),
   netCashRatioMin: parseFloat(process.env.NET_CASH_RATIO_MIN || '0.3'),
   mvpStockLimit: parseInt(process.env.MVP_STOCK_LIMIT || '30', 10),
+  allowedOrigins: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
+    : null,
   adminToken: process.env.ADMIN_TOKEN || '',
   jquants: {
     apiKey: process.env.JQUANTS_API_KEY || '',

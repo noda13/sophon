@@ -3,7 +3,9 @@ import { config } from './config.js';
 
 export function requireAdminToken(_req: Request, res: Response, next: NextFunction): void {
   if (!config.adminToken) {
-    // No token configured — allow (dev/local mode)
+    if (config.nodeEnv === 'production') {
+      console.warn('[adminAuth] WARNING: ADMIN_TOKEN not set in production — all admin requests permitted');
+    }
     next();
     return;
   }

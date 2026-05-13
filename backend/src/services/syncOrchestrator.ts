@@ -12,6 +12,7 @@ export function isSyncing(): boolean {
 
 export async function runSync(opts?: { provider?: DataProvider }): Promise<{ stocks: number; snapshots: number }> {
   _syncInProgress = true;
+  console.log('[sync] starting runSync...');
   const provider = opts?.provider ?? resolveProvider();
 
   const log = await prisma.collectionLog.create({
@@ -82,60 +83,59 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
 
       // Upsert financial statements
       const statements = await provider.fetchStatements(info.code);
-      for (const stmt of statements) {
-        await prisma.financialStatement.upsert({
-          where: {
-            code_fiscalYear_typeOfCurrentPeriod: {
-              code: stmt.code,
-              fiscalYear: stmt.fiscalYear,
-              typeOfCurrentPeriod: stmt.typeOfCurrentPeriod,
-            },
-          },
-          update: {
-            netSales: stmt.netSales ?? null,
-            operatingProfit: stmt.operatingProfit ?? null,
-            profit: stmt.profit ?? null,
-            totalAssets: stmt.totalAssets ?? null,
-            equity: stmt.equity ?? null,
-            currentAssets: stmt.currentAssets ?? null,
-            cashAndEquivalents: stmt.cashAndEquivalents ?? null,
-            sharesOutstanding: stmt.sharesOutstanding ?? null,
-          },
-          create: {
-            code: stmt.code,
-            fiscalYear: stmt.fiscalYear,
-            typeOfCurrentPeriod: stmt.typeOfCurrentPeriod,
-            disclosedDate: stmt.disclosedDate,
-            periodEndDate: stmt.periodEndDate,
-            netSales: stmt.netSales ?? null,
-            operatingProfit: stmt.operatingProfit ?? null,
-            profit: stmt.profit ?? null,
-            totalAssets: stmt.totalAssets ?? null,
-            equity: stmt.equity ?? null,
-            currentAssets: stmt.currentAssets ?? null,
-            cashAndEquivalents: stmt.cashAndEquivalents ?? null,
-            sharesOutstanding: stmt.sharesOutstanding ?? null,
-          },
-        });
+      if (statements.length > 0) {
+        await prisma.$transaction(
+          statements.map(stmt =>
+            prisma.financialStatement.upsert({
+              where: {
+                code_fiscalYear_typeOfCurrentPeriod: {
+                  code: stmt.code,
+                  fiscalYear: stmt.fiscalYear,
+                  typeOfCurrentPeriod: stmt.typeOfCurrentPeriod,
+                },
+              },
+              update: {
+                netSales: stmt.netSales ?? null,
+                operatingProfit: stmt.operatingProfit ?? null,
+                profit: stmt.profit ?? null,
+                totalAssets: stmt.totalAssets ?? null,
+                equity: stmt.equity ?? null,
+                currentAssets: stmt.currentAssets ?? null,
+                cashAndEquivalents: stmt.cashAndEquivalents ?? null,
+                sharesOutstanding: stmt.sharesOutstanding ?? null,
+              },
+              create: {
+                code: stmt.code,
+                fiscalYear: stmt.fiscalYear,
+                typeOfCurrentPeriod: stmt.typeOfCurrentPeriod,
+                disclosedDate: stmt.disclosedDate,
+                periodEndDate: stmt.periodEndDate,
+                netSales: stmt.netSales ?? null,
+                operatingProfit: stmt.operatingProfit ?? null,
+                profit: stmt.profit ?? null,
+                totalAssets: stmt.totalAssets ?? null,
+                equity: stmt.equity ?? null,
+                currentAssets: stmt.currentAssets ?? null,
+                cashAndEquivalents: stmt.cashAndEquivalents ?? null,
+                sharesOutstanding: stmt.sharesOutstanding ?? null,
+              },
+            })
+          )
+        );
       }
 
       // Upsert prices
       const prices = await provider.fetchPrices(info.code);
-      for (const price of prices) {
-        await prisma.dailyPrice.upsert({
-          where: {
-            code_date: {
-              code: price.code,
-              date: price.date,
-            },
-          },
-          update: { close: price.close },
-          create: {
-            code: price.code,
-            date: price.date,
-            close: price.close,
-          },
-        });
+      if (prices.length > 0) {
+        await prisma.$transaction(
+          prices.map(price =>
+            prisma.dailyPrice.upsert({
+              where: { code_date: { code: price.code, date: price.date } },
+              update: { close: price.close },
+              create: { code: price.code, date: price.date, close: price.close },
+            })
+          )
+        );
       }
 
       // Get latest statement and price
