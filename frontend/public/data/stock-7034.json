@@ -3,21 +3,21 @@
     "code": "7034",
     "name": "プロレド・パートナーズ",
     "sector33Name": "サービス業",
-    "sector33Code": null,
-    "sector17Code": null,
+    "sector33Code": "9050",
+    "sector17Code": "10",
     "marketSegment": "プライム",
-    "scaleCategory": null,
-    "updatedAt": "2026-04-26T09:37:34.642Z",
+    "scaleCategory": "TOPIX Small 2",
+    "updatedAt": "2026-05-13T13:41:23.306Z",
     "snapshots": [
       {
         "id": "static-7034",
-        "snapshotAt": "2026-04-26T09:37:34.642Z",
-        "marketCap": 12018263400,
+        "snapshotAt": "2026-05-13T13:41:23.306Z",
+        "marketCap": 5495624082,
         "netCash": -2533000000,
-        "netCashRatio": -0.2107625632501947,
-        "cashNeutralPer": 70.98177268292683,
-        "per": 58.62567512195122,
-        "pbr": 1.010617507568113
+        "netCashRatio": -0.4609121661535073,
+        "cashNeutralPer": 39.16401991219512,
+        "per": 26.807922351219514,
+        "pbr": 0.46212782391523716
       }
     ]
   },
@@ -37,33 +37,65 @@
       "equity": 11892000000,
       "cashAndEquivalents": 5843000000,
       "sharesOutstanding": 10925694
-    },
-    {
-      "id": "static-7034-2024-FY",
-      "code": "7034",
-      "fiscalYear": 2024,
-      "typeOfCurrentPeriod": "FY",
-      "disclosedDate": "2024-05-15T00:00:00.000Z",
-      "periodEndDate": "2024-03-31T00:00:00.000Z",
-      "netSales": 16000000000,
-      "operatingProfit": 2200000000,
-      "ordinaryProfit": null,
-      "profit": 1400000000,
-      "totalAssets": 20000000000,
-      "equity": 16000000000,
-      "cashAndEquivalents": 5500000000,
-      "sharesOutstanding": 11000000
     }
   ],
   "strategies": {
     "kiyohara": {
+      "score": 3,
+      "components": {
+        "ncrScore": 8,
+        "cnperScore": -8,
+        "sizeBonus": 3
+      },
+      "reason": "NCR=-0.46, CNPER=39.2, 55億円 → 対象外"
+    },
+    "graham": {
+      "score": 72,
+      "components": {
+        "grahamProductScore": 47,
+        "pbrScore": 25,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=12.4, PBR=0.46, PER=26.8 → 強い買い候補"
+    },
+    "buffett": {
       "score": 0,
       "components": {
-        "ncrScore": 9,
-        "cnperScore": -15,
-        "sizeBonus": 0
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
       },
-      "reason": "NCR=-0.21, CNPER=71.0, 120億円 → 対象外"
+      "reason": "ROE=1.7%, PBR=0.46 → 対象外"
+    },
+    "lynch": {
+      "score": 18,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 10,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=26.8, 時価総額55億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り3.73%, NCR=-0.46, PBR=0.46 → 対象外"
+    },
+    "composite": {
+      "score": 22,
+      "components": {
+        "kiyohara": 3,
+        "graham": 72,
+        "buffett": 0,
+        "lynch": 18,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:3, グレアム流:72, バフェット流:0, リンチ流:18, 配当・インカム流:18"
     }
   }
 }

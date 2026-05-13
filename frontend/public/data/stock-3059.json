@@ -7,21 +7,37 @@
     "sector17Code": "14",
     "marketSegment": "スタンダード",
     "scaleCategory": "-",
-    "updatedAt": "2026-04-26T09:37:37.334Z",
+    "updatedAt": "2026-05-13T13:41:22.941Z",
     "snapshots": [
       {
         "id": "static-3059",
-        "snapshotAt": "2026-04-26T09:37:37.334Z",
-        "marketCap": 4069152252,
-        "netCash": -9267000000,
-        "netCashRatio": -2.277378536388075,
+        "snapshotAt": "2026-05-13T13:41:22.941Z",
+        "marketCap": 4049682624,
+        "netCash": -8927000000,
+        "netCashRatio": -2.204370275116157,
         "cashNeutralPer": null,
         "per": null,
-        "pbr": 0.6364016659368158
+        "pbr": 0.6500293136436597
       }
     ]
   },
   "history": [
+    {
+      "id": "static-3059-2025-3Q",
+      "code": "3059",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-05T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 9108000000,
+      "operatingProfit": -144000000,
+      "ordinaryProfit": null,
+      "profit": -199000000,
+      "totalAssets": 15157000000,
+      "equity": 6230000000,
+      "cashAndEquivalents": 2400922000,
+      "sharesOutstanding": 4867407
+    },
     {
       "id": "static-3059-2025-2Q",
       "code": "3059",
@@ -47,7 +63,55 @@
         "cnperScore": 0,
         "sizeBonus": 5
       },
-      "reason": "NCR=-2.28, CNPER=null, 41億円、赤字キャップ → 対象外"
+      "reason": "NCR=-2.20, CNPER=null, 40億円、赤字キャップ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": null,
+        "pbrScore": null,
+        "perScore": null,
+        "ncrBonus": null
+      },
+      "reason": "データ不足（PER/PBR/純資産が必要）"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=n/a, PBR=0.65、赤字キャップ → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": null,
+        "sizeBonus": null,
+        "pbrPenalty": null
+      },
+      "reason": "データ不足（PERが必要）"
+    },
+    "dividend": {
+      "score": 0,
+      "components": {
+        "earningsYieldScore": null,
+        "stabilityBonus": null,
+        "pbrPenalty": null
+      },
+      "reason": "赤字（インカム不適）"
+    },
+    "composite": {
+      "score": 1,
+      "components": {
+        "kiyohara": 5,
+        "graham": 0,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 0
+      },
+      "reason": "総合(均等加重): 清原流:5, グレアム流:0, バフェット流:0, リンチ流:0, 配当・インカム流:0"
     }
   }
 }

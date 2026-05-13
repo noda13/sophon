@@ -3,25 +3,41 @@
     "code": "7037",
     "name": "テノ．ホールディングス",
     "sector33Name": "サービス業",
-    "sector33Code": null,
-    "sector17Code": null,
+    "sector33Code": "9050",
+    "sector17Code": "10",
     "marketSegment": "スタンダード",
-    "scaleCategory": null,
-    "updatedAt": "2026-04-26T09:37:34.654Z",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.306Z",
     "snapshots": [
       {
         "id": "static-7037",
-        "snapshotAt": "2026-04-26T09:37:34.654Z",
-        "marketCap": 3654860800,
-        "netCash": -8380000000,
-        "netCashRatio": -2.292836980275692,
-        "cashNeutralPer": 47.56861976284585,
-        "per": 14.446090118577075,
-        "pbr": 1.8771755521314843
+        "snapshotAt": "2026-05-13T13:41:23.306Z",
+        "marketCap": 4061464064,
+        "netCash": -8625000000,
+        "netCashRatio": -2.123618444996292,
+        "cashNeutralPer": 115.33149149090909,
+        "per": 36.92240058181818,
+        "pbr": 2.251365889135255
       }
     ]
   },
   "history": [
+    {
+      "id": "static-7037-2025-FY",
+      "code": "7037",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-02-13T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 18129000000,
+      "operatingProfit": 631000000,
+      "ordinaryProfit": null,
+      "profit": 110000000,
+      "totalAssets": 10429000000,
+      "equity": 1804000000,
+      "cashAndEquivalents": 2395000000,
+      "sharesOutstanding": 4568576
+    },
     {
       "id": "static-7037-2025-3Q",
       "code": "7037",
@@ -37,22 +53,6 @@
       "equity": 1947000000,
       "cashAndEquivalents": null,
       "sharesOutstanding": 4568576
-    },
-    {
-      "id": "static-7037-2024-FY",
-      "code": "7037",
-      "fiscalYear": 2024,
-      "typeOfCurrentPeriod": "FY",
-      "disclosedDate": "2024-05-15T00:00:00.000Z",
-      "periodEndDate": "2024-03-31T00:00:00.000Z",
-      "netSales": 10000000000,
-      "operatingProfit": 700000000,
-      "ordinaryProfit": null,
-      "profit": 420000000,
-      "totalAssets": 14000000000,
-      "equity": 10000000000,
-      "cashAndEquivalents": 3000000000,
-      "sharesOutstanding": 6500000
     }
   ],
   "strategies": {
@@ -63,7 +63,55 @@
         "cnperScore": -15,
         "sizeBonus": 5
       },
-      "reason": "NCR=-2.29, CNPER=47.6, 37億円 → 対象外"
+      "reason": "NCR=-2.12, CNPER=115.3, 41億円 → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=83.1, PBR=2.25, PER=36.9 → 対象外"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=6.1%, PBR=2.25 → 対象外"
+    },
+    "lynch": {
+      "score": 10,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 10,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=36.9, 時価総額41億 → 対象外"
+    },
+    "dividend": {
+      "score": 0,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り2.71%, NCR=-2.12, PBR=2.25 → 対象外"
+    },
+    "composite": {
+      "score": 4,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 10,
+        "lynch": 10,
+        "dividend": 0
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:10, リンチ流:10, 配当・インカム流:0"
     }
   }
 }

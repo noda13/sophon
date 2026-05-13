@@ -7,21 +7,37 @@
     "sector17Code": "10",
     "marketSegment": "プライム",
     "scaleCategory": "TOPIX Small 2",
-    "updatedAt": "2026-04-26T09:37:37.307Z",
+    "updatedAt": "2026-05-13T13:41:22.939Z",
     "snapshots": [
       {
         "id": "static-3040",
-        "snapshotAt": "2026-04-26T09:37:37.307Z",
-        "marketCap": 35784967620,
-        "netCash": -11371000000,
-        "netCashRatio": -0.31775912502558246,
-        "cashNeutralPer": 33.325772169611305,
-        "per": 25.289729766784454,
-        "pbr": 2.883326695673193
+        "snapshotAt": "2026-05-13T13:41:22.939Z",
+        "marketCap": 38232346180,
+        "netCash": -12972000000,
+        "netCashRatio": -0.33929385183234917,
+        "cashNeutralPer": 22.28213497824195,
+        "per": 16.63722636205396,
+        "pbr": 2.8841540570307784
       }
     ]
   },
   "history": [
+    {
+      "id": "static-3040-2025-FY",
+      "code": "3040",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-02-13T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 19762000000,
+      "operatingProfit": 2844000000,
+      "ordinaryProfit": null,
+      "profit": 2298000000,
+      "totalAssets": 26228000000,
+      "equity": 13256000000,
+      "cashAndEquivalents": 6858000000,
+      "sharesOutstanding": 18541390
+    },
     {
       "id": "static-3040-2025-3Q",
       "code": "3040",
@@ -47,7 +63,55 @@
         "cnperScore": -8,
         "sizeBonus": 0
       },
-      "reason": "NCR=-0.32, CNPER=33.3, 358億円 → 対象外"
+      "reason": "NCR=-0.34, CNPER=22.3, 382億円 → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=48.0, PBR=2.88, PER=16.6 → 対象外"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 40,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=17.3%, PBR=2.88 → 様子見"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=16.6, 時価総額382億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り6.01%, NCR=-0.34, PBR=2.88 → 様子見"
+    },
+    "composite": {
+      "score": 18,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 40,
+        "lynch": 22,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:40, リンチ流:22, 配当・インカム流:25"
     }
   }
 }

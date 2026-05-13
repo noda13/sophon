@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "3279",
+    "name": "アクティビア・プロパティーズ投資法人",
+    "sector33Name": "その他",
+    "sector33Code": "9999",
+    "sector17Code": "99",
+    "marketSegment": "その他",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:22.965Z",
+    "snapshots": [
+      {
+        "id": "static-3279",
+        "snapshotAt": "2026-05-13T13:41:22.965Z",
+        "marketCap": 355497172800,
+        "netCash": -293423000000,
+        "netCashRatio": -0.8253877174012789,
+        "cashNeutralPer": 87.76307449283203,
+        "per": 48.07914157424939,
+        "pbr": 1.3274230715805981
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-3279-2025-FY",
+      "code": "3279",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-01-16T00:00:00.000Z",
+      "periodEndDate": "2025-11-30T00:00:00.000Z",
+      "netSales": 16538000000,
+      "operatingProfit": 8557000000,
+      "ordinaryProfit": null,
+      "profit": 7394000000,
+      "totalAssets": 561233000000,
+      "equity": 267810000000,
+      "cashAndEquivalents": 21205000000,
+      "sharesOutstanding": 2376318
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 6,
+        "cnperScore": -15,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.83, CNPER=87.8, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 12,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 12,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=63.8, PBR=1.33, PER=48.1 → 対象外"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=2.8%, PBR=1.33 → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=48.1, 時価総額3555億 → 対象外"
+    },
+    "dividend": {
+      "score": 5,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り2.08%, NCR=-0.83, PBR=1.33 → 対象外"
+    },
+    "composite": {
+      "score": 3,
+      "components": {
+        "kiyohara": 0,
+        "graham": 12,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 5
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:12, バフェット流:0, リンチ流:0, 配当・インカム流:5"
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "8954",
+    "name": "オリックス不動産投資法人",
+    "sector33Name": "その他",
+    "sector33Code": "9999",
+    "sector17Code": "99",
+    "marketSegment": "その他",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.469Z",
+    "snapshots": [
+      {
+        "id": "static-8954",
+        "snapshotAt": "2026-05-13T13:41:23.469Z",
+        "marketCap": 291180000000,
+        "netCash": -366652000000,
+        "netCashRatio": -1.2591936259358472,
+        "cashNeutralPer": 52.64340588988476,
+        "per": 23.301856594110117,
+        "pbr": 0.8277544197787765
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8954-2025-FY",
+      "code": "8954",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2025-10-21T00:00:00.000Z",
+      "periodEndDate": "2025-08-31T00:00:00.000Z",
+      "netSales": 28423000000,
+      "operatingProfit": 14147000000,
+      "ordinaryProfit": null,
+      "profit": 12496000000,
+      "totalAssets": 718423000000,
+      "equity": 351771000000,
+      "cashAndEquivalents": 19269000000,
+      "sharesOutstanding": 2760000
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 4,
+        "cnperScore": -15,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-1.26, CNPER=52.6, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 52,
+      "components": {
+        "grahamProductScore": 32,
+        "pbrScore": 20,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=19.3, PBR=0.83, PER=23.3 → 買い候補"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=3.6%, PBR=0.83 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=23.3, 時価総額2912億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り4.29%, NCR=-1.26, PBR=0.83 → 対象外"
+    },
+    "composite": {
+      "score": 16,
+      "components": {
+        "kiyohara": 0,
+        "graham": 52,
+        "buffett": 0,
+        "lynch": 8,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:52, バフェット流:0, リンチ流:8, 配当・インカム流:18"
+    }
+  }
+}

@@ -3,25 +3,41 @@
     "code": "7004",
     "name": "カナデビア",
     "sector33Name": "機械",
-    "sector33Code": null,
-    "sector17Code": null,
+    "sector33Code": "3600",
+    "sector17Code": "8",
     "marketSegment": "プライム",
-    "scaleCategory": null,
-    "updatedAt": "2026-04-26T09:37:34.383Z",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-05-13T13:41:23.303Z",
     "snapshots": [
       {
         "id": "static-7004",
-        "snapshotAt": "2026-04-26T09:37:34.383Z",
-        "marketCap": 168244866000,
-        "netCash": -396055000000,
-        "netCashRatio": -2.354039141972986,
+        "snapshotAt": "2026-05-13T13:41:23.303Z",
+        "marketCap": 184900117535,
+        "netCash": -468324000000,
+        "netCashRatio": -2.5328485792408992,
         "cashNeutralPer": null,
         "per": null,
-        "pbr": 0.9007214878820488
+        "pbr": 0.9893367731001161
       }
     ]
   },
   "history": [
+    {
+      "id": "static-7004-2025-3Q",
+      "code": "7004",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-05T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 424740000000,
+      "operatingProfit": -4666000000,
+      "ordinaryProfit": null,
+      "profit": -6311000000,
+      "totalAssets": 655217000000,
+      "equity": 186893000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 168243965
+    },
     {
       "id": "static-7004-2025-2Q",
       "code": "7004",
@@ -37,22 +53,6 @@
       "equity": 186789000000,
       "cashAndEquivalents": null,
       "sharesOutstanding": 168244866
-    },
-    {
-      "id": "static-7004-2024-FY",
-      "code": "7004",
-      "fiscalYear": 2024,
-      "typeOfCurrentPeriod": "FY",
-      "disclosedDate": "2024-05-15T00:00:00.000Z",
-      "periodEndDate": "2024-03-31T00:00:00.000Z",
-      "netSales": 40000000000,
-      "operatingProfit": 3000000000,
-      "ordinaryProfit": null,
-      "profit": 2000000000,
-      "totalAssets": 20000000000,
-      "equity": 15000000000,
-      "cashAndEquivalents": 5000000000,
-      "sharesOutstanding": 20000000
     }
   ],
   "strategies": {
@@ -63,7 +63,55 @@
         "cnperScore": 0,
         "sizeBonus": -10
       },
-      "reason": "NCR=-2.35, CNPER=null, 大型株ペナルティ、赤字キャップ → 対象外"
+      "reason": "NCR=-2.53, CNPER=null, 大型株ペナルティ、赤字キャップ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": null,
+        "pbrScore": null,
+        "perScore": null,
+        "ncrBonus": null
+      },
+      "reason": "データ不足（PER/PBR/純資産が必要）"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=n/a, PBR=0.99、赤字キャップ → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": null,
+        "sizeBonus": null,
+        "pbrPenalty": null
+      },
+      "reason": "データ不足（PERが必要）"
+    },
+    "dividend": {
+      "score": 0,
+      "components": {
+        "earningsYieldScore": null,
+        "stabilityBonus": null,
+        "pbrPenalty": null
+      },
+      "reason": "赤字（インカム不適）"
+    },
+    "composite": {
+      "score": 0,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 0
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:0, リンチ流:0, 配当・インカム流:0"
     }
   }
 }

@@ -3,25 +3,41 @@
     "code": "7040",
     "name": "サン・ライフホールディング",
     "sector33Name": "サービス業",
-    "sector33Code": null,
-    "sector17Code": null,
+    "sector33Code": "9050",
+    "sector17Code": "10",
     "marketSegment": "スタンダード",
-    "scaleCategory": null,
-    "updatedAt": "2026-04-26T09:37:34.684Z",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.307Z",
     "snapshots": [
       {
         "id": "static-7040",
-        "snapshotAt": "2026-04-26T09:37:34.684Z",
-        "marketCap": 4898524000,
-        "netCash": -29374000000,
-        "netCashRatio": -5.996500170255366,
-        "cashNeutralPer": 107.77523270440251,
-        "per": 15.40416352201258,
-        "pbr": 0.7214321060382916
+        "snapshotAt": "2026-05-13T13:41:23.307Z",
+        "marketCap": 6221125480,
+        "netCash": -29426000000,
+        "netCashRatio": -4.7300122935311695,
+        "cashNeutralPer": 73.95669186721992,
+        "per": 12.906899336099585,
+        "pbr": 0.9144679523739526
       }
     ]
   },
   "history": [
+    {
+      "id": "static-7040-2025-3Q",
+      "code": "7040",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-09T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 10537000000,
+      "operatingProfit": 800000000,
+      "ordinaryProfit": null,
+      "profit": 482000000,
+      "totalAssets": 36229000000,
+      "equity": 6803000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 6123155
+    },
     {
       "id": "static-7040-2025-2Q",
       "code": "7040",
@@ -37,22 +53,6 @@
       "equity": 6790000000,
       "cashAndEquivalents": 3995518000,
       "sharesOutstanding": 6123155
-    },
-    {
-      "id": "static-7040-2024-FY",
-      "code": "7040",
-      "fiscalYear": 2024,
-      "typeOfCurrentPeriod": "FY",
-      "disclosedDate": "2024-05-15T00:00:00.000Z",
-      "periodEndDate": "2024-03-31T00:00:00.000Z",
-      "netSales": 20000000000,
-      "operatingProfit": 1500000000,
-      "ordinaryProfit": null,
-      "profit": 900000000,
-      "totalAssets": 60000000000,
-      "equity": 15000000000,
-      "cashAndEquivalents": 4000000000,
-      "sharesOutstanding": 15000000
     }
   ],
   "strategies": {
@@ -61,9 +61,57 @@
       "components": {
         "ncrScore": 0,
         "cnperScore": -15,
-        "sizeBonus": 5
+        "sizeBonus": 3
       },
-      "reason": "NCR=-6.00, CNPER=107.8, 49億円 → 対象外"
+      "reason": "NCR=-4.73, CNPER=74.0, 62億円 → 対象外"
+    },
+    "graham": {
+      "score": 80,
+      "components": {
+        "grahamProductScore": 48,
+        "pbrScore": 20,
+        "perScore": 12,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=11.8, PBR=0.91, PER=12.9 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=7.1%, PBR=0.91 → 対象外"
+    },
+    "lynch": {
+      "score": 48,
+      "components": {
+        "perScore": 38,
+        "sizeBonus": 10,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=12.9, 時価総額62億 → 注目"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り7.75%, NCR=-4.73, PBR=0.91 → 様子見"
+    },
+    "composite": {
+      "score": 35,
+      "components": {
+        "kiyohara": 0,
+        "graham": 80,
+        "buffett": 10,
+        "lynch": 48,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:80, バフェット流:10, リンチ流:48, 配当・インカム流:35"
     }
   }
 }

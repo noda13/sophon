@@ -1,23 +1,23 @@
 {
   "profile": {
     "code": "2345",
-    "name": "クシム",
+    "name": "ＨＯＤＬ１",
     "sector33Name": "情報･通信業",
     "sector33Code": "5250",
     "sector17Code": "10",
     "marketSegment": "スタンダード",
     "scaleCategory": "-",
-    "updatedAt": "2026-04-26T09:37:36.080Z",
+    "updatedAt": "2026-05-13T13:41:22.863Z",
     "snapshots": [
       {
         "id": "static-2345",
-        "snapshotAt": "2026-04-26T09:37:36.080Z",
-        "marketCap": 4700718748,
+        "snapshotAt": "2026-05-13T13:41:22.863Z",
+        "marketCap": 3771722948,
         "netCash": -105000000,
-        "netCashRatio": -0.022337009642339062,
+        "netCashRatio": -0.027838736155230456,
         "cashNeutralPer": null,
         "per": null,
-        "pbr": 10.982987728971963
+        "pbr": 8.812436794392523
       }
     ]
   },
@@ -47,7 +47,55 @@
         "cnperScore": 0,
         "sizeBonus": 5
       },
-      "reason": "NCR=-0.02, CNPER=null, 47億円、赤字キャップ → 対象外"
+      "reason": "NCR=-0.03, CNPER=null, 38億円、赤字キャップ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": null,
+        "pbrScore": null,
+        "perScore": null,
+        "ncrBonus": null
+      },
+      "reason": "データ不足（PER/PBR/純資産が必要）"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": -10
+      },
+      "reason": "ROE=n/a, PBR=8.81、赤字キャップ → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": null,
+        "sizeBonus": null,
+        "pbrPenalty": null
+      },
+      "reason": "データ不足（PERが必要）"
+    },
+    "dividend": {
+      "score": 0,
+      "components": {
+        "earningsYieldScore": null,
+        "stabilityBonus": null,
+        "pbrPenalty": null
+      },
+      "reason": "赤字（インカム不適）"
+    },
+    "composite": {
+      "score": 3,
+      "components": {
+        "kiyohara": 15,
+        "graham": 0,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 0
+      },
+      "reason": "総合(均等加重): 清原流:15, グレアム流:0, バフェット流:0, リンチ流:0, 配当・インカム流:0"
     }
   }
 }

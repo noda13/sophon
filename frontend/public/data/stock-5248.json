@@ -7,17 +7,17 @@
     "sector17Code": "10",
     "marketSegment": "グロース",
     "scaleCategory": "-",
-    "updatedAt": "2026-04-26T09:37:43.110Z",
+    "updatedAt": "2026-05-13T13:41:23.167Z",
     "snapshots": [
       {
         "id": "static-5248",
-        "snapshotAt": "2026-04-26T09:37:43.110Z",
-        "marketCap": 9628497372,
+        "snapshotAt": "2026-05-13T13:41:23.167Z",
+        "marketCap": 8867016912,
         "netCash": -15051000000,
-        "netCashRatio": -1.5631722602707274,
-        "cashNeutralPer": 316.40381246153845,
-        "per": 123.442274,
-        "pbr": 2.0662011527896995
+        "netCashRatio": -1.697414152851229,
+        "cashNeutralPer": 306.64124246153847,
+        "per": 113.679704,
+        "pbr": 1.9027933287553649
       }
     ]
   },
@@ -47,7 +47,55 @@
         "cnperScore": -15,
         "sizeBonus": 3
       },
-      "reason": "NCR=-1.56, CNPER=316.4, 96億円 → 対象外"
+      "reason": "NCR=-1.70, CNPER=306.6, 89億円 → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 5,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=216.3, PBR=1.90, PER=113.7 → 対象外"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=1.7%, PBR=1.90 → 対象外"
+    },
+    "lynch": {
+      "score": 10,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 10,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=113.7, 時価総額89億 → 対象外"
+    },
+    "dividend": {
+      "score": 5,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り0.88%, NCR=-1.70, PBR=1.90 → 対象外"
+    },
+    "composite": {
+      "score": 4,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 0,
+        "lynch": 10,
+        "dividend": 5
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:0, リンチ流:10, 配当・インカム流:5"
     }
   }
 }

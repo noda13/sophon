@@ -7,17 +7,17 @@
     "sector17Code": "10",
     "marketSegment": "スタンダード",
     "scaleCategory": "-",
-    "updatedAt": "2026-04-26T09:37:42.378Z",
+    "updatedAt": "2026-05-13T13:41:23.129Z",
     "snapshots": [
       {
         "id": "static-4760",
-        "snapshotAt": "2026-04-26T09:37:42.378Z",
-        "marketCap": 0,
+        "snapshotAt": "2026-05-13T13:41:23.129Z",
+        "marketCap": 1281639760,
         "netCash": -3377000000,
-        "netCashRatio": 0,
-        "cashNeutralPer": 64.9423076923077,
-        "per": 0,
-        "pbr": 0
+        "netCashRatio": -2.6349057710257053,
+        "cashNeutralPer": 89.58922615384616,
+        "per": 24.646918461538462,
+        "pbr": 0.8683196205962059
       }
     ]
   },
@@ -37,23 +37,65 @@
       "equity": 1476000000,
       "cashAndEquivalents": null,
       "sharesOutstanding": 804040
-    },
-    {
-      "id": "static-4760-2025-FY",
-      "code": "4760",
-      "fiscalYear": 2025,
-      "typeOfCurrentPeriod": "FY",
-      "disclosedDate": "2025-10-10T00:00:00.000Z",
-      "periodEndDate": "2025-08-31T00:00:00.000Z",
-      "netSales": 6365000000,
-      "operatingProfit": 234000000,
-      "ordinaryProfit": null,
-      "profit": 127000000,
-      "totalAssets": 4533000000,
-      "equity": 1523000000,
-      "cashAndEquivalents": 508000000,
-      "sharesOutstanding": 804040
     }
   ],
-  "strategies": {}
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": -15,
+        "sizeBonus": 5
+      },
+      "reason": "NCR=-2.63, CNPER=89.6, 13億円 → 対象外"
+    },
+    "graham": {
+      "score": 47,
+      "components": {
+        "grahamProductScore": 27,
+        "pbrScore": 20,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=21.4, PBR=0.87, PER=24.6 → 様子見"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=3.5%, PBR=0.87 → 対象外"
+    },
+    "lynch": {
+      "score": 23,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 15,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=24.6, 時価総額13億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り4.06%, NCR=-2.63, PBR=0.87 → 対象外"
+    },
+    "composite": {
+      "score": 18,
+      "components": {
+        "kiyohara": 0,
+        "graham": 47,
+        "buffett": 0,
+        "lynch": 23,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:47, バフェット流:0, リンチ流:23, 配当・インカム流:18"
+    }
+  }
 }

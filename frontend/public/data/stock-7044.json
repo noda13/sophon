@@ -3,25 +3,41 @@
     "code": "7044",
     "name": "ピアラ",
     "sector33Name": "サービス業",
-    "sector33Code": null,
-    "sector17Code": null,
+    "sector33Code": "9050",
+    "sector17Code": "10",
     "marketSegment": "スタンダード",
-    "scaleCategory": null,
-    "updatedAt": "2026-04-26T09:37:34.705Z",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.307Z",
     "snapshots": [
       {
         "id": "static-7044",
-        "snapshotAt": "2026-04-26T09:37:34.705Z",
-        "marketCap": 4301256000,
-        "netCash": -3194000000,
-        "netCashRatio": -0.742573797049048,
-        "cashNeutralPer": 50.64362162162162,
-        "per": 29.06254054054054,
-        "pbr": 6.904102728731942
+        "snapshotAt": "2026-05-13T13:41:23.307Z",
+        "marketCap": 3584700000,
+        "netCash": -3567000000,
+        "netCashRatio": -0.9950623483136665,
+        "cashNeutralPer": 35.938190954773866,
+        "per": 18.01356783919598,
+        "pbr": 5.514923076923077
       }
     ]
   },
   "history": [
+    {
+      "id": "static-7044-2025-FY",
+      "code": "7044",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-02-13T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 15731000000,
+      "operatingProfit": 40000000,
+      "ordinaryProfit": null,
+      "profit": 199000000,
+      "totalAssets": 4217000000,
+      "equity": 650000000,
+      "cashAndEquivalents": 1628000000,
+      "sharesOutstanding": 7169400
+    },
     {
       "id": "static-7044-2025-3Q",
       "code": "7044",
@@ -37,33 +53,65 @@
       "equity": 623000000,
       "cashAndEquivalents": null,
       "sharesOutstanding": 7168760
-    },
-    {
-      "id": "static-7044-2024-FY",
-      "code": "7044",
-      "fiscalYear": 2024,
-      "typeOfCurrentPeriod": "FY",
-      "disclosedDate": "2024-05-15T00:00:00.000Z",
-      "periodEndDate": "2024-03-31T00:00:00.000Z",
-      "netSales": 9000000000,
-      "operatingProfit": -300000000,
-      "ordinaryProfit": null,
-      "profit": -200000000,
-      "totalAssets": 12000000000,
-      "equity": 9500000000,
-      "cashAndEquivalents": 4500000000,
-      "sharesOutstanding": 6000000
     }
   ],
   "strategies": {
     "kiyohara": {
-      "score": 0,
+      "score": 2,
       "components": {
-        "ncrScore": 6,
-        "cnperScore": -15,
+        "ncrScore": 5,
+        "cnperScore": -8,
         "sizeBonus": 5
       },
-      "reason": "NCR=-0.74, CNPER=50.6, 43億円 → 対象外"
+      "reason": "NCR=-1.00, CNPER=35.9, 36億円 → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=99.3, PBR=5.51, PER=18.0 → 対象外"
+    },
+    "buffett": {
+      "score": 50,
+      "components": {
+        "roeScore": 60,
+        "qualityBonus": 0,
+        "valuationPenalty": -10
+      },
+      "reason": "ROE=30.6%, PBR=5.51 → 良好"
+    },
+    "lynch": {
+      "score": 24,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 10,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=18.0, 時価総額36億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り5.55%, NCR=-1.00, PBR=5.51 → 様子見"
+    },
+    "composite": {
+      "score": 21,
+      "components": {
+        "kiyohara": 2,
+        "graham": 5,
+        "buffett": 50,
+        "lynch": 24,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:2, グレアム流:5, バフェット流:50, リンチ流:24, 配当・インカム流:25"
     }
   }
 }

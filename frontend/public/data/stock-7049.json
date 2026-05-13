@@ -3,21 +3,21 @@
     "code": "7049",
     "name": "識学",
     "sector33Name": "サービス業",
-    "sector33Code": null,
-    "sector17Code": null,
+    "sector33Code": "9050",
+    "sector17Code": "10",
     "marketSegment": "グロース",
-    "scaleCategory": null,
-    "updatedAt": "2026-04-26T09:37:34.745Z",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.308Z",
     "snapshots": [
       {
         "id": "static-7049",
-        "snapshotAt": "2026-04-26T09:37:34.745Z",
-        "marketCap": 10938167500,
+        "snapshotAt": "2026-05-13T13:41:23.308Z",
+        "marketCap": 7732443025,
         "netCash": -1380000000,
-        "netCashRatio": -0.12616372897928285,
-        "cashNeutralPer": 31.42389668367347,
-        "per": 27.903488520408164,
-        "pbr": 2.8982955749867516
+        "netCashRatio": -0.1784688222775492,
+        "cashNeutralPer": 23.246028125,
+        "per": 19.725619961734694,
+        "pbr": 2.0488720257021726
       }
     ]
   },
@@ -37,49 +37,65 @@
       "equity": 3774000000,
       "cashAndEquivalents": null,
       "sharesOutstanding": 8413975
-    },
-    {
-      "id": "static-7049-2025-2Q",
-      "code": "7049",
-      "fiscalYear": 2025,
-      "typeOfCurrentPeriod": "2Q",
-      "disclosedDate": "2025-10-10T00:00:00.000Z",
-      "periodEndDate": "2025-08-31T00:00:00.000Z",
-      "netSales": 3677000000,
-      "operatingProfit": 840000000,
-      "ordinaryProfit": null,
-      "profit": 445000000,
-      "totalAssets": 5324000000,
-      "equity": 3843000000,
-      "cashAndEquivalents": 2597180000,
-      "sharesOutstanding": 8413975
-    },
-    {
-      "id": "static-7049-2024-FY",
-      "code": "7049",
-      "fiscalYear": 2024,
-      "typeOfCurrentPeriod": "FY",
-      "disclosedDate": "2024-05-15T00:00:00.000Z",
-      "periodEndDate": "2024-03-31T00:00:00.000Z",
-      "netSales": 120000000000,
-      "operatingProfit": 15000000000,
-      "ordinaryProfit": null,
-      "profit": 9000000000,
-      "totalAssets": 180000000000,
-      "equity": 100000000000,
-      "cashAndEquivalents": 25000000000,
-      "sharesOutstanding": 45000000
     }
   ],
   "strategies": {
     "kiyohara": {
-      "score": 1,
+      "score": 4,
       "components": {
         "ncrScore": 9,
         "cnperScore": -8,
-        "sizeBonus": 0
+        "sizeBonus": 3
       },
-      "reason": "NCR=-0.13, CNPER=31.4, 109億円 → 対象外"
+      "reason": "NCR=-0.18, CNPER=23.2, 77億円 → 対象外"
+    },
+    "graham": {
+      "score": 20,
+      "components": {
+        "grahamProductScore": 15,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=40.4, PBR=2.05, PER=19.7 → 対象外"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=10.4%, PBR=2.05 → 様子見"
+    },
+    "lynch": {
+      "score": 32,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 10,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=19.7, 時価総額77億 → 様子見"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り5.07%, NCR=-0.18, PBR=2.05 → 様子見"
+    },
+    "composite": {
+      "score": 21,
+      "components": {
+        "kiyohara": 4,
+        "graham": 20,
+        "buffett": 25,
+        "lynch": 32,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:4, グレアム流:20, バフェット流:25, リンチ流:32, 配当・インカム流:25"
     }
   }
 }

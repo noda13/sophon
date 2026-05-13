@@ -3,25 +3,41 @@
     "code": "7039",
     "name": "ブリッジインターナショナルグループ",
     "sector33Name": "サービス業",
-    "sector33Code": null,
-    "sector17Code": null,
+    "sector33Code": "9050",
+    "sector17Code": "10",
     "marketSegment": "グロース",
-    "scaleCategory": null,
-    "updatedAt": "2026-04-26T09:37:34.677Z",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.306Z",
     "snapshots": [
       {
         "id": "static-7039",
-        "snapshotAt": "2026-04-26T09:37:34.677Z",
-        "marketCap": 1437922400,
-        "netCash": -1221000000,
-        "netCashRatio": -0.849141789570842,
-        "cashNeutralPer": 5.669344136460555,
-        "per": 3.0659326226012795,
-        "pbr": 0.30916413674478604
+        "snapshotAt": "2026-05-13T13:41:23.306Z",
+        "marketCap": 6787407690,
+        "netCash": -949000000,
+        "netCashRatio": -0.13981773945864154,
+        "cashNeutralPer": 14.433596436567164,
+        "per": 12.663074048507463,
+        "pbr": 1.4465915792838875
       }
     ]
   },
   "history": [
+    {
+      "id": "static-7039-2025-FY",
+      "code": "7039",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-02-13T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 8564000000,
+      "operatingProfit": 873000000,
+      "ordinaryProfit": null,
+      "profit": 536000000,
+      "totalAssets": 5641000000,
+      "equity": 4692000000,
+      "cashAndEquivalents": 2617000000,
+      "sharesOutstanding": 3591221
+    },
     {
       "id": "static-7039-2025-3Q",
       "code": "7039",
@@ -37,33 +53,65 @@
       "equity": 4651000000,
       "cashAndEquivalents": null,
       "sharesOutstanding": 3594806
-    },
-    {
-      "id": "static-7039-2024-FY",
-      "code": "7039",
-      "fiscalYear": 2024,
-      "typeOfCurrentPeriod": "FY",
-      "disclosedDate": "2024-05-15T00:00:00.000Z",
-      "periodEndDate": "2024-03-31T00:00:00.000Z",
-      "netSales": 30000000000,
-      "operatingProfit": 2000000000,
-      "ordinaryProfit": null,
-      "profit": 1200000000,
-      "totalAssets": 500000000000,
-      "equity": 25000000000,
-      "cashAndEquivalents": 8000000000,
-      "sharesOutstanding": 50000000
     }
   ],
   "strategies": {
     "kiyohara": {
-      "score": 26,
+      "score": 20,
       "components": {
-        "ncrScore": 6,
-        "cnperScore": 15,
-        "sizeBonus": 5
+        "ncrScore": 9,
+        "cnperScore": 8,
+        "sizeBonus": 3
       },
-      "reason": "NCR=-0.85, CNPER=5.7, 14億円 → 割高気味"
+      "reason": "NCR=-0.14, CNPER=14.4, 68億円 → 割高気味"
+    },
+    "graham": {
+      "score": 58,
+      "components": {
+        "grahamProductScore": 34,
+        "pbrScore": 12,
+        "perScore": 12,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=18.3, PBR=1.45, PER=12.7 → 買い候補"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=11.4%, PBR=1.45 → 様子見"
+    },
+    "lynch": {
+      "score": 48,
+      "components": {
+        "perScore": 38,
+        "sizeBonus": 10,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=12.7, 時価総額68億 → 注目"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り7.90%, NCR=-0.14, PBR=1.45 → 様子見"
+    },
+    "composite": {
+      "score": 37,
+      "components": {
+        "kiyohara": 20,
+        "graham": 58,
+        "buffett": 25,
+        "lynch": 48,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:20, グレアム流:58, バフェット流:25, リンチ流:48, 配当・インカム流:35"
     }
   }
 }

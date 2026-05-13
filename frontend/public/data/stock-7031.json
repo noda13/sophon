@@ -3,25 +3,41 @@
     "code": "7031",
     "name": "インバウンドテック",
     "sector33Name": "サービス業",
-    "sector33Code": null,
-    "sector17Code": null,
+    "sector33Code": "9050",
+    "sector17Code": "10",
     "marketSegment": "グロース",
-    "scaleCategory": null,
-    "updatedAt": "2026-04-26T09:37:34.622Z",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.305Z",
     "snapshots": [
       {
         "id": "static-7031",
-        "snapshotAt": "2026-04-26T09:37:34.622Z",
-        "marketCap": 3769560000,
-        "netCash": -790000000,
-        "netCashRatio": -0.20957353112830146,
+        "snapshotAt": "2026-05-13T13:41:23.305Z",
+        "marketCap": 1386948675,
+        "netCash": -801000000,
+        "netCashRatio": -0.5775267783431135,
         "cashNeutralPer": null,
         "per": null,
-        "pbr": 2.0125787506673785
+        "pbr": 0.7326723058637084
       }
     ]
   },
   "history": [
+    {
+      "id": "static-7031-2025-3Q",
+      "code": "7031",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-13T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 1625000000,
+      "operatingProfit": -32000000,
+      "ordinaryProfit": null,
+      "profit": -71000000,
+      "totalAssets": 2694000000,
+      "equity": 1893000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 2387175
+    },
     {
       "id": "static-7031-2025-2Q",
       "code": "7031",
@@ -37,33 +53,65 @@
       "equity": 1873000000,
       "cashAndEquivalents": 1556723000,
       "sharesOutstanding": 2355975
-    },
-    {
-      "id": "static-7031-2024-FY",
-      "code": "7031",
-      "fiscalYear": 2024,
-      "typeOfCurrentPeriod": "FY",
-      "disclosedDate": "2024-05-15T00:00:00.000Z",
-      "periodEndDate": "2024-03-31T00:00:00.000Z",
-      "netSales": 11000000000,
-      "operatingProfit": 2000000000,
-      "ordinaryProfit": null,
-      "profit": 1300000000,
-      "totalAssets": 14000000000,
-      "equity": 11000000000,
-      "cashAndEquivalents": 3000000000,
-      "sharesOutstanding": 5000000
     }
   ],
   "strategies": {
     "kiyohara": {
-      "score": 14,
+      "score": 12,
       "components": {
-        "ncrScore": 9,
+        "ncrScore": 7,
         "cnperScore": 0,
         "sizeBonus": 5
       },
-      "reason": "NCR=-0.21, CNPER=null, 38億円、赤字キャップ → 対象外"
+      "reason": "NCR=-0.58, CNPER=null, 14億円、赤字キャップ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": null,
+        "pbrScore": null,
+        "perScore": null,
+        "ncrBonus": null
+      },
+      "reason": "データ不足（PER/PBR/純資産が必要）"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=n/a, PBR=0.73、赤字キャップ → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": null,
+        "sizeBonus": null,
+        "pbrPenalty": null
+      },
+      "reason": "データ不足（PERが必要）"
+    },
+    "dividend": {
+      "score": 0,
+      "components": {
+        "earningsYieldScore": null,
+        "stabilityBonus": null,
+        "pbrPenalty": null
+      },
+      "reason": "赤字（インカム不適）"
+    },
+    "composite": {
+      "score": 2,
+      "components": {
+        "kiyohara": 12,
+        "graham": 0,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 0
+      },
+      "reason": "総合(均等加重): 清原流:12, グレアム流:0, バフェット流:0, リンチ流:0, 配当・インカム流:0"
     }
   }
 }

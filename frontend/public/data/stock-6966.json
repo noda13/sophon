@@ -7,17 +7,17 @@
     "sector17Code": "9",
     "marketSegment": "プライム",
     "scaleCategory": "TOPIX Small 1",
-    "updatedAt": "2026-04-26T09:37:44.461Z",
+    "updatedAt": "2026-05-13T13:41:23.300Z",
     "snapshots": [
       {
         "id": "static-6966",
-        "snapshotAt": "2026-04-26T09:37:44.461Z",
-        "marketCap": 137427627760,
+        "snapshotAt": "2026-05-13T13:41:23.300Z",
+        "marketCap": 150585592120,
         "netCash": -126719000000,
-        "netCashRatio": -0.9220780571232644,
-        "cashNeutralPer": 35.63769937398813,
-        "per": 18.541234182406907,
-        "pbr": 1.2058122483789735
+        "netCashRatio": -0.8415081298018141,
+        "cashNeutralPer": 37.412923923367515,
+        "per": 20.31645873178629,
+        "pbr": 1.3212623572663222
       }
     ]
   },
@@ -43,11 +43,59 @@
     "kiyohara": {
       "score": 0,
       "components": {
-        "ncrScore": 5,
+        "ncrScore": 6,
         "cnperScore": -8,
         "sizeBonus": -10
       },
-      "reason": "NCR=-0.92, CNPER=35.6, 大型株ペナルティ → 対象外"
+      "reason": "NCR=-0.84, CNPER=37.4, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 35,
+      "components": {
+        "grahamProductScore": 23,
+        "pbrScore": 12,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=26.8, PBR=1.32, PER=20.3 → 様子見"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=6.5%, PBR=1.32 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=20.3, 時価総額1506億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り4.92%, NCR=-0.84, PBR=1.32 → 対象外"
+    },
+    "composite": {
+      "score": 14,
+      "components": {
+        "kiyohara": 0,
+        "graham": 35,
+        "buffett": 10,
+        "lynch": 8,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:35, バフェット流:10, リンチ流:8, 配当・インカム流:18"
     }
   }
 }

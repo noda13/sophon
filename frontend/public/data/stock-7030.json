@@ -3,25 +3,41 @@
     "code": "7030",
     "name": "スプリックス",
     "sector33Name": "サービス業",
-    "sector33Code": null,
-    "sector17Code": null,
+    "sector33Code": "9050",
+    "sector17Code": "10",
     "marketSegment": "スタンダード",
-    "scaleCategory": null,
-    "updatedAt": "2026-04-26T09:37:34.600Z",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.305Z",
     "snapshots": [
       {
         "id": "static-7030",
-        "snapshotAt": "2026-04-26T09:37:34.600Z",
-        "marketCap": 15878398500,
+        "snapshotAt": "2026-05-13T13:41:23.305Z",
+        "marketCap": 23817597750,
         "netCash": -12504000000,
-        "netCashRatio": -0.7874849595190598,
-        "cashNeutralPer": 26.11076218951242,
-        "per": 14.607542318307267,
-        "pbr": 1.5908624887285843
+        "netCashRatio": -0.5249899730127066,
+        "cashNeutralPer": 33.414533348666055,
+        "per": 21.9113134774609,
+        "pbr": 2.3862937330928764
       }
     ]
   },
   "history": [
+    {
+      "id": "static-7030-2025-1Q",
+      "code": "7030",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-02-12T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 9749000000,
+      "operatingProfit": 1531000000,
+      "ordinaryProfit": null,
+      "profit": 954000000,
+      "totalAssets": 23269000000,
+      "equity": 10609000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 17648965
+    },
     {
       "id": "static-7030-2025-FY",
       "code": "7030",
@@ -37,33 +53,65 @@
       "equity": 9981000000,
       "cashAndEquivalents": 6460000000,
       "sharesOutstanding": 17642665
-    },
-    {
-      "id": "static-7030-2024-FY",
-      "code": "7030",
-      "fiscalYear": 2024,
-      "typeOfCurrentPeriod": "FY",
-      "disclosedDate": "2024-05-15T00:00:00.000Z",
-      "periodEndDate": "2024-03-31T00:00:00.000Z",
-      "netSales": 15000000000,
-      "operatingProfit": 1000000000,
-      "ordinaryProfit": null,
-      "profit": 600000000,
-      "totalAssets": 18000000000,
-      "equity": 13000000000,
-      "cashAndEquivalents": 4500000000,
-      "sharesOutstanding": 8000000
     }
   ],
   "strategies": {
     "kiyohara": {
       "score": 0,
       "components": {
-        "ncrScore": 6,
+        "ncrScore": 7,
         "cnperScore": -8,
         "sizeBonus": 0
       },
-      "reason": "NCR=-0.79, CNPER=26.1, 159億円 → 対象外"
+      "reason": "NCR=-0.52, CNPER=33.4, 238億円 → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=52.3, PBR=2.39, PER=21.9 → 対象外"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=10.9%, PBR=2.39 → 様子見"
+    },
+    "lynch": {
+      "score": 12,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 4,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=21.9, 時価総額238億 → 対象外"
+    },
+    "dividend": {
+      "score": 8,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り4.56%, NCR=-0.52, PBR=2.39 → 対象外"
+    },
+    "composite": {
+      "score": 9,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 25,
+        "lynch": 12,
+        "dividend": 8
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:25, リンチ流:12, 配当・インカム流:8"
     }
   }
 }

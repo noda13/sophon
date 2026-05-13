@@ -7,17 +7,17 @@
     "sector17Code": "16",
     "marketSegment": "プライム",
     "scaleCategory": "TOPIX Mid400",
-    "updatedAt": "2026-04-26T09:37:45.403Z",
+    "updatedAt": "2026-05-13T13:41:23.451Z",
     "snapshots": [
       {
         "id": "static-8595",
-        "snapshotAt": "2026-04-26T09:37:45.403Z",
-        "marketCap": 127787898279,
+        "snapshotAt": "2026-05-13T13:41:23.451Z",
+        "marketCap": 127708968138,
         "netCash": -24661000000,
-        "netCashRatio": -0.1929838453572302,
-        "cashNeutralPer": 27.17449167183601,
-        "per": 22.778591493582887,
-        "pbr": 0.9317654053271696
+        "netCashRatio": -0.19310311843841516,
+        "cashNeutralPer": 27.16042212798574,
+        "per": 22.76452194973262,
+        "pbr": 0.9311898862380237
       }
     ]
   },
@@ -64,6 +64,54 @@
         "sizeBonus": -10
       },
       "reason": "NCR=-0.19, CNPER=27.2, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 48,
+      "components": {
+        "grahamProductScore": 28,
+        "pbrScore": 20,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=21.2, PBR=0.93, PER=22.8 → 様子見"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=4.1%, PBR=0.93 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=22.8, 時価総額1277億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り4.39%, NCR=-0.19, PBR=0.93 → 対象外"
+    },
+    "composite": {
+      "score": 15,
+      "components": {
+        "kiyohara": 0,
+        "graham": 48,
+        "buffett": 0,
+        "lynch": 8,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:48, バフェット流:0, リンチ流:8, 配当・インカム流:18"
     }
   }
 }
