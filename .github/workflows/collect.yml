@@ -31,7 +31,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm exec prisma generate --schema=backend/prisma/schema.prisma
+        run: pnpm --filter backend exec prisma generate
 
       - name: Generate static JSON
         run: pnpm exec tsx scripts/collect-static.ts
