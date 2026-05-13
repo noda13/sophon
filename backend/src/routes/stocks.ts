@@ -1,11 +1,12 @@
 import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { getStockStrategyScores } from '../services/screener.js';
 
 const router: RouterType = Router();
 
-const codeSchema = z.string().regex(/^\d{4}$/, 'Stock code must be a 4-digit number');
+const codeSchema = z.string().regex(/^[0-9A-Z]{4}$/, 'Stock code must be a 4-character alphanumeric code');
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
@@ -21,11 +22,13 @@ router.get('/', async (req, res) => {
       res.status(400).json({ error: parsed.error.message });
       return;
     }
-    const { limit, sector } = parsed.data;
+    const { limit, sector, orderBy } = parsed.data;
+    const prismaOrderBy: Prisma.StockOrderByWithRelationInput =
+      orderBy === 'name' ? { name: 'asc' } : { code: 'asc' };
     const stocks = await prisma.stock.findMany({
       where: sector ? { sector33Name: { contains: sector } } : undefined,
-      take: limit,
-      orderBy: { code: 'asc' },
+      take: orderBy === 'marketCap' ? undefined : limit,
+      orderBy: prismaOrderBy,
       include: {
         snapshots: {
           orderBy: { snapshotAt: 'desc' },
@@ -33,6 +36,14 @@ router.get('/', async (req, res) => {
         },
       },
     });
+    if (orderBy === 'marketCap') {
+      stocks.sort(
+        (a, b) =>
+          ((b.snapshots[0]?.marketCap ?? 0) as number) -
+          ((a.snapshots[0]?.marketCap ?? 0) as number),
+      );
+      stocks.splice(limit);
+    }
     res.json(stocks);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

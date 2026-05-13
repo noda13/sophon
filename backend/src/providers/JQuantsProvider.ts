@@ -180,7 +180,15 @@ export class JQuantsProvider implements DataProvider {
     const results: TItem[] = [];
     const params: Record<string, string> = { ...(queryParams ?? {}) };
 
+    const MAX_PAGES = 500;
+    let pages = 0;
+
     for (;;) {
+      pages++;
+      if (pages > MAX_PAGES) {
+        throw new Error(`[jquants] pagination exceeded ${MAX_PAGES} pages for ${path}`);
+      }
+
       const response = (await this.fetchV2(path, params, path)) as Record<string, unknown>;
 
       const items = response['data'] as TItem[] | undefined;

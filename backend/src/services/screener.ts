@@ -81,7 +81,7 @@ export async function rankByStrategyId(
   strategyId: string,
   opts?: RankingOpts
 ): Promise<StrategyRankingRow[]> {
-  const strategy = getStrategy(strategyId as any);
+  const strategy = getStrategy(strategyId);
   if (!strategy) throw new Error(`Strategy not found: ${strategyId}`);
   return rankByStrategy(strategy, opts);
 }

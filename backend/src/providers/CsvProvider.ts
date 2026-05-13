@@ -35,13 +35,19 @@ function parseDate(s: string): Date {
   return new Date(s.trim());
 }
 
+const EXPECTED_COLUMNS = 18;
+
 function parseCsv(content: string): CsvRow[] {
   const lines = content.split('\n').filter(l => l.trim() !== '');
   if (lines.length < 2) return [];
   // skip header
-  return lines.slice(1).map(line => {
+  return lines.slice(1).flatMap(line => {
     const cols = line.split(',').map(c => c.trim());
-    return {
+    if (cols.length < EXPECTED_COLUMNS) {
+      console.warn(`[csv] skipping malformed line (${cols.length}/${EXPECTED_COLUMNS} cols): ${line.slice(0, 80)}`);
+      return [];
+    }
+    return [{
       code: cols[0],
       name: cols[1],
       sector33Name: cols[2],
@@ -60,7 +66,7 @@ function parseCsv(content: string): CsvRow[] {
       equity: parseNum(cols[15]),
       currentAssets: parseNum(cols[16]),
       cashAndEquivalents: parseNum(cols[17]),
-    };
+    }];
   });
 }
 

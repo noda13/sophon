@@ -21,7 +21,7 @@ router.get('/', (_req, res) => {
 router.get('/:id/ranking', async (req, res) => {
   try {
     const { id } = req.params;
-    const strategy = getStrategy(id as any);
+    const strategy = getStrategy(id);
     if (!strategy) {
       res.status(404).json({ error: `Strategy not found: ${id}` });
       return;

@@ -3,7 +3,7 @@ import { KiyoharaStrategy } from './KiyoharaStrategy.js';
 
 export const strategies: InvestmentStrategy[] = [new KiyoharaStrategy()];
 
-export function getStrategy(id: StrategyId): InvestmentStrategy | undefined {
+export function getStrategy(id: string): InvestmentStrategy | undefined {
   return strategies.find(s => s.meta.id === id);
 }
 

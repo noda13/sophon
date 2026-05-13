@@ -89,15 +89,19 @@ async function main() {
     if (statements.length === 0 || prices.length === 0) continue;
 
     // Use the most recent statement and price
-    const latestStmt = statements.sort(
+    const sortedStmts = statements.sort(
       (a, b) => new Date(b.disclosedDate).getTime() - new Date(a.disclosedDate).getTime()
-    )[0];
+    );
+    // Prefer FY (annual) for balance sheet metrics; quarterly reports often lack currentAssets
+    const latestStmt = sortedStmts.find(s => s.typeOfCurrentPeriod === 'FY') ?? sortedStmts[0];
     const latestPrice = prices.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     )[0];
 
     const shares = latestStmt.sharesOutstanding ?? info.sharesOutstanding;
     const marketCap = computeMarketCap(shares, latestPrice.close);
+
+    if (marketCap <= 0) continue;
 
     const metrics = computeMetrics({
       marketCap,
@@ -157,7 +161,7 @@ async function main() {
     }
 
     // Build a minimal profile (matches StockProfile shape)
-    const latestStmt = history[0] ?? null;
+    const latestStmt = history.find(s => s.typeOfCurrentPeriod === 'FY') ?? history[0] ?? null;
     const prices = pricesCache.get(info.code) ?? [];
     const latestPrice = prices.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()

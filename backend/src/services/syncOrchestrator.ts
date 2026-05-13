@@ -97,6 +97,7 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
               update: {
                 netSales: stmt.netSales ?? null,
                 operatingProfit: stmt.operatingProfit ?? null,
+                ordinaryProfit: stmt.ordinaryProfit ?? null,
                 profit: stmt.profit ?? null,
                 totalAssets: stmt.totalAssets ?? null,
                 equity: stmt.equity ?? null,
@@ -112,6 +113,7 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
                 periodEndDate: stmt.periodEndDate,
                 netSales: stmt.netSales ?? null,
                 operatingProfit: stmt.operatingProfit ?? null,
+                ordinaryProfit: stmt.ordinaryProfit ?? null,
                 profit: stmt.profit ?? null,
                 totalAssets: stmt.totalAssets ?? null,
                 equity: stmt.equity ?? null,
@@ -139,10 +141,13 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
       }
 
       // Get latest statement and price
-      const latestStmt = await prisma.financialStatement.findFirst({
+      const recentStmts = await prisma.financialStatement.findMany({
         where: { code: info.code },
         orderBy: { disclosedDate: 'desc' },
+        take: 10,
       });
+      // Prefer FY (annual) for balance sheet metrics; quarterly reports often lack currentAssets
+      const latestStmt = recentStmts.find(s => s.typeOfCurrentPeriod === 'FY') ?? recentStmts[0] ?? null;
       const latestPrice = await prisma.dailyPrice.findFirst({
         where: { code: info.code },
         orderBy: { date: 'desc' },
@@ -177,6 +182,11 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
       snapshotsCreated++;
       stocksProcessed++;
     }
+
+    const cutoff = new Date(Date.now() - 30 * 24 * 3_600_000);
+    await prisma.screeningSnapshot.deleteMany({
+      where: { snapshotAt: { lt: cutoff } },
+    });
 
     await prisma.collectionLog.update({
       where: { id: log.id },

@@ -11,7 +11,8 @@ import type {
   StaticMeta,
 } from '../lib/types';
 
-// Detect if running in static mode (GitHub Pages)
+// In Vite production builds import.meta.env.DEV is false, so this defaults to static (GitHub Pages) mode.
+// Set VITE_STATIC_DATA=false to force dynamic API mode in a production server deployment.
 const isStatic = import.meta.env.VITE_STATIC_DATA === 'true' || !import.meta.env.DEV;
 
 const api = axios.create({
