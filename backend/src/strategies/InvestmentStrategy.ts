@@ -1,4 +1,4 @@
-export type StrategyId = 'kiyohara' | 'graham' | 'buffett' | 'lynch' | 'dividend';
+export type StrategyId = 'kiyohara' | 'graham' | 'buffett' | 'lynch' | 'dividend' | 'composite';
 
 export interface StrategyMeta {
   id: StrategyId;

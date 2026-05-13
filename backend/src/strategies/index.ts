@@ -1,7 +1,19 @@
 import type { InvestmentStrategy, StrategyId } from './InvestmentStrategy.js';
 import { KiyoharaStrategy } from './KiyoharaStrategy.js';
+import { GrahamStrategy } from './GrahamStrategy.js';
+import { BuffettStrategy } from './BuffettStrategy.js';
+import { LynchStrategy } from './LynchStrategy.js';
+import { DividendStrategy } from './DividendStrategy.js';
+import { CompositeStrategy } from './CompositeStrategy.js';
 
-export const strategies: InvestmentStrategy[] = [new KiyoharaStrategy()];
+const kiyohara = new KiyoharaStrategy();
+const graham = new GrahamStrategy();
+const buffett = new BuffettStrategy();
+const lynch = new LynchStrategy();
+const dividend = new DividendStrategy();
+const composite = new CompositeStrategy([kiyohara, graham, buffett, lynch, dividend]);
+
+export const strategies: InvestmentStrategy[] = [kiyohara, graham, buffett, lynch, dividend, composite];
 
 export function getStrategy(id: string): InvestmentStrategy | undefined {
   return strategies.find(s => s.meta.id === id);
