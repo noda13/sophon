@@ -10,9 +10,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { fetchStockDetail, fetchStockHistory, fetchStockStrategies } from '../services/api';
+import { fetchStockDetail, fetchStockHistory, fetchStockStrategies, fetchStrategies } from '../services/api';
 import { formatYen, formatRatio, formatPer } from '../lib/formatters';
-import type { FinancialStatement, StockProfile, StrategyScore } from '../lib/types';
+import { t } from '../lib/i18n';
+import type { FinancialStatement, StockProfile, StrategyScore, StrategyMeta } from '../lib/types';
 
 // --- Score Bar ---
 
@@ -36,7 +37,7 @@ function ScoreBar({ label, scoreObj }: { label: string; scoreObj: StrategyScore 
       <div className="w-full bg-gray-700 rounded-full h-3 mb-3">
         <div
           className={`h-3 rounded-full transition-all ${color}`}
-          style={{ width: `${score}%` }}
+          style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
         />
       </div>
       <p className="text-gray-400 text-xs">{reason}</p>
@@ -76,7 +77,7 @@ function ExternalLinks({ code }: { code: string }) {
 
   return (
     <div className="bg-gray-800 rounded-lg p-4">
-      <h3 className="text-white font-semibold mb-3">外部リンク</h3>
+      <h3 className="text-white font-semibold mb-3">{t('externalLinks')}</h3>
       <div className="grid grid-cols-2 gap-2">
         {links.map(link => (
           <a
@@ -112,7 +113,7 @@ function FinancialChart({ history }: { history: FinancialStatement[] }) {
 
   return (
     <div className="bg-gray-800 rounded-lg p-4">
-      <h3 className="text-white font-semibold mb-4">財務推移（単位：億円）</h3>
+      <h3 className="text-white font-semibold mb-4">{t('financialChart')}</h3>
       <ResponsiveContainer width="100%" height={280}>
         <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -157,30 +158,30 @@ function ProfileCard({ profile }: { profile: StockProfile }) {
           )}
         </div>
         <div className="text-right text-sm text-gray-500">
-          更新: {new Date(profile.updatedAt).toLocaleDateString('ja-JP')}
+          {t('updatedAt')}: {new Date(profile.updatedAt).toLocaleDateString('ja-JP')}
         </div>
       </div>
 
       {latestSnapshot && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-gray-700 rounded p-3">
-            <div className="text-gray-400 text-xs mb-1">時価総額</div>
+            <div className="text-gray-400 text-xs mb-1">{t('metricMarketCap')}</div>
             <div className="text-white font-mono">{formatYen(latestSnapshot.marketCap)}</div>
           </div>
           <div className="bg-gray-700 rounded p-3">
-            <div className="text-gray-400 text-xs mb-1">ネットキャッシュ</div>
-            <div className={`font-mono ${latestSnapshot.netCash >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <div className="text-gray-400 text-xs mb-1">{t('metricNetCash')}</div>
+            <div className={`font-mono ${latestSnapshot.netCash !== null && latestSnapshot.netCash >= 0 ? 'text-green-400' : latestSnapshot.netCash !== null ? 'text-red-400' : 'text-gray-400'}`}>
               {formatYen(latestSnapshot.netCash)}
             </div>
           </div>
           <div className="bg-gray-700 rounded p-3">
-            <div className="text-gray-400 text-xs mb-1">NCR</div>
-            <div className={`font-mono font-bold ${latestSnapshot.netCashRatio >= 1.0 ? 'text-green-400' : latestSnapshot.netCashRatio >= 0.3 ? 'text-yellow-400' : 'text-gray-300'}`}>
+            <div className="text-gray-400 text-xs mb-1">{t('metricNcr')}</div>
+            <div className={`font-mono font-bold ${latestSnapshot.netCashRatio !== null && latestSnapshot.netCashRatio >= 1.0 ? 'text-green-400' : latestSnapshot.netCashRatio !== null && latestSnapshot.netCashRatio >= 0.3 ? 'text-yellow-400' : 'text-gray-300'}`}>
               {formatRatio(latestSnapshot.netCashRatio)}
             </div>
           </div>
           <div className="bg-gray-700 rounded p-3">
-            <div className="text-gray-400 text-xs mb-1">CNPER</div>
+            <div className="text-gray-400 text-xs mb-1">{t('metricCnper')}</div>
             <div className="text-white font-mono">{formatPer(latestSnapshot.cashNeutralPer)}</div>
           </div>
         </div>
@@ -215,10 +216,16 @@ export function StockDetailPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const strategyMetaQuery = useQuery<StrategyMeta[]>({
+    queryKey: ['strategies'],
+    queryFn: fetchStrategies,
+    staleTime: 10 * 60 * 1000,
+  });
+
   if (profileQuery.isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400 text-lg">読み込み中...</div>
+        <div className="text-gray-400 text-lg">{t('loading')}</div>
       </div>
     );
   }
@@ -227,11 +234,11 @@ export function StockDetailPage() {
     return (
       <div className="bg-red-900 border border-red-700 rounded-lg p-4">
         <p className="text-red-200">
-          銘柄データの取得に失敗しました:{' '}
-          {profileQuery.error instanceof Error ? profileQuery.error.message : '不明なエラー'}
+          {t('stockFetchFailed')}:{' '}
+          {profileQuery.error instanceof Error ? profileQuery.error.message : t('unknownError')}
         </p>
         <Link to="/" className="text-blue-400 hover:underline text-sm mt-2 inline-block">
-          ← ランキングに戻る
+          {t('backToRanking')}
         </Link>
       </div>
     );
@@ -245,7 +252,7 @@ export function StockDetailPage() {
     <div className="space-y-4">
       {/* Back link */}
       <Link to="/" className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
-        ← ランキングに戻る
+        {t('backToRanking')}
       </Link>
 
       {/* Profile */}
@@ -255,11 +262,15 @@ export function StockDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Chart */}
         <div className="lg:col-span-2">
-          {history.length > 0 ? (
+          {historyQuery.isError ? (
+            <div className="bg-gray-800 rounded-lg p-4 text-red-400 text-center h-40 flex items-center justify-center">
+              {t('financialFetchFailed')}
+            </div>
+          ) : history.length > 0 ? (
             <FinancialChart history={history} />
           ) : (
             <div className="bg-gray-800 rounded-lg p-4 text-gray-400 text-center h-40 flex items-center justify-center">
-              財務データがありません
+              {t('noFinancialData')}
             </div>
           )}
         </div>
@@ -271,23 +282,19 @@ export function StockDetailPage() {
       </div>
 
       {/* Strategy Scores */}
-      {Object.keys(strategyScores).length > 0 && (
+      {strategiesQuery.isError ? (
+        <div className="text-red-400 text-sm">{t('scoreFetchFailed')}</div>
+      ) : Object.keys(strategyScores).length > 0 && (
         <div>
-          <h3 className="text-white font-semibold mb-3">投資視点スコア</h3>
+          <h3 className="text-white font-semibold mb-3">{t('investmentScores')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(strategyScores).map(([id, scoreObj]) => {
-              const labelMap: Record<string, string> = {
-                kiyohara: '清原流',
-                graham: 'グレアム',
-                buffett: 'バフェット',
-                lynch: 'リンチ',
-                dividend: '配当',
-              };
+              const strategyLabel = strategyMetaQuery.data?.find(s => s.id === id)?.displayName ?? id;
               return (
                 <ScoreBar
                   key={id}
-                  label={labelMap[id] ?? id}
-                  scoreObj={scoreObj as StrategyScore}
+                  label={strategyLabel}
+                  scoreObj={scoreObj}
                 />
               );
             })}

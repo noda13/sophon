@@ -51,8 +51,7 @@ export class LynchStrategy implements InvestmentStrategy {
     const pbrPenalty = m.pbr !== null && m.pbr > 3 ? -8 : 0;
     components.pbrPenalty = pbrPenalty;
 
-    let rawScore = perScore + sizeBonus + pbrPenalty;
-    if (m.profit !== null && m.profit <= 0) rawScore = Math.min(rawScore, 20);
+    const rawScore = perScore + sizeBonus + pbrPenalty;
 
     const score = Math.max(0, Math.min(100, Math.round(rawScore)));
 

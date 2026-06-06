@@ -41,9 +41,9 @@ export class DividendStrategy implements InvestmentStrategy {
 
     // Balance sheet stability: positive NCR = no net debt = dividend capacity
     let stabilityBonus = 0;
-    if (m.netCashRatio >= 0.5) stabilityBonus = 20;
-    else if (m.netCashRatio >= 0) stabilityBonus = 12;
-    else stabilityBonus = 0;
+    if (m.netCashRatio !== null && m.netCashRatio >= 0.5) stabilityBonus = 20;
+    else if (m.netCashRatio !== null && m.netCashRatio >= 0) stabilityBonus = 12;
+    // else 0 (null or negative NCR)
     components.stabilityBonus = stabilityBonus;
 
     // PBR penalty: income investors dislike paying excessive book premium
@@ -60,7 +60,7 @@ export class DividendStrategy implements InvestmentStrategy {
     else judgment = '対象外';
 
     const yieldPct = (yield_ * 100).toFixed(2);
-    const ncrStr = `NCR=${m.netCashRatio.toFixed(2)}`;
+    const ncrStr = m.netCashRatio !== null ? `NCR=${m.netCashRatio.toFixed(2)}` : 'NCR=null';
     const pbrStr = m.pbr !== null ? `PBR=${m.pbr.toFixed(2)}` : 'PBR=n/a';
     const reason = `益回り${yieldPct}%, ${ncrStr}, ${pbrStr} → ${judgment}`;
 

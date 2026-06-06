@@ -1,19 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { fetchStrategyRanking } from '../services/api';
+import { fetchStrategyRanking, fetchStrategies } from '../services/api';
 import { formatYen, formatRatio, formatPer } from '../lib/formatters';
-import type { RankingRow } from '../lib/types';
+import { t } from '../lib/i18n';
+import type { RankingRow, StrategyMeta, StrategyId } from '../lib/types';
 
-function NCRBadge({ value }: { value: number }) {
+function NCRBadge({ value }: { value: number | null }) {
   const color =
-    value >= 1.0
+    value !== null && value >= 1.0
       ? 'bg-green-700 text-green-100'
-      : value >= 0.3
+      : value !== null && value >= 0.3
         ? 'bg-yellow-700 text-yellow-100'
         : 'bg-gray-700 text-gray-300';
   return (
     <span className={`inline-block px-2 py-0.5 rounded text-xs font-mono font-bold ${color}`}>
-      {formatRatio(value)}
+      {value !== null ? formatRatio(value) : '—'}
     </span>
   );
 }
@@ -39,7 +40,18 @@ function ScoreBadge({ score, reason }: { score: number; reason: string }) {
 
 export function RankingPage() {
   const [searchParams] = useSearchParams();
-  const strategyId = searchParams.get('strategy') ?? 'kiyohara';
+  const VALID_STRATEGIES: readonly StrategyId[] = ['kiyohara', 'graham', 'buffett', 'lynch', 'dividend', 'composite'];
+  const rawStrategy = searchParams.get('strategy');
+  const strategyId: StrategyId = VALID_STRATEGIES.includes(rawStrategy as StrategyId)
+    ? (rawStrategy as StrategyId)
+    : 'kiyohara';
+
+  const strategiesQuery = useQuery<StrategyMeta[]>({
+    queryKey: ['strategies'],
+    queryFn: fetchStrategies,
+    staleTime: 10 * 60 * 1000,
+  });
+  const currentStrategyMeta = strategiesQuery.data?.find(s => s.id === strategyId);
 
   const { data, isLoading, isError, error } = useQuery<RankingRow[]>({
     queryKey: ['strategy-ranking', strategyId],
@@ -50,7 +62,7 @@ export function RankingPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400 text-lg">読み込み中...</div>
+        <div className="text-gray-400 text-lg">{t('loading')}</div>
       </div>
     );
   }
@@ -59,10 +71,10 @@ export function RankingPage() {
     return (
       <div className="bg-red-900 border border-red-700 rounded-lg p-4">
         <p className="text-red-200">
-          データ取得エラー: {error instanceof Error ? error.message : '不明なエラー'}
+          {t('fetchError')}: {error instanceof Error ? error.message : t('unknownError')}
         </p>
         <p className="text-red-400 text-sm mt-1">
-          バックエンドが起動しているか確認してください (POST /api/admin/sync で同期)
+          {t('syncHint')} (<code className="bg-red-800 px-1 rounded">{t('syncCommand')}</code> {t('syncInstruction')})
         </p>
       </div>
     );
@@ -71,10 +83,10 @@ export function RankingPage() {
   if (!data || data.length === 0) {
     return (
       <div className="bg-gray-800 border border-gray-700 rounded-lg p-8 text-center">
-        <p className="text-gray-400 text-lg">データがありません</p>
+        <p className="text-gray-400 text-lg">{t('noData')}</p>
         <p className="text-gray-500 text-sm mt-2">
-          <code className="bg-gray-700 px-2 py-1 rounded">POST /api/admin/sync</code>{' '}
-          を実行してデータを同期してください
+          <code className="bg-gray-700 px-2 py-1 rounded">{t('syncCommand')}</code>{' '}
+          {t('syncInstruction')}
         </p>
       </div>
     );
@@ -84,28 +96,28 @@ export function RankingPage() {
     <div>
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-white">
-          清原流ランキング
-          <span className="ml-2 text-sm font-normal text-gray-400">（スコア降順）</span>
+          {currentStrategyMeta?.displayName ?? strategyId}{t('rankingTitle')}
+          <span className="ml-2 text-sm font-normal text-gray-400">{t('rankingSubtitle')}</span>
         </h2>
-        <p className="text-gray-400 text-sm mt-1">
-          NCR = NetCash / 時価総額　|　NCR &gt; 1.0 = 超割安水準（清原流）　|　スコアにカーソルで評価理由を表示
-        </p>
+        {currentStrategyMeta?.description && (
+          <p className="text-gray-400 text-sm mt-1">{currentStrategyMeta.description}</p>
+        )}
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-700 text-gray-400">
-              <th className="text-right py-3 px-2 w-12">順位</th>
-              <th className="text-left py-3 px-2 w-16">コード</th>
-              <th className="text-left py-3 px-2">銘柄名</th>
-              <th className="text-left py-3 px-2">業種</th>
-              <th className="text-right py-3 px-2">時価総額</th>
-              <th className="text-right py-3 px-2">NetCash</th>
-              <th className="text-right py-3 px-2">NCR</th>
-              <th className="text-right py-3 px-2">CNPER</th>
-              <th className="text-right py-3 px-2">PER</th>
-              <th className="text-right py-3 px-2">スコア</th>
+              <th className="text-right py-3 px-2 w-12">{t('colRank')}</th>
+              <th className="text-left py-3 px-2 w-16">{t('colCode')}</th>
+              <th className="text-left py-3 px-2">{t('colName')}</th>
+              <th className="text-left py-3 px-2">{t('colSector')}</th>
+              <th className="text-right py-3 px-2">{t('colMarketCap')}</th>
+              <th className="text-right py-3 px-2">{t('colNetCash')}</th>
+              <th className="text-right py-3 px-2">{t('colNcr')}</th>
+              <th className="text-right py-3 px-2">{t('colCnper')}</th>
+              <th className="text-right py-3 px-2">{t('colPer')}</th>
+              <th className="text-right py-3 px-2">{t('colScore')}</th>
             </tr>
           </thead>
           <tbody>
@@ -129,7 +141,7 @@ export function RankingPage() {
                   {formatYen(row.marketCap)}
                 </td>
                 <td
-                  className={`text-right py-3 px-2 font-mono ${row.netCash >= 0 ? 'text-green-400' : 'text-red-400'}`}
+                  className={`text-right py-3 px-2 font-mono ${row.netCash !== null && row.netCash >= 0 ? 'text-green-400' : row.netCash !== null ? 'text-red-400' : 'text-gray-400'}`}
                 >
                   {formatYen(row.netCash)}
                 </td>
@@ -144,8 +156,8 @@ export function RankingPage() {
                 </td>
                 <td className="text-right py-3 px-2">
                   <ScoreBadge
-                    score={row.strategyScore.score}
-                    reason={row.strategyScore.reason}
+                    score={row.strategyScore?.score ?? 0}
+                    reason={row.strategyScore?.reason ?? ''}
                   />
                 </td>
               </tr>
@@ -155,7 +167,7 @@ export function RankingPage() {
       </div>
 
       <p className="mt-4 text-xs text-gray-600">
-        データ取得:{' '}
+        {t('dataFetchedAt')}:{' '}
         {data[0]?.snapshotAt ? new Date(data[0].snapshotAt).toLocaleString('ja-JP') : '—'}
       </p>
     </div>

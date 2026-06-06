@@ -20,6 +20,11 @@ export class CompositeStrategy implements InvestmentStrategy {
 
   score(m: StockMetrics): StrategyScore {
     const components: Record<string, number | null> = {};
+
+    if (this.constituents.length === 0) {
+      return { score: 0, components, reason: '構成戦略なし' };
+    }
+
     let total = 0;
 
     for (const s of this.constituents) {

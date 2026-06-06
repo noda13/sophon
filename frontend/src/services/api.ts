@@ -2,13 +2,13 @@
 import axios from 'axios';
 import type {
   RankingRow,
-  LegacyRankingRow,
   StockProfile,
   FinancialStatement,
   StrategyMeta,
   StrategyScore,
   StaticStockDetail,
   StaticMeta,
+  StrategyId,
 } from '../lib/types';
 
 // In Vite production builds import.meta.env.DEV is false, so this defaults to static (GitHub Pages) mode.
@@ -22,33 +22,29 @@ const api = axios.create({
 
 // --- Static JSON fetchers ---
 
-async function fetchStaticJson<T>(filename: string, fallback: T): Promise<T> {
-  try {
-    const base = import.meta.env.BASE_URL || '/';
-    const res = await fetch(`${base}data/${filename}`);
-    if (!res.ok) return fallback;
-    return (await res.json()) as T;
-  } catch {
-    return fallback;
-  }
+async function fetchStaticJson<T>(filename: string): Promise<T> {
+  const base = import.meta.env.BASE_URL || '/';
+  const res = await fetch(`${base}data/${filename}`);
+  if (!res.ok) throw new Error(`Failed to fetch ${filename}: ${res.status} ${res.statusText}`);
+  return (await res.json()) as T;
 }
 
 // --- Strategy API ---
 
 export async function fetchStrategies(): Promise<StrategyMeta[]> {
   if (isStatic) {
-    return fetchStaticJson<StrategyMeta[]>('strategies.json', []);
+    return fetchStaticJson<StrategyMeta[]>('strategies.json');
   }
   const { data } = await api.get<StrategyMeta[]>('/strategies');
   return data;
 }
 
 export async function fetchStrategyRanking(
-  id: string,
+  id: StrategyId,
   opts?: { limit?: number; maxMarketCap?: number; minMarketCap?: number }
 ): Promise<RankingRow[]> {
   if (isStatic) {
-    const all = await fetchStaticJson<RankingRow[]>(`ranking-${id}.json`, []);
+    const all = await fetchStaticJson<RankingRow[]>(`ranking-${id}.json`);
     return all.slice(0, opts?.limit ?? 50);
   }
   const { data } = await api.get<RankingRow[]>(`/strategies/${id}/ranking`, { params: opts });
@@ -59,8 +55,7 @@ export async function fetchStrategyRanking(
 
 export async function fetchStockDetail(code: string): Promise<StockProfile> {
   if (isStatic) {
-    const detail = await fetchStaticJson<StaticStockDetail | null>(`stock-${code}.json`, null);
-    if (!detail) throw new Error(`Stock ${code} not found in static data`);
+    const detail = await fetchStaticJson<StaticStockDetail>(`stock-${code}.json`);
     return detail.profile;
   }
   const { data } = await api.get<StockProfile>(`/stocks/${code}`);
@@ -69,8 +64,7 @@ export async function fetchStockDetail(code: string): Promise<StockProfile> {
 
 export async function fetchStockHistory(code: string): Promise<FinancialStatement[]> {
   if (isStatic) {
-    const detail = await fetchStaticJson<StaticStockDetail | null>(`stock-${code}.json`, null);
-    if (!detail) return [];
+    const detail = await fetchStaticJson<StaticStockDetail>(`stock-${code}.json`);
     return detail.history;
   }
   const { data } = await api.get<FinancialStatement[]>(`/stocks/${code}/history`);
@@ -79,40 +73,11 @@ export async function fetchStockHistory(code: string): Promise<FinancialStatemen
 
 export async function fetchStockStrategies(code: string): Promise<Record<string, StrategyScore>> {
   if (isStatic) {
-    const detail = await fetchStaticJson<StaticStockDetail | null>(`stock-${code}.json`, null);
-    if (!detail) return {};
+    const detail = await fetchStaticJson<StaticStockDetail>(`stock-${code}.json`);
     return detail.strategies;
   }
   const { data } = await api.get<Record<string, StrategyScore>>(`/stocks/${code}/strategies`);
   return data;
 }
 
-// --- Legacy API (backward compat) ---
-
-export async function fetchNetCashRanking(limit = 50): Promise<LegacyRankingRow[]> {
-  if (isStatic) {
-    const all = await fetchStaticJson<LegacyRankingRow[]>('ranking-ncr.json', []);
-    return all.slice(0, limit);
-  }
-  const { data } = await api.get<LegacyRankingRow[]>('/ranking/net-cash-ratio', {
-    params: { limit },
-  });
-  return data;
-}
-
-export async function fetchCashNeutralRanking(limit = 50): Promise<LegacyRankingRow[]> {
-  if (isStatic) {
-    const all = await fetchStaticJson<LegacyRankingRow[]>('ranking-cnper.json', []);
-    return all.slice(0, limit);
-  }
-  const { data } = await api.get<LegacyRankingRow[]>('/ranking/cash-neutral-per', {
-    params: { limit },
-  });
-  return data;
-}
-
-export async function fetchStock(code: string): Promise<StockProfile> {
-  return fetchStockDetail(code);
-}
-
-export type { RankingRow, LegacyRankingRow, StockProfile, StaticMeta };
+export type { RankingRow, StockProfile, StaticMeta };

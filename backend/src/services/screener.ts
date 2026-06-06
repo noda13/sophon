@@ -16,8 +16,8 @@ export interface RankingRow {
   sector33Name: string | null;
   marketSegment: string | null;
   marketCap: number;
-  netCash: number;
-  netCashRatio: number;
+  netCash: number | null;
+  netCashRatio: number | null;
   cashNeutralPer: number | null;
   per: number | null;
   pbr: number | null;
@@ -158,7 +158,7 @@ export async function listRanking(opts: {
 
   // Re-sort by requested metric
   if (opts.metric === 'netCashRatio') {
-    legacyRows.sort((a, b) => b.netCashRatio - a.netCashRatio);
+    legacyRows.sort((a, b) => (b.netCashRatio ?? -Infinity) - (a.netCashRatio ?? -Infinity));
   } else {
     // cashNeutralPer: ascending, skip nulls
     legacyRows = legacyRows.filter(r => r.cashNeutralPer !== null);

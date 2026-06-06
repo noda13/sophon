@@ -40,7 +40,7 @@ export class BuffettStrategy implements InvestmentStrategy {
     components.roeScore = roeScore;
 
     // Financial quality bonus: NCR ≥ 0 means no net debt (+15)
-    const qualityBonus = m.netCashRatio >= 0 ? 15 : 0;
+    const qualityBonus = m.netCashRatio !== null && m.netCashRatio >= 0 ? 15 : 0;
     components.qualityBonus = qualityBonus;
 
     // Valuation penalty: PBR > 5 is dangerously expensive (-10)

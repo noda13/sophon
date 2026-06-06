@@ -26,7 +26,9 @@ export class KiyoharaStrategy implements InvestmentStrategy {
     // --- NCR score (0-70 base) ---
     let ncrScore: number;
     const ncr = m.netCashRatio;
-    if (ncr >= 2.0) {
+    if (ncr === null) {
+      ncrScore = 0;
+    } else if (ncr >= 2.0) {
       ncrScore = 80;
     } else if (ncr >= 1.0) {
       // linear from 50 to 80 between 1.0 and 2.0
@@ -41,7 +43,8 @@ export class KiyoharaStrategy implements InvestmentStrategy {
       // negative NCR: up to 10
       ncrScore = Math.max(0, 10 + ncr * 5);
     }
-    components.ncrScore = Math.round(ncrScore);
+    ncrScore = Math.round(ncrScore);
+    components.ncrScore = ncrScore;
 
     // --- CNPER score adjustment (-15 to +20) ---
     let cnperScore = 0;
@@ -86,7 +89,7 @@ export class KiyoharaStrategy implements InvestmentStrategy {
     const score = Math.max(0, Math.min(100, Math.round(rawScore)));
 
     // --- Reason string ---
-    const ncrStr = `NCR=${ncr.toFixed(2)}`;
+    const ncrStr = ncr !== null ? `NCR=${ncr.toFixed(2)}` : 'NCR=null';
     const cnperStr = cnper !== null ? `CNPER=${cnper.toFixed(1)}` : 'CNPER=null';
     const marketCapBillion = (m.marketCap / BILLION).toFixed(0);
     let judgment: string;

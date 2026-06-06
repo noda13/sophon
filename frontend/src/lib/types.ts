@@ -1,6 +1,6 @@
 // --- Strategy types (matching backend) ---
 
-export type StrategyId = 'kiyohara' | 'graham' | 'buffett' | 'lynch' | 'dividend';
+export type StrategyId = 'kiyohara' | 'graham' | 'buffett' | 'lynch' | 'dividend' | 'composite';
 
 export interface StrategyMeta {
   id: StrategyId;
@@ -23,8 +23,8 @@ export interface StockMetrics {
   sector33Name: string | null;
   marketSegment: string | null;
   marketCap: number;
-  netCash: number;
-  netCashRatio: number;
+  netCash: number | null;
+  netCashRatio: number | null;
   cashNeutralPer: number | null;
   per: number | null;
   pbr: number | null;
@@ -46,8 +46,8 @@ export interface LegacyRankingRow {
   sector33Name: string | null;
   marketSegment: string | null;
   marketCap: number;
-  netCash: number;
-  netCashRatio: number;
+  netCash: number | null;
+  netCashRatio: number | null;
   cashNeutralPer: number | null;
   per: number | null;
   pbr: number | null;
@@ -67,8 +67,8 @@ export interface StockProfile {
     id: string;
     snapshotAt: string;
     marketCap: number;
-    netCash: number;
-    netCashRatio: number;
+    netCash: number | null;
+    netCashRatio: number | null;
     cashNeutralPer: number | null;
     per: number | null;
     pbr: number | null;
@@ -98,8 +98,8 @@ export interface Snapshot {
   code: string;
   snapshotAt: string;
   marketCap: number;
-  netCash: number;
-  netCashRatio: number;
+  netCash: number | null;
+  netCashRatio: number | null;
   cashNeutralPer: number | null;
   per: number | null;
   pbr: number | null;

@@ -8,8 +8,8 @@ export interface MetricInputs {
 }
 
 export interface MetricOutputs {
-  netCash: number;
-  netCashRatio: number;
+  netCash: number | null;
+  netCashRatio: number | null;
   cashNeutralPer: number | null;
   per: number | null;
   pbr: number | null;
@@ -28,11 +28,14 @@ export function computeMarketCap(sharesOutstanding: number, closePrice: number):
  * 負債合計 = 総資産 − 純資産
  * Phase 0/1: 投資有価証券 = 0 (保守的)
  */
-export function computeNetCash(inputs: MetricInputs): number {
-  const currentAssets = inputs.currentAssets ?? 0;
+export function computeNetCash(inputs: MetricInputs): number | null {
+  if (inputs.currentAssets === null || inputs.totalAssets === null || inputs.equity === null) {
+    return null;
+  }
+  const currentAssets = inputs.currentAssets;
   const investSec = (inputs.investmentSecurities ?? 0) * 0.7;
-  const totalAssets = inputs.totalAssets ?? 0;
-  const equity = inputs.equity ?? 0;
+  const totalAssets = inputs.totalAssets;
+  const equity = inputs.equity;
   const totalLiabilities = totalAssets - equity;
   return currentAssets + investSec - totalLiabilities;
 }
@@ -42,11 +45,11 @@ export function computeNetCash(inputs: MetricInputs): number {
  */
 export function computeMetrics(inputs: MetricInputs): MetricOutputs {
   const netCash = computeNetCash(inputs);
-  const netCashRatio = inputs.marketCap > 0 ? netCash / inputs.marketCap : 0;
+  const netCashRatio = netCash === null || inputs.marketCap <= 0 ? null : netCash / inputs.marketCap;
 
   const profit = inputs.profit;
   const cashNeutralPer =
-    profit !== null && profit > 0
+    netCash !== null && profit !== null && profit > 0
       ? (inputs.marketCap - netCash) / profit
       : null;
 
