@@ -60,6 +60,12 @@ const ja = {
   // AppLayout
   tagline: '清原流バリュー・スクリーナー',
   disclaimer: '本ツールは投資判断支援を目的とし、個別銘柄の推奨ではありません。投資に関する最終判断はご自身の責任で行ってください。',
+
+  // FinancialChart series labels
+  chartNetSales: '売上',
+  chartProfit: '利益',
+  chartCash: '現預金',
+  chartEquity: '純資産',
 } as const;
 
 export type MessageKey = keyof typeof ja;
