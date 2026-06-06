@@ -105,10 +105,10 @@ function FinancialChart({ history }: { history: FinancialStatement[] }) {
 
   const chartData = sorted.map(s => ({
     period: `${s.fiscalYear}${s.typeOfCurrentPeriod !== 'FY' ? s.typeOfCurrentPeriod : ''}`,
-    売上: s.netSales !== null ? s.netSales / 100_000_000 : null,
-    利益: s.profit !== null ? s.profit / 100_000_000 : null,
-    現預金: s.cashAndEquivalents !== null ? s.cashAndEquivalents / 100_000_000 : null,
-    純資産: s.equity !== null ? s.equity / 100_000_000 : null,
+    netSales: s.netSales !== null ? s.netSales / 100_000_000 : null,
+    profit: s.profit !== null ? s.profit / 100_000_000 : null,
+    cash: s.cashAndEquivalents !== null ? s.cashAndEquivalents / 100_000_000 : null,
+    equity: s.equity !== null ? s.equity / 100_000_000 : null,
   }));
 
   return (
@@ -125,10 +125,10 @@ function FinancialChart({ history }: { history: FinancialStatement[] }) {
             itemStyle={{ color: '#D1D5DB' }}
           />
           <Legend wrapperStyle={{ color: '#9CA3AF', fontSize: 12 }} />
-          <Line type="monotone" dataKey="売上" stroke="#60A5FA" strokeWidth={2} dot={false} connectNulls />
-          <Line type="monotone" dataKey="利益" stroke="#34D399" strokeWidth={2} dot={false} connectNulls />
-          <Line type="monotone" dataKey="現預金" stroke="#FBBF24" strokeWidth={2} dot={false} connectNulls />
-          <Line type="monotone" dataKey="純資産" stroke="#A78BFA" strokeWidth={2} dot={false} connectNulls />
+          <Line type="monotone" dataKey="netSales" name={t('chartNetSales')} stroke="#60A5FA" strokeWidth={2} dot={false} connectNulls />
+          <Line type="monotone" dataKey="profit" name={t('chartProfit')} stroke="#34D399" strokeWidth={2} dot={false} connectNulls />
+          <Line type="monotone" dataKey="cash" name={t('chartCash')} stroke="#FBBF24" strokeWidth={2} dot={false} connectNulls />
+          <Line type="monotone" dataKey="equity" name={t('chartEquity')} stroke="#A78BFA" strokeWidth={2} dot={false} connectNulls />
         </LineChart>
       </ResponsiveContainer>
     </div>
