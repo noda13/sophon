@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { fetchStrategies } from '../../services/api';
+import { t } from '../../lib/i18n';
 import type { StrategyMeta } from '../../lib/types';
 
 export function StrategySelector() {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentStrategy = searchParams.get('strategy') ?? 'kiyohara';
 
-  const { data: strategies, isLoading } = useQuery<StrategyMeta[]>({
+  const { data: strategies, isLoading, isError } = useQuery<StrategyMeta[]>({
     queryKey: ['strategies'],
     queryFn: fetchStrategies,
     staleTime: 10 * 60 * 1000,
@@ -15,11 +16,14 @@ export function StrategySelector() {
 
   const active = strategies?.filter(s => s.active) ?? [];
 
-  if (isLoading || active.length === 0) {
+  if (isLoading || isError || active.length === 0) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-gray-400 text-sm">視点:</span>
-        <span className="px-3 py-1 bg-blue-700 text-blue-100 rounded text-sm">清原流</span>
+        <span className="text-gray-400 text-sm">{t('strategyLabel')}:</span>
+        {isError
+          ? <span className="text-red-400 text-xs">{t('strategyFetchError')}</span>
+          : <span className="px-3 py-1 bg-blue-700 text-blue-100 rounded text-sm">清原流</span>
+        }
       </div>
     );
   }
@@ -27,7 +31,7 @@ export function StrategySelector() {
   if (active.length === 1) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-gray-400 text-sm">視点:</span>
+        <span className="text-gray-400 text-sm">{t('strategyLabel')}:</span>
         <span
           className="px-3 py-1 bg-blue-700 text-blue-100 rounded text-sm cursor-default"
           title={active[0].description}
@@ -41,7 +45,7 @@ export function StrategySelector() {
   // Future: multiple strategies — show as tabs
   return (
     <div className="flex items-center gap-2">
-      <span className="text-gray-400 text-sm">視点:</span>
+      <span className="text-gray-400 text-sm">{t('strategyLabel')}:</span>
       <div className="flex gap-1">
         {active.map(s => (
           <button

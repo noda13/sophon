@@ -13,8 +13,8 @@ export interface StockMetrics {
   sector33Name: string | null;
   marketSegment: string | null;
   marketCap: number;
-  netCash: number;
-  netCashRatio: number;
+  netCash: number | null;
+  netCashRatio: number | null;
   cashNeutralPer: number | null;
   per: number | null;
   pbr: number | null;

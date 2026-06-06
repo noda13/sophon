@@ -81,51 +81,56 @@ async function main() {
   const allMetrics: StockMetrics[] = [];
 
   for (const info of stockInfos) {
-    const statements = await provider.fetchStatements(info.code);
-    const prices = await provider.fetchPrices(info.code);
-    statementsCache.set(info.code, statements);
-    pricesCache.set(info.code, prices);
+    try {
+      const statements = await provider.fetchStatements(info.code);
+      const prices = await provider.fetchPrices(info.code);
+      statementsCache.set(info.code, statements);
+      pricesCache.set(info.code, prices);
 
-    if (statements.length === 0 || prices.length === 0) continue;
+      if (statements.length === 0 || prices.length === 0) continue;
 
-    // Use the most recent statement and price
-    const sortedStmts = statements.sort(
-      (a, b) => new Date(b.disclosedDate).getTime() - new Date(a.disclosedDate).getTime()
-    );
-    // Prefer FY (annual) for balance sheet metrics; quarterly reports often lack currentAssets
-    const latestStmt = sortedStmts.find(s => s.typeOfCurrentPeriod === 'FY') ?? sortedStmts[0];
-    const latestPrice = prices.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    )[0];
+      // Use the most recent statement and price
+      const sortedStmts = statements.sort(
+        (a, b) => new Date(b.disclosedDate).getTime() - new Date(a.disclosedDate).getTime()
+      );
+      // Prefer FY (annual) for balance sheet metrics; quarterly reports often lack currentAssets
+      const latestStmt = sortedStmts.find(s => s.typeOfCurrentPeriod === 'FY') ?? sortedStmts[0];
+      const latestPrice = prices.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      )[0];
 
-    const shares = latestStmt.sharesOutstanding ?? info.sharesOutstanding;
-    const marketCap = computeMarketCap(shares, latestPrice.close);
+      const shares = latestStmt.sharesOutstanding ?? info.sharesOutstanding;
+      const marketCap = computeMarketCap(shares, latestPrice.close);
 
-    if (marketCap <= 0) continue;
+      if (marketCap <= 0) continue;
 
-    const metrics = computeMetrics({
-      marketCap,
-      currentAssets: latestStmt.currentAssets ?? null,
-      totalAssets: latestStmt.totalAssets ?? null,
-      equity: latestStmt.equity ?? null,
-      investmentSecurities: null,
-      profit: latestStmt.profit ?? null,
-    });
+      const metrics = computeMetrics({
+        marketCap,
+        currentAssets: latestStmt.currentAssets ?? null,
+        totalAssets: latestStmt.totalAssets ?? null,
+        equity: latestStmt.equity ?? null,
+        investmentSecurities: null,
+        profit: latestStmt.profit ?? null,
+      });
 
-    allMetrics.push({
-      code: info.code,
-      name: info.name,
-      sector33Name: info.sector33Name ?? null,
-      marketSegment: info.marketSegment ?? null,
-      marketCap,
-      netCash: metrics.netCash,
-      netCashRatio: metrics.netCashRatio,
-      cashNeutralPer: metrics.cashNeutralPer,
-      per: metrics.per,
-      pbr: metrics.pbr,
-      profit: latestStmt.profit ?? null,
-      equity: latestStmt.equity ?? null,
-    });
+      allMetrics.push({
+        code: info.code,
+        name: info.name,
+        sector33Name: info.sector33Name ?? null,
+        marketSegment: info.marketSegment ?? null,
+        marketCap,
+        netCash: metrics.netCash,
+        netCashRatio: metrics.netCashRatio,
+        cashNeutralPer: metrics.cashNeutralPer,
+        per: metrics.per,
+        pbr: metrics.pbr,
+        profit: latestStmt.profit ?? null,
+        equity: latestStmt.equity ?? null,
+      });
+    } catch (err) {
+      console.warn(`  [WARN] metrics pass failed for ${info.code}: ${err instanceof Error ? err.message : String(err)}`);
+      continue;
+    }
   }
 
   // 3. Write strategies.json
@@ -142,89 +147,94 @@ async function main() {
 
   // 6. Write stock-{code}.json for each stock
   for (const info of stockInfos) {
-    const statements = statementsCache.get(info.code) ?? [];
+    try {
+      const statements = statementsCache.get(info.code) ?? [];
 
-    // Sort statements newest first for history
-    const history = statements
-      .sort((a, b) => new Date(b.disclosedDate).getTime() - new Date(a.disclosedDate).getTime())
-      .slice(0, 8);
+      // Sort statements newest first for history
+      const history = statements
+        .sort((a, b) => new Date(b.disclosedDate).getTime() - new Date(a.disclosedDate).getTime())
+        .slice(0, 8);
 
-    // Find metrics for this stock
-    const m = allMetrics.find(x => x.code === info.code);
+      // Find metrics for this stock
+      const m = allMetrics.find(x => x.code === info.code);
 
-    // Strategy scores
-    const scoreMap: Record<string, unknown> = {};
-    if (m) {
-      for (const strategy of activeStrategies()) {
-        scoreMap[strategy.meta.id] = strategy.score(m);
+      // Strategy scores
+      const scoreMap: Record<string, unknown> = {};
+      if (m) {
+        for (const strategy of activeStrategies()) {
+          scoreMap[strategy.meta.id] = strategy.score(m);
+        }
       }
+
+      // Build a minimal profile (matches StockProfile shape)
+      const latestStmt = history.find(s => s.typeOfCurrentPeriod === 'FY') ?? history[0] ?? null;
+      const prices = pricesCache.get(info.code) ?? [];
+      const latestPrice = prices.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      )[0];
+
+      const shares = latestStmt?.sharesOutstanding ?? info.sharesOutstanding;
+      const marketCap = latestPrice ? computeMarketCap(shares, latestPrice.close) : 0;
+      const metricsForSnapshot = (latestStmt && marketCap > 0)
+        ? computeMetrics({
+            marketCap,
+            currentAssets: latestStmt.currentAssets ?? null,
+            totalAssets: latestStmt.totalAssets ?? null,
+            equity: latestStmt.equity ?? null,
+            investmentSecurities: null,
+            profit: latestStmt.profit ?? null,
+          })
+        : null;
+
+      const detail = {
+        profile: {
+          code: info.code,
+          name: info.name,
+          sector33Name: info.sector33Name ?? null,
+          sector33Code: info.sector33Code ?? null,
+          sector17Code: info.sector17Code ?? null,
+          marketSegment: info.marketSegment ?? null,
+          scaleCategory: info.scaleCategory ?? null,
+          updatedAt: new Date().toISOString(),
+          snapshots: metricsForSnapshot
+            ? [
+                {
+                  id: `static-${info.code}`,
+                  snapshotAt: new Date().toISOString(),
+                  marketCap,
+                  netCash: metricsForSnapshot.netCash,
+                  netCashRatio: metricsForSnapshot.netCashRatio,
+                  cashNeutralPer: metricsForSnapshot.cashNeutralPer,
+                  per: metricsForSnapshot.per,
+                  pbr: metricsForSnapshot.pbr,
+                },
+              ]
+            : [],
+        },
+        history: history.map(s => ({
+          id: `static-${info.code}-${s.fiscalYear}-${s.typeOfCurrentPeriod}`,
+          code: s.code,
+          fiscalYear: s.fiscalYear,
+          typeOfCurrentPeriod: s.typeOfCurrentPeriod,
+          disclosedDate: s.disclosedDate instanceof Date ? s.disclosedDate.toISOString() : s.disclosedDate,
+          periodEndDate: s.periodEndDate instanceof Date ? s.periodEndDate.toISOString() : s.periodEndDate,
+          netSales: s.netSales ?? null,
+          operatingProfit: s.operatingProfit ?? null,
+          ordinaryProfit: null,
+          profit: s.profit ?? null,
+          totalAssets: s.totalAssets ?? null,
+          equity: s.equity ?? null,
+          cashAndEquivalents: s.cashAndEquivalents ?? null,
+          sharesOutstanding: s.sharesOutstanding ?? null,
+        })),
+        strategies: scoreMap,
+      };
+
+      write(`stock-${info.code}.json`, detail);
+    } catch (err) {
+      console.warn(`  [WARN] detail pass failed for ${info.code}: ${err instanceof Error ? err.message : String(err)}`);
+      continue;
     }
-
-    // Build a minimal profile (matches StockProfile shape)
-    const latestStmt = history.find(s => s.typeOfCurrentPeriod === 'FY') ?? history[0] ?? null;
-    const prices = pricesCache.get(info.code) ?? [];
-    const latestPrice = prices.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    )[0];
-
-    const shares = latestStmt?.sharesOutstanding ?? info.sharesOutstanding;
-    const marketCap = latestPrice ? computeMarketCap(shares, latestPrice.close) : 0;
-    const metricsForSnapshot = latestStmt
-      ? computeMetrics({
-          marketCap,
-          currentAssets: latestStmt.currentAssets ?? null,
-          totalAssets: latestStmt.totalAssets ?? null,
-          equity: latestStmt.equity ?? null,
-          investmentSecurities: null,
-          profit: latestStmt.profit ?? null,
-        })
-      : null;
-
-    const detail = {
-      profile: {
-        code: info.code,
-        name: info.name,
-        sector33Name: info.sector33Name ?? null,
-        sector33Code: info.sector33Code ?? null,
-        sector17Code: info.sector17Code ?? null,
-        marketSegment: info.marketSegment ?? null,
-        scaleCategory: info.scaleCategory ?? null,
-        updatedAt: new Date().toISOString(),
-        snapshots: metricsForSnapshot
-          ? [
-              {
-                id: `static-${info.code}`,
-                snapshotAt: new Date().toISOString(),
-                marketCap,
-                netCash: metricsForSnapshot.netCash,
-                netCashRatio: metricsForSnapshot.netCashRatio,
-                cashNeutralPer: metricsForSnapshot.cashNeutralPer,
-                per: metricsForSnapshot.per,
-                pbr: metricsForSnapshot.pbr,
-              },
-            ]
-          : [],
-      },
-      history: history.map(s => ({
-        id: `static-${info.code}-${s.fiscalYear}-${s.typeOfCurrentPeriod}`,
-        code: s.code,
-        fiscalYear: s.fiscalYear,
-        typeOfCurrentPeriod: s.typeOfCurrentPeriod,
-        disclosedDate: s.disclosedDate instanceof Date ? s.disclosedDate.toISOString() : s.disclosedDate,
-        periodEndDate: s.periodEndDate instanceof Date ? s.periodEndDate.toISOString() : s.periodEndDate,
-        netSales: s.netSales ?? null,
-        operatingProfit: s.operatingProfit ?? null,
-        ordinaryProfit: null,
-        profit: s.profit ?? null,
-        totalAssets: s.totalAssets ?? null,
-        equity: s.equity ?? null,
-        cashAndEquivalents: s.cashAndEquivalents ?? null,
-        sharesOutstanding: s.sharesOutstanding ?? null,
-      })),
-      strategies: scoreMap,
-    };
-
-    write(`stock-${info.code}.json`, detail);
   }
 
   // 7. Write meta.json

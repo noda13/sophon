@@ -23,8 +23,8 @@ export class GrahamStrategy implements InvestmentStrategy {
       ncrBonus: null,
     };
 
-    if (m.per === null || m.pbr === null || m.equity === null || m.equity <= 0) {
-      return { score: 0, components, reason: 'データ不足（PER/PBR/純資産が必要）' };
+    if (m.per === null || m.pbr === null) {
+      return { score: 0, components, reason: 'データ不足（PER/PBRが必要）' };
     }
 
     // Graham number criterion: PBR × PER ≤ 22.5
@@ -39,7 +39,8 @@ export class GrahamStrategy implements InvestmentStrategy {
     } else {
       grahamProductScore = 0;
     }
-    components.grahamProductScore = Math.round(grahamProductScore);
+    grahamProductScore = Math.round(grahamProductScore);
+    components.grahamProductScore = grahamProductScore;
 
     let pbrScore: number;
     if (m.pbr <= 0.5) pbrScore = 25;
@@ -57,7 +58,7 @@ export class GrahamStrategy implements InvestmentStrategy {
     else perScore = 0;
     components.perScore = perScore;
 
-    const ncrBonus = m.netCashRatio >= 0 ? 5 : 0;
+    const ncrBonus = m.netCashRatio !== null && m.netCashRatio >= 0 ? 5 : 0;
     components.ncrBonus = ncrBonus;
 
     let rawScore = grahamProductScore + pbrScore + perScore + ncrBonus;
