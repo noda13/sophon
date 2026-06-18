@@ -29,7 +29,7 @@ const SECTION_LABEL_COLOR: Record<string, string> = {
 };
 
 export function DigestPage() {
-  const { data: meta } = useQuery({
+  const { data: meta, isLoading: isMetaLoading } = useQuery({
     queryKey: ['meta'],
     queryFn: fetchMeta,
   });
@@ -67,9 +67,9 @@ export function DigestPage() {
       <div className="flex items-center justify-center gap-4 mb-6">
         <button
           onClick={handlePrev}
-          disabled={!meta || isAtEarliest}
+          disabled={isMetaLoading || isAtEarliest}
           className={`p-2 rounded-md transition-colors ${
-            !meta || isAtEarliest
+            isMetaLoading || isAtEarliest
               ? 'bg-gray-900 text-gray-700 cursor-not-allowed'
               : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
           }`}
@@ -82,9 +82,9 @@ export function DigestPage() {
         </span>
         <button
           onClick={handleNext}
-          disabled={!meta || isAtLatest}
+          disabled={isMetaLoading || isAtLatest}
           className={`p-2 rounded-md transition-colors ${
-            !meta || isAtLatest
+            isMetaLoading || isAtLatest
               ? 'bg-gray-900 text-gray-700 cursor-not-allowed'
               : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
           }`}

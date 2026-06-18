@@ -374,17 +374,22 @@ async function callGemini(system: string, user: string, config: LLMConfig): Prom
     model: config.model,
     systemInstruction: system,
   });
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('Gemini request timeout (30s)')), 30000)
-  );
-  const r = await Promise.race([
-    model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: user }] }],
-      generationConfig: { responseMimeType: 'application/json' },
-    }),
-    timeout,
-  ]);
-  return r.response.text();
+  let timerId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timerId = setTimeout(() => reject(new Error('Gemini request timeout (30s)')), 30000);
+  });
+  try {
+    const r = await Promise.race([
+      model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: user }] }],
+        generationConfig: { responseMimeType: 'application/json' },
+      }),
+      timeout,
+    ]);
+    return r.response.text();
+  } finally {
+    clearTimeout(timerId!);
+  }
 }
 
 function parseJson(text: string): unknown {
