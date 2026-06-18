@@ -3,7 +3,7 @@ import type { Category } from '../lib/categories';
 
 async function fetchStaticJson<T>(filename: string, fallback: T): Promise<T> {
   try {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = import.meta.env.BASE_URL;
     const normalizedBase = base.endsWith('/') ? base : `${base}/`;
     const res = await fetch(`${normalizedBase}data/${filename}`);
     if (!res.ok) return fallback;

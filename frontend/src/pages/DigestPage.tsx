@@ -48,6 +48,7 @@ export function DigestPage() {
     queryKey: ['digest', displayDate],
     queryFn: () => fetchDigest(displayDate),
     enabled: !!displayDate,
+    staleTime: 0,
   });
 
   const handlePrev = () => setCurrentDate(addDays(displayDate, -1));
@@ -126,9 +127,9 @@ export function DigestPage() {
 
           {/* Per-category sections */}
           {digest.sections.map((section) => {
-            const meta = CATEGORY_META[section.category as Category];
-            if (!meta || section.highlights.length === 0) return null;
-            const colorKey = meta.color;
+            const sectionMeta = CATEGORY_META[section.category as Category];
+            if (!sectionMeta || section.highlights.length === 0) return null;
+            const colorKey = sectionMeta.color;
             const sectionStyle = SECTION_COLOR[colorKey] ?? 'border-gray-700 bg-gray-900';
             const labelStyle = SECTION_LABEL_COLOR[colorKey] ?? 'text-gray-300';
 
@@ -138,11 +139,11 @@ export function DigestPage() {
                 className={`border rounded-lg p-5 ${sectionStyle}`}
               >
                 <h2 className={`text-sm font-bold mb-4 ${labelStyle}`}>
-                  {meta.label}
+                  {sectionMeta.label}
                 </h2>
                 <div className="space-y-4">
                   {section.highlights.map((highlight, idx) => (
-                    <div key={idx} className="border-t border-gray-800 pt-3 first:border-t-0 first:pt-0">
+                    <div key={highlight.url || String(idx)} className="border-t border-gray-800 pt-3 first:border-t-0 first:pt-0">
                       <h3 className="text-sm font-semibold text-gray-100 mb-1 leading-snug">
                         <a
                           href={safeHref(highlight.url)}

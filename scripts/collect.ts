@@ -137,6 +137,7 @@ async function collectArticles(existing: Article[]): Promise<Article[]> {
       const items: Article[] = [];
       for (const item of (feed.items ?? []).slice(0, 30)) {
         if (!item.title || !item.link) continue;
+        if (!/^https?:\/\//i.test(item.link)) continue;  // reject non-http(s) URLs (e.g. javascript:)
         const id = genId(item.link, item.title);
         if (ids.has(id)) continue;
         items.push({
@@ -192,6 +193,12 @@ interface EndOfLifeCycle {
   lts?: boolean | string;
 }
 
+function computeDaysLeft(eol: string | false, today: Date): number {
+  if (eol === false) return EOL_NO_DATE_DAYS;
+  const ms = new Date(eol).getTime() - today.getTime();
+  return Math.min(Math.round(ms / (1000 * 60 * 60 * 24)), EOL_NO_DATE_DAYS - 1);
+}
+
 async function collectEol(prev: EolItem[]): Promise<EolItem[]> {
   const today = new Date();
   const results: EolItem[] = [];
@@ -218,16 +225,14 @@ async function collectEol(prev: EolItem[]): Promise<EolItem[]> {
           .slice(0, 3);
 
         for (const c of active) {
-          const daysLeft = c.eol === false
-            ? Infinity
-            : Math.round((new Date(c.eol as string).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          const daysLeft = computeDaysLeft(c.eol as string | false, today);
 
           results.push({
             product: product.label,
             cycle: c.cycle,
             eol: c.eol as string | false,
             latest: c.latest,
-            daysLeft: daysLeft === Infinity ? EOL_NO_DATE_DAYS : daysLeft,
+            daysLeft,
           });
         }
         console.log(`  ${product.label}: ${active.length} active cycles`);
@@ -236,9 +241,7 @@ async function collectEol(prev: EolItem[]): Promise<EolItem[]> {
         // Carry forward cached values for this product
         const cached = prev.filter(item => item.product === product.label);
         for (const item of cached) {
-          const freshDaysLeft = item.eol === false
-            ? EOL_NO_DATE_DAYS
-            : Math.round((new Date(item.eol).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          const freshDaysLeft = computeDaysLeft(item.eol, today);
           if (!Number.isFinite(freshDaysLeft) || freshDaysLeft < 0) continue; // skip already-EOL items, consistent with success path
           results.push({ ...item, daysLeft: freshDaysLeft });
         }
@@ -340,7 +343,7 @@ async function callOpenAICompatible(system: string, user: string, config: LLMCon
       model: config.model,
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
       temperature: 0.3,
-      max_tokens: 4096,
+      max_tokens: 8192,
       ...(SUPPORTS_JSON_FORMAT.has(config.provider) ? { response_format: { type: 'json_object' } } : {}),
     }),
   });
@@ -522,14 +525,17 @@ async function main() {
     console.log(`--- LLM (${llm.provider}): Summarize & Classify ---`);
     await summarizeAndClassify(articles);
 
+    // Persist summaries before buildDigest so a crash/kill there doesn't waste LLM work.
+    writeJson('articles.json', articles.slice(0, 200));
+
     console.log(`\n--- LLM (${llm.provider}): Build Digest ---`);
     await buildDigest(articles);
   } else {
     console.log('No LLM configured, skipping AI processing\n');
+    // Persist articles even when no LLM is configured (for dedup on next run).
+    writeJson('articles.json', articles.slice(0, 200));
   }
 
-  // Persist all articles so dedup works across runs; UI filters to summarized-only.
-  writeJson('articles.json', articles.slice(0, 200));
   writeJson('eol.json', eol);
   writeJson('meta.json', { lastUpdated: new Date().toISOString() });
 
