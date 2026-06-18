@@ -147,7 +147,8 @@ async function collectArticles(existing: Article[]): Promise<Article[]> {
           originalTitle: item.title,
           originalUrl: item.link,
           publishedAt: (() => {
-            const d = item.pubDate ? new Date(item.pubDate) : null;
+            const raw = item.isoDate ?? item.pubDate;
+            const d = raw ? new Date(raw) : null;
             return d && !isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString();
           })(),
           summaryJa: '',
@@ -192,7 +193,6 @@ interface EndOfLifeCycle {
 }
 
 async function collectEol(prev: EolItem[]): Promise<EolItem[]> {
-  const prevMap = new Map(prev.map(e => [`${e.product}:${e.cycle}`, e]));
   const today = new Date();
   const results: EolItem[] = [];
 
@@ -234,14 +234,13 @@ async function collectEol(prev: EolItem[]): Promise<EolItem[]> {
       } catch (e) {
         console.warn(`  ${product.label}: fetch failed (${e instanceof Error ? e.message : e}), using cache`);
         // Carry forward cached values for this product
-        for (const [key, item] of prevMap.entries()) {
-          const productSegment = key.split(':')[0];
-          if (productSegment === product.label) {
-            const freshDaysLeft = item.eol === false
-              ? EOL_NO_DATE_DAYS
-              : Math.round((new Date(item.eol).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-            results.push({ ...item, daysLeft: freshDaysLeft });
-          }
+        const cached = prev.filter(item => item.product === product.label);
+        for (const item of cached) {
+          const freshDaysLeft = item.eol === false
+            ? EOL_NO_DATE_DAYS
+            : Math.round((new Date(item.eol).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          if (!Number.isFinite(freshDaysLeft) || freshDaysLeft < 0) continue; // skip already-EOL items, consistent with success path
+          results.push({ ...item, daysLeft: freshDaysLeft });
         }
       }
     }),
@@ -272,6 +271,7 @@ interface LLMConfig {
 const PROVIDER_DEFAULTS: Record<string, { baseUrl: string; model: string }> = {
   groq:     { baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile' },
   openai:   { baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
+  gemini:   { baseUrl: '', model: 'gemini-2.0-flash' },
   together: { baseUrl: 'https://api.together.xyz/v1', model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo' },
   openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'meta-llama/llama-3.3-70b-instruct' },
 };
@@ -325,12 +325,13 @@ async function callLLM(system: string, user: string): Promise<string> {
   if (!config) throw new Error('No LLM configured. Set GROQ_API_KEY, GEMINI_API_KEY, or LLM_API_KEY+LLM_BASE_URL.');
 
   if (config.provider === 'gemini') {
-    return callGemini(system, user, config.key);
+    return callGemini(system, user, config);
   }
   return callOpenAICompatible(system, user, config);
 }
 
 async function callOpenAICompatible(system: string, user: string, config: LLMConfig): Promise<string> {
+  const SUPPORTS_JSON_FORMAT = new Set(['groq', 'openai']);
   const res = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     signal: AbortSignal.timeout(30000),
@@ -340,7 +341,7 @@ async function callOpenAICompatible(system: string, user: string, config: LLMCon
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
       temperature: 0.3,
       max_tokens: 4096,
-      response_format: { type: 'json_object' },
+      ...(SUPPORTS_JSON_FORMAT.has(config.provider) ? { response_format: { type: 'json_object' } } : {}),
     }),
   });
   if (!res.ok) throw new Error(`${config.provider} ${res.status}: ${await res.text()}`);
@@ -350,11 +351,11 @@ async function callOpenAICompatible(system: string, user: string, config: LLMCon
   return content;
 }
 
-async function callGemini(system: string, user: string, key: string): Promise<string> {
+async function callGemini(system: string, user: string, config: LLMConfig): Promise<string> {
   const { GoogleGenerativeAI } = await import('@google/generative-ai');
-  const genAI = new GoogleGenerativeAI(key);
+  const genAI = new GoogleGenerativeAI(config.key);
   const model = genAI.getGenerativeModel({
-    model: process.env.LLM_MODEL || 'gemini-2.0-flash',
+    model: config.model,
     systemInstruction: system,
   });
   const r = await model.generateContent({

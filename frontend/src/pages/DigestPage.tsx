@@ -64,7 +64,12 @@ export function DigestPage() {
       <div className="flex items-center justify-center gap-4 mb-6">
         <button
           onClick={handlePrev}
-          className="p-2 rounded-md bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+          disabled={!meta}
+          className={`p-2 rounded-md transition-colors ${
+            !meta
+              ? 'bg-gray-900 text-gray-700 cursor-not-allowed'
+              : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+          }`}
           aria-label="前の日"
         >
           ←
@@ -74,9 +79,9 @@ export function DigestPage() {
         </span>
         <button
           onClick={handleNext}
-          disabled={isToday}
+          disabled={!meta || isToday}
           className={`p-2 rounded-md transition-colors ${
-            isToday
+            !meta || isToday
               ? 'bg-gray-900 text-gray-700 cursor-not-allowed'
               : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
           }`}

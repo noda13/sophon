@@ -23,7 +23,7 @@ interface Props {
 }
 
 export function ArticleCard({ article }: Props) {
-  const categoryMeta = CATEGORY_META[article.category];
+  const categoryMeta = CATEGORY_META[article.category] ?? CATEGORY_META['trend'];
   const categoryStyle = CATEGORY_COLOR_STYLES[categoryMeta.color] ?? CATEGORY_COLOR_STYLES['blue'];
 
   const publishedDate = new Date(article.publishedAt).toLocaleDateString('ja-JP', {

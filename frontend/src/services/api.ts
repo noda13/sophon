@@ -1,3 +1,4 @@
+import { CATEGORIES } from '../lib/categories';
 import type { Category } from '../lib/categories';
 
 async function fetchStaticJson<T>(filename: string, fallback: T): Promise<T> {
@@ -55,7 +56,9 @@ export interface Meta {
 
 export const fetchArticles = (category?: Category, limit = 50): Promise<Article[]> =>
   fetchStaticJson<Article[]>('articles.json', []).then(all => {
-    const summarized = all.filter(a => (a.summaryJa?.length ?? 0) > 0);
+    const summarized = all
+      .filter(a => (a.summaryJa?.length ?? 0) > 0)
+      .filter(a => (CATEGORIES as readonly string[]).includes(a.category));
     const filtered = category ? summarized.filter(a => a.category === category) : summarized;
     return filtered.slice(0, limit);
   });
