@@ -14,6 +14,8 @@ function Layout() {
   );
 }
 
+// Hash routing is intentional: GitHub Pages serves only static files with no
+// server-side fallback, so BrowserRouter would 404 on direct deep-link access.
 const router = createHashRouter([
   {
     path: '/',

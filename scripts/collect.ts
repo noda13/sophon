@@ -55,6 +55,9 @@ function genId(url: string, title: string): string {
 }
 
 const BATCH_DELAY_MS = 30_000;
+// Max articles to summarize per run (rate-limit/cost cap). Un-summarized articles persist
+// and are picked up in subsequent runs.
+const MAX_SUMMARIZE_PER_RUN = 50;
 
 // --- Sources ---
 const SOURCES = [
@@ -190,7 +193,8 @@ async function collectEol(prev: EolItem[]): Promise<EolItem[]> {
         console.warn(`  ${product.label}: fetch failed (${e instanceof Error ? e.message : e}), using cache`);
         // Carry forward cached values for this product
         for (const [key, item] of prevMap.entries()) {
-          if (key.startsWith(`${product.label}:`)) {
+          const productSegment = key.split(':')[0];
+          if (productSegment === product.label) {
             results.push(item);
           }
         }
@@ -308,7 +312,10 @@ async function callGemini(system: string, user: string, key: string): Promise<st
     model: process.env.LLM_MODEL || 'gemini-2.0-flash',
     systemInstruction: system,
   });
-  const r = await model.generateContent({ contents: [{ role: 'user', parts: [{ text: user }] }] });
+  const r = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: user }] }],
+    generationConfig: { responseMimeType: 'application/json' },
+  });
   return r.response.text();
 }
 
@@ -345,7 +352,7 @@ async function summarizeAndClassify(articles: Article[]) {
 
 応答は必ず以下のJSON形式: {"results":[{"index":0,"summaryJa":"...","category":"trend","importance":"中"}]}`;
 
-  for (let i = 0; i < Math.min(todo.length, 50); i += 10) {
+  for (let i = 0; i < Math.min(todo.length, MAX_SUMMARIZE_PER_RUN); i += 10) {
     const batch = todo.slice(i, i + 10);
     const msg = batch.map((a, j) => `[${j}] source:${a.source} hint:${a.category} title:${a.originalTitle}`).join('\n');
     try {
@@ -378,7 +385,7 @@ async function summarizeAndClassify(articles: Article[]) {
       }
       console.log(`  Batch ${Math.floor(i / 10) + 1} done (${accepted} summarized)`);
     } catch (e) { console.error('  Summarize failed:', e instanceof Error ? e.message : e); }
-    if (i + 10 < Math.min(todo.length, 50)) await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
+    if (i + 10 < Math.min(todo.length, MAX_SUMMARIZE_PER_RUN)) await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
   }
 }
 
@@ -475,11 +482,8 @@ async function main() {
     console.log('No LLM configured, skipping AI processing\n');
   }
 
-  const filteredArticles = articles
-    .filter(a => !a.summaryJa || a.summaryJa.length > 0)
-    .slice(0, 200);
-
-  writeJson('articles.json', filteredArticles);
+  // Persist all articles so dedup works across runs; UI filters to summarized-only.
+  writeJson('articles.json', articles.slice(0, 200));
   writeJson('eol.json', eol);
   writeJson('meta.json', { lastUpdated: new Date().toISOString() });
 

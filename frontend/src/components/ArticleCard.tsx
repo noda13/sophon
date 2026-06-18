@@ -1,6 +1,10 @@
 import type { Article } from '../services/api';
 import { CATEGORY_META } from '../lib/categories';
 
+function safeHref(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : '#';
+}
+
 const IMPORTANCE_STYLES: Record<Article['importance'], string> = {
   '高': 'bg-red-900 text-red-300 border border-red-700',
   '中': 'bg-yellow-900 text-yellow-300 border border-yellow-700',
@@ -45,7 +49,7 @@ export function ArticleCard({ article }: Props) {
       {/* Title */}
       <h3 className="text-sm font-semibold text-gray-100 mb-1.5 leading-snug">
         <a
-          href={article.originalUrl}
+          href={safeHref(article.originalUrl)}
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-blue-400 transition-colors"

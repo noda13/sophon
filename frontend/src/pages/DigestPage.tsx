@@ -12,9 +12,14 @@ function formatDate(date: Date): string {
 }
 
 function addDays(dateStr: string, delta: number): string {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + delta);
-  return formatDate(d);
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d); // local time
+  date.setDate(date.getDate() + delta);
+  return formatDate(date);
+}
+
+function safeHref(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : '#';
 }
 
 const SECTION_COLOR: Record<string, string> = {
@@ -143,7 +148,7 @@ export function DigestPage() {
                     <div key={idx} className="border-t border-gray-800 pt-3 first:border-t-0 first:pt-0">
                       <h3 className="text-sm font-semibold text-gray-100 mb-1 leading-snug">
                         <a
-                          href={highlight.url}
+                          href={safeHref(highlight.url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:text-blue-400 transition-colors"
