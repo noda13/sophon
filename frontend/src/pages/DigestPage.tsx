@@ -42,9 +42,8 @@ export function DigestPage() {
   const displayDate = currentDate ?? latestDigestDate;
 
   const { data: digest, isLoading } = useQuery({
-    queryKey: ['digest', displayDate],
-    queryFn: () => fetchDigest(displayDate),
-    enabled: !!displayDate,
+    queryKey: ['digest', currentDate ?? 'latest'],
+    queryFn: () => currentDate ? fetchDigest(currentDate) : fetchDigest(),
     staleTime: 0,
   });
 

@@ -229,6 +229,12 @@ async function collectEol(prev: EolItem[]): Promise<EolItem[]> {
             }
             return false;
           })
+          .sort((a, b) => {
+            if (a.eol === false && b.eol === false) return 0;
+            if (a.eol === false) return -1;
+            if (b.eol === false) return 1;
+            return new Date(b.eol as string).getTime() - new Date(a.eol as string).getTime();
+          })
           .slice(0, 3);
 
         for (const c of active) {
@@ -354,7 +360,7 @@ async function callOpenAICompatible(system: string, user: string, config: LLMCon
       ...(SUPPORTS_JSON_FORMAT.has(config.provider) ? { response_format: { type: 'json_object' } } : {}),
     }),
   });
-  if (!res.ok) throw new Error(`${config.provider} ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`${config.provider} ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new Error(`${config.provider} returned empty or malformed response (no choices[0].message.content)`);
