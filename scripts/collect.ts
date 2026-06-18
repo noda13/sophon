@@ -468,8 +468,13 @@ async function buildDigest(articles: Article[]): Promise<string | null> {
   const today = new Date().toISOString().slice(0, 10);
 
   // Filter: summaryJa populated + importance '高' or '中', max 30
+  const IMPORTANCE_RANK: Record<string, number> = { '高': 0, '中': 1 };
   const candidates = articles
     .filter(a => a.summaryJa && a.summaryJa.length > 0 && (a.importance === '高' || a.importance === '中'))
+    .sort((a, b) =>
+      (IMPORTANCE_RANK[a.importance] ?? 1) - (IMPORTANCE_RANK[b.importance] ?? 1) ||
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    )
     .slice(0, 30);
 
   if (!candidates.length) {
@@ -538,7 +543,7 @@ async function main() {
 
   const prevArticles = readArticles();
   const prevEol = readEolItems();
-  const prevMeta = readJson<{ lastUpdated?: string; latestDigestDate?: string }>('meta.json', {});
+  const prevMeta = readJson<{ lastUpdated?: string; latestDigestDate?: string; earliestDigestDate?: string }>('meta.json', {});
 
   console.log('--- Articles ---');
   const articles = await collectArticles(prevArticles);
@@ -567,9 +572,12 @@ async function main() {
 
   writeJson('eol.json', eol);
   const latestDigestDate = builtDigestDate ?? prevMeta.latestDigestDate ?? null;
+  // Carry forward earliestDigestDate — set on first successful digest, never moves earlier
+  const earliestDigestDate = prevMeta.earliestDigestDate ?? latestDigestDate ?? null;
   writeJson('meta.json', {
     lastUpdated: new Date().toISOString(),
     ...(latestDigestDate ? { latestDigestDate } : {}),
+    ...(earliestDigestDate ? { earliestDigestDate } : {}),
   });
 
   console.log('\n=== Saved to frontend/public/data/ ===');

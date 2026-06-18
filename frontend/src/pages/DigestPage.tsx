@@ -48,7 +48,9 @@ export function DigestPage() {
     staleTime: 0,
   });
 
-  const handlePrev = () => setCurrentDate(addDays(displayDate, -1));
+  const handlePrev = () => {
+    if (!isAtEarliest) setCurrentDate(addDays(displayDate, -1));
+  };
   const handleNext = () => {
     const next = addDays(displayDate, 1);
     // Cap at latestDigestDate to avoid navigating into days with no digest data
@@ -56,6 +58,8 @@ export function DigestPage() {
   };
 
   const isAtLatest = displayDate >= latestDigestDate;
+  const earliestDigestDate = meta?.earliestDigestDate?.slice(0, 10) ?? null;
+  const isAtEarliest = earliestDigestDate ? displayDate <= earliestDigestDate : false;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -63,9 +67,9 @@ export function DigestPage() {
       <div className="flex items-center justify-center gap-4 mb-6">
         <button
           onClick={handlePrev}
-          disabled={!meta}
+          disabled={!meta || isAtEarliest}
           className={`p-2 rounded-md transition-colors ${
-            !meta
+            !meta || isAtEarliest
               ? 'bg-gray-900 text-gray-700 cursor-not-allowed'
               : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
           }`}
