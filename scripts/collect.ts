@@ -168,9 +168,13 @@ async function collectArticles(existing: Article[]): Promise<Article[]> {
   const all = [...fresh, ...existing];
   all.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   if (all.length <= 200) return all;
+  const freshIds = new Set(fresh.map(a => a.id));
   const withSummary = all.filter(a => a.summaryJa.length > 0);
-  const withoutSummary = all.filter(a => a.summaryJa.length === 0);
-  // Reserve slots for fresh articles so they can be summarized in future runs
+  // Newly-fetched articles come first so they always reach the summarization pipeline
+  // even when old unsummarized backlog is large.
+  const freshUnsummarized = all.filter(a => !a.summaryJa && freshIds.has(a.id));
+  const oldUnsummarized = all.filter(a => !a.summaryJa && !freshIds.has(a.id));
+  const withoutSummary = [...freshUnsummarized, ...oldUnsummarized];
   const freshSlots = Math.min(withoutSummary.length, MAX_SUMMARIZE_PER_RUN);
   const merged = [...withSummary.slice(0, 200 - freshSlots), ...withoutSummary.slice(0, freshSlots)];
   merged.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
@@ -255,7 +259,7 @@ async function collectEol(prev: EolItem[]): Promise<EolItem[]> {
         const cached = prev.filter(item => item.product === product.label);
         for (const item of cached) {
           const freshDaysLeft = computeDaysLeft(item.eol, today);
-          if (!Number.isFinite(freshDaysLeft) || freshDaysLeft < 0) continue; // skip already-EOL items, consistent with success path
+          if (freshDaysLeft < 0) continue; // skip already-EOL items, consistent with live path
           results.push({ ...item, daysLeft: freshDaysLeft });
         }
       }
@@ -348,6 +352,8 @@ async function callLLM(system: string, user: string): Promise<string> {
 
 async function callOpenAICompatible(system: string, user: string, config: LLMConfig): Promise<string> {
   const SUPPORTS_JSON_FORMAT = new Set(['groq', 'openai', 'together', 'openrouter']);
+  // Custom providers can opt in via LLM_JSON_FORMAT=true when their endpoint supports json_object
+  if (process.env.LLM_JSON_FORMAT === 'true') SUPPORTS_JSON_FORMAT.add(config.provider);
   const res = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     signal: AbortSignal.timeout(30000),

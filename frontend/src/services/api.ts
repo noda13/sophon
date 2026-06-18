@@ -58,9 +58,7 @@ export interface Meta {
 
 export const fetchArticles = (category?: Category, limit = 50): Promise<Article[]> =>
   fetchStaticJson<Article[]>('articles.json', []).then(all => {
-    const summarized = all
-      .filter(a => (a.summaryJa?.length ?? 0) > 0)
-      .filter(a => (CATEGORIES as readonly string[]).includes(a.category));
+    const summarized = all.filter(a => (a.summaryJa?.length ?? 0) > 0);
     const filtered = category ? summarized.filter(a => a.category === category) : summarized;
     return filtered.slice(0, limit);
   });

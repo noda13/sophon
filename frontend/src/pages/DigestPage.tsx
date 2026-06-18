@@ -128,7 +128,7 @@ export function DigestPage() {
           </section>
 
           {/* Per-category sections */}
-          {digest.sections.map((section) => {
+          {(digest.sections ?? []).map((section) => {
             const sectionMeta = CATEGORY_META[section.category as Category];
             if (!sectionMeta || section.highlights.length === 0) return null;
             const colorKey = sectionMeta.color;
