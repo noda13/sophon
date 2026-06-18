@@ -510,7 +510,7 @@ async function buildDigest(articles: Article[]): Promise<string | null> {
         highlights: z.array(z.object({
           title: z.string(),
           summaryJa: z.string(),
-          url: z.string(),
+          url: z.string().refine(u => /^https?:\/\//i.test(u), { message: 'URL must use http(s) scheme' }),
         })).max(5),
       })),
     });
