@@ -170,7 +170,11 @@ async function collectArticles(existing: Article[]): Promise<Article[]> {
   if (all.length <= 200) return all;
   const withSummary = all.filter(a => a.summaryJa.length > 0);
   const withoutSummary = all.filter(a => a.summaryJa.length === 0);
-  return [...withSummary, ...withoutSummary].slice(0, 200);
+  // Reserve slots for fresh articles so they can be summarized in future runs
+  const freshSlots = Math.min(withoutSummary.length, MAX_SUMMARIZE_PER_RUN);
+  const merged = [...withSummary.slice(0, 200 - freshSlots), ...withoutSummary.slice(0, freshSlots)];
+  merged.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  return merged;
 }
 
 // --- EOL ---
@@ -337,7 +341,7 @@ async function callLLM(system: string, user: string): Promise<string> {
 }
 
 async function callOpenAICompatible(system: string, user: string, config: LLMConfig): Promise<string> {
-  const SUPPORTS_JSON_FORMAT = new Set(['groq', 'openai']);
+  const SUPPORTS_JSON_FORMAT = new Set(['groq', 'openai', 'together', 'openrouter']);
   const res = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     signal: AbortSignal.timeout(30000),
@@ -372,15 +376,17 @@ async function callGemini(system: string, user: string, config: LLMConfig): Prom
 }
 
 function parseJson(text: string): unknown {
-  try {
-    let s = text.trim();
-    if (s.startsWith('```')) s = s.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
-    return JSON.parse(s);
-  } catch (e) {
-    console.error('JSON parse failed:', e instanceof Error ? e.message : e);
-    console.error('Raw text (first 200 chars):', text.slice(0, 200));
-    throw new Error('LLM returned invalid JSON');
+  let s = text.trim();
+  if (s.startsWith('```')) s = s.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+  try { return JSON.parse(s); } catch {}
+  // Fallback: extract first balanced {...} block (handles leading explanatory text from LLMs)
+  const start = s.indexOf('{');
+  const end = s.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    try { return JSON.parse(s.slice(start, end + 1)); } catch {}
   }
+  console.error('JSON parse failed. Raw text (first 200 chars):', s.slice(0, 200));
+  throw new Error('LLM returned invalid JSON');
 }
 
 // --- Summarize & Classify ---

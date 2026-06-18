@@ -34,15 +34,12 @@ export function DigestPage() {
     queryFn: fetchMeta,
   });
 
-  // Determine today: prefer meta.lastUpdated UTC date, fallback to current UTC date
-  const todayStr = meta?.lastUpdated
-    ? meta.lastUpdated.slice(0, 10)
-    : new Date().toISOString().slice(0, 10);
-
+  // Navigation upper bound is always the real current date
+  const todayStr = new Date().toISOString().slice(0, 10);
+  // Default display: latest digest date from meta, fallback to today
+  const latestDigestDate = meta?.lastUpdated?.slice(0, 10) ?? todayStr;
   const [currentDate, setCurrentDate] = useState<string | null>(null);
-
-  // Use currentDate if set, otherwise use derived todayStr (but only once meta loads)
-  const displayDate = currentDate ?? todayStr;
+  const displayDate = currentDate ?? latestDigestDate;
 
   const { data: digest, isLoading } = useQuery({
     queryKey: ['digest', displayDate],
