@@ -102,7 +102,7 @@ export function DigestPage() {
       )}
 
       {/* Empty state */}
-      {!isLoading && (!digest || !digest.overviewJa) && (
+      {!isLoading && (!digest?.overviewJa && !(digest?.sections?.length)) && (
         <div className="text-center py-16 text-gray-500">
           <p className="text-lg">この日のダイジェストがありません</p>
           <p className="text-sm mt-1">{displayDate} のデータはまだ生成されていません</p>
@@ -110,7 +110,7 @@ export function DigestPage() {
       )}
 
       {/* Digest content */}
-      {!isLoading && digest?.overviewJa && (
+      {!isLoading && (digest?.overviewJa || (digest?.sections?.length ?? 0) > 0) && (
         <div className="space-y-6">
           {/* Overview */}
           <section className="bg-gray-900 border border-gray-800 rounded-lg p-5">

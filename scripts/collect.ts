@@ -167,7 +167,10 @@ async function collectArticles(existing: Article[]): Promise<Article[]> {
 
   const all = [...fresh, ...existing];
   all.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-  return all.slice(0, 200);
+  if (all.length <= 200) return all;
+  const withSummary = all.filter(a => a.summaryJa.length > 0);
+  const withoutSummary = all.filter(a => a.summaryJa.length === 0);
+  return [...withSummary, ...withoutSummary].slice(0, 200);
 }
 
 // --- EOL ---
