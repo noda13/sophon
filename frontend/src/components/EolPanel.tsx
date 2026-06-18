@@ -1,10 +1,18 @@
 import type { EolItem } from '../services/api';
+import { EOL_NO_DATE_DAYS } from '../lib/categories';
 
 interface Props {
   items: EolItem[];
 }
 
 function getEolStyle(daysLeft: number): { card: string; badge: string; label: string } {
+  if (daysLeft >= EOL_NO_DATE_DAYS) {
+    return {
+      card: 'bg-gray-900 border-gray-700',
+      badge: 'bg-gray-800 text-gray-400 border-gray-700',
+      label: 'EOL未定',
+    };
+  }
   if (daysLeft < 0) {
     return {
       card: 'bg-gray-900 border-gray-700',

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import Parser from 'rss-parser';
 import crypto from 'crypto';
 import { z } from 'zod';
-import { type Category } from '../shared/categories.js';
+import { CATEGORIES, EOL_NO_DATE_DAYS, type Category } from '../shared/categories.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(__dirname, '../frontend/public/data');
@@ -58,6 +58,45 @@ const BATCH_DELAY_MS = 30_000;
 // Max articles to summarize per run (rate-limit/cost cap). Un-summarized articles persist
 // and are picked up in subsequent runs.
 const MAX_SUMMARIZE_PER_RUN = 50;
+
+const articleSchema = z.object({
+  id: z.string(),
+  source: z.string(),
+  category: z.enum(CATEGORIES),
+  importance: z.enum(['高', '中', '低']),
+  originalTitle: z.string(),
+  originalUrl: z.string(),
+  publishedAt: z.string(),
+  summaryJa: z.string(),
+});
+
+const eolItemSchema = z.object({
+  product: z.string(),
+  cycle: z.string(),
+  eol: z.union([z.string(), z.literal(false)]),
+  latest: z.string().optional(),
+  daysLeft: z.number(),
+});
+
+function readArticles(): Article[] {
+  const raw = readJson<unknown>('articles.json', []);
+  const result = z.array(articleSchema).safeParse(raw);
+  if (!result.success) {
+    console.warn('[readArticles] Invalid articles.json, starting fresh');
+    return [];
+  }
+  return result.data;
+}
+
+function readEolItems(): EolItem[] {
+  const raw = readJson<unknown>('eol.json', []);
+  const result = z.array(eolItemSchema).safeParse(raw);
+  if (!result.success) {
+    console.warn('[readEolItems] Invalid eol.json, starting fresh');
+    return [];
+  }
+  return result.data;
+}
 
 // --- Sources ---
 const SOURCES = [
@@ -185,7 +224,7 @@ async function collectEol(prev: EolItem[]): Promise<EolItem[]> {
             cycle: c.cycle,
             eol: c.eol as string | false,
             latest: c.latest,
-            daysLeft: daysLeft === Infinity ? 9999 : daysLeft,
+            daysLeft: daysLeft === Infinity ? EOL_NO_DATE_DAYS : daysLeft,
           });
         }
         console.log(`  ${product.label}: ${active.length} active cycles`);
@@ -362,7 +401,7 @@ async function summarizeAndClassify(articles: Article[]) {
       const articleResultSchema = z.object({
         index: z.number().int().min(0),
         summaryJa: z.string(),
-        category: z.enum(['trend', 'ai', 'security', 'release']),
+        category: z.enum(CATEGORIES),
         importance: z.enum(['高', '中', '低']),
       });
       const responseSchema = z.object({ results: z.array(z.unknown()) });
@@ -422,7 +461,7 @@ async function buildDigest(articles: Article[]) {
     const digestSchema = z.object({
       overviewJa: z.string(),
       sections: z.array(z.object({
-        category: z.enum(['trend', 'ai', 'security', 'release']),
+        category: z.enum(CATEGORIES),
         highlights: z.array(z.object({
           title: z.string(),
           summaryJa: z.string(),
@@ -460,8 +499,8 @@ async function buildDigest(articles: Article[]) {
 async function main() {
   console.log('=== Techscope Static Collection ===\n');
 
-  const prevArticles = readJson<Article[]>('articles.json', []);
-  const prevEol = readJson<EolItem[]>('eol.json', []);
+  const prevArticles = readArticles();
+  const prevEol = readEolItems();
 
   console.log('--- Articles ---');
   const articles = await collectArticles(prevArticles);

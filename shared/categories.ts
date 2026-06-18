@@ -7,3 +7,5 @@ export const CATEGORY_META: Record<Category, { label: string; color: string; des
   security: { label: 'セキュリティ',      color: 'red',    description: '脆弱性・セキュリティインシデント' },
   release:  { label: 'リリース / 更新',   color: 'green',  description: '製品・OSS・SaaSのリリース情報' },
 };
+
+export const EOL_NO_DATE_DAYS = 9999;
