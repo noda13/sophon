@@ -1,0 +1,45 @@
+name: Collect IT Data
+
+on:
+  schedule:
+    - cron: '0 21 * * *'  # JST 06:00 (UTC 21:00 previous day)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --ignore-scripts
+
+      - name: Run collection
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+        run: pnpm collect
+
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add frontend/public/data/
+          if git diff --staged --quiet; then
+            echo "No changes"
+          else
+            git commit -m "chore: update IT data [skip ci]"
+            git push
+          fi
