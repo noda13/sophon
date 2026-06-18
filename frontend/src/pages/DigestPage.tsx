@@ -34,10 +34,11 @@ export function DigestPage() {
     queryFn: fetchMeta,
   });
 
-  // Navigation upper bound is always the real current date
-  const todayStr = new Date().toISOString().slice(0, 10);
-  // Default display: latest digest date from meta, fallback to today
-  const latestDigestDate = meta?.lastUpdated?.slice(0, 10) ?? todayStr;
+  // Use actual latest digest date (written by collect.ts when digest succeeds).
+  // Fall back to lastUpdated date, then calendar today.
+  const latestDigestDate = meta?.latestDigestDate?.slice(0, 10)
+    ?? meta?.lastUpdated?.slice(0, 10)
+    ?? new Date().toISOString().slice(0, 10);
   const [currentDate, setCurrentDate] = useState<string | null>(null);
   const displayDate = currentDate ?? latestDigestDate;
 
@@ -50,10 +51,11 @@ export function DigestPage() {
   const handlePrev = () => setCurrentDate(addDays(displayDate, -1));
   const handleNext = () => {
     const next = addDays(displayDate, 1);
-    if (next <= todayStr) setCurrentDate(next);
+    // Cap at latestDigestDate to avoid navigating into days with no digest data
+    if (next <= latestDigestDate) setCurrentDate(next);
   };
 
-  const isToday = displayDate === todayStr;
+  const isAtLatest = displayDate >= latestDigestDate;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -76,9 +78,9 @@ export function DigestPage() {
         </span>
         <button
           onClick={handleNext}
-          disabled={!meta || isToday}
+          disabled={!meta || isAtLatest}
           className={`p-2 rounded-md transition-colors ${
-            !meta || isToday
+            !meta || isAtLatest
               ? 'bg-gray-900 text-gray-700 cursor-not-allowed'
               : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
           }`}

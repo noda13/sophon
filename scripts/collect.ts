@@ -374,10 +374,16 @@ async function callGemini(system: string, user: string, config: LLMConfig): Prom
     model: config.model,
     systemInstruction: system,
   });
-  const r = await model.generateContent({
-    contents: [{ role: 'user', parts: [{ text: user }] }],
-    generationConfig: { responseMimeType: 'application/json' },
-  });
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Gemini request timeout (30s)')), 30000)
+  );
+  const r = await Promise.race([
+    model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: user }] }],
+      generationConfig: { responseMimeType: 'application/json' },
+    }),
+    timeout,
+  ]);
   return r.response.text();
 }
 
@@ -419,6 +425,7 @@ async function summarizeAndClassify(articles: Article[]) {
   for (let i = 0; i < Math.min(todo.length, MAX_SUMMARIZE_PER_RUN); i += 10) {
     const batch = todo.slice(i, i + 10);
     const msg = batch.map((a, j) => `[${j}] source:${a.source} hint:${a.category} title:${a.originalTitle}`).join('\n');
+    let batchSucceeded = false;
     try {
       const raw = await callLLM(SYS, msg);
       const parsed = parseJson(raw);
@@ -432,6 +439,7 @@ async function summarizeAndClassify(articles: Article[]) {
       const responseSchema = z.object({ results: z.array(z.unknown()) });
       const { results: rawItems } = responseSchema.parse(parsed);
 
+      const filled = new Set<number>();
       let accepted = 0;
       for (const item of rawItems) {
         const res = articleResultSchema.safeParse(item);
@@ -440,21 +448,23 @@ async function summarizeAndClassify(articles: Article[]) {
           continue;
         }
         const r = res.data;
-        if (r.index < batch.length && batch[r.index]) {
+        if (r.index < batch.length && batch[r.index] && !filled.has(r.index)) {
           batch[r.index].summaryJa = r.summaryJa;
           batch[r.index].category = r.category;
           batch[r.index].importance = r.importance;
+          filled.add(r.index);
           accepted++;
         }
       }
       console.log(`  Batch ${Math.floor(i / 10) + 1} done (${accepted} summarized)`);
+      batchSucceeded = true;
     } catch (e) { console.error('  Summarize failed:', e instanceof Error ? e.message : e); }
-    if (i + 10 < Math.min(todo.length, MAX_SUMMARIZE_PER_RUN)) await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
+    if (batchSucceeded && i + 10 < Math.min(todo.length, MAX_SUMMARIZE_PER_RUN)) await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
   }
 }
 
 // --- Build Digest ---
-async function buildDigest(articles: Article[]) {
+async function buildDigest(articles: Article[]): Promise<string | null> {
   const today = new Date().toISOString().slice(0, 10);
 
   // Filter: summaryJa populated + importance '高' or '中', max 30
@@ -464,7 +474,7 @@ async function buildDigest(articles: Article[]) {
 
   if (!candidates.length) {
     console.log('  No summarized articles for digest, skipping');
-    return;
+    return null;
   }
 
   const SYS = `あなたはITニュースのキュレーターです。本日の重要なIT関連ニュースを日本語でダイジェスト形式にまとめてください。
@@ -498,7 +508,7 @@ async function buildDigest(articles: Article[]) {
     const result = digestSchema.safeParse(parsed);
     if (!result.success) {
       console.error('[buildDigest] Invalid digest schema:', result.error.issues);
-      return;
+      return null;
     }
 
     const now = new Date().toISOString();
@@ -515,8 +525,10 @@ async function buildDigest(articles: Article[]) {
       JSON.stringify(digest, null, 2),
     );
     console.log(`  Digest built for ${today}`);
+    return today;
   } catch (e) {
     console.error('  Digest build failed:', e instanceof Error ? e.message : e);
+    return null;
   }
 }
 
@@ -526,6 +538,7 @@ async function main() {
 
   const prevArticles = readArticles();
   const prevEol = readEolItems();
+  const prevMeta = readJson<{ lastUpdated?: string; latestDigestDate?: string }>('meta.json', {});
 
   console.log('--- Articles ---');
   const articles = await collectArticles(prevArticles);
@@ -535,6 +548,7 @@ async function main() {
   const eol = await collectEol(prevEol);
   console.log(`Total: ${eol.length} entries\n`);
 
+  let builtDigestDate: string | null = null;
   const llm = detectProvider();
   if (llm) {
     console.log(`--- LLM (${llm.provider}): Summarize & Classify ---`);
@@ -544,7 +558,7 @@ async function main() {
     writeJson('articles.json', articles.slice(0, 200));
 
     console.log(`\n--- LLM (${llm.provider}): Build Digest ---`);
-    await buildDigest(articles);
+    builtDigestDate = await buildDigest(articles);
   } else {
     console.log('No LLM configured, skipping AI processing\n');
     // Persist articles even when no LLM is configured (for dedup on next run).
@@ -552,7 +566,11 @@ async function main() {
   }
 
   writeJson('eol.json', eol);
-  writeJson('meta.json', { lastUpdated: new Date().toISOString() });
+  const latestDigestDate = builtDigestDate ?? prevMeta.latestDigestDate ?? null;
+  writeJson('meta.json', {
+    lastUpdated: new Date().toISOString(),
+    ...(latestDigestDate ? { latestDigestDate } : {}),
+  });
 
   console.log('\n=== Saved to frontend/public/data/ ===');
 }

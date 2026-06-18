@@ -52,6 +52,7 @@ export interface Digest {
 
 export interface Meta {
   lastUpdated: string;
+  latestDigestDate?: string;
 }
 
 export const fetchArticles = (category?: Category, limit = 50): Promise<Article[]> =>
