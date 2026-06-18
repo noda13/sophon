@@ -510,7 +510,7 @@ async function buildDigest(articles: Article[]): Promise<string | null> {
         highlights: z.array(z.object({
           title: z.string(),
           summaryJa: z.string(),
-          url: z.string().refine(u => /^https?:\/\//i.test(u), { message: 'URL must use http(s) scheme' }),
+          url: z.string(),
         })).max(5),
       })),
     });
@@ -522,11 +522,16 @@ async function buildDigest(articles: Article[]): Promise<string | null> {
     }
 
     const now = new Date().toISOString();
+    // Filter highlights whose URL lacks an http(s) scheme (defense-in-depth; frontend also uses safeHref)
+    const sections = result.data.sections.map(section => ({
+      ...section,
+      highlights: section.highlights.filter(h => /^https?:\/\//i.test(h.url)),
+    }));
     const digest: Digest = {
       date: today,
       generatedAt: now,
       overviewJa: result.data.overviewJa,
-      sections: result.data.sections,
+      sections,
     };
 
     writeJson('digest-latest.json', digest);

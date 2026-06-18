@@ -59,7 +59,7 @@ export function DigestPage() {
 
   const isAtLatest = displayDate >= latestDigestDate;
   const earliestDigestDate = meta?.earliestDigestDate?.slice(0, 10) ?? null;
-  const isAtEarliest = earliestDigestDate ? displayDate <= earliestDigestDate : false;
+  const isAtEarliest = earliestDigestDate ? displayDate <= earliestDigestDate : true;
 
   return (
     <div className="max-w-3xl mx-auto">
