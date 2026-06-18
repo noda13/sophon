@@ -135,7 +135,7 @@ async function collectArticles(existing: Article[]): Promise<Article[]> {
     SOURCES.map(async (src) => {
       const feed = await parser.parseURL(src.url);
       const items: Article[] = [];
-      for (const item of feed.items || []) {
+      for (const item of (feed.items ?? []).slice(0, 30)) {
         if (!item.title || !item.link) continue;
         const id = genId(item.link, item.title);
         if (ids.has(id)) continue;
@@ -146,7 +146,10 @@ async function collectArticles(existing: Article[]): Promise<Article[]> {
           importance: '中',
           originalTitle: item.title,
           originalUrl: item.link,
-          publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+          publishedAt: (() => {
+            const d = item.pubDate ? new Date(item.pubDate) : null;
+            return d && !isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString();
+          })(),
           summaryJa: '',
         });
       }
@@ -234,7 +237,10 @@ async function collectEol(prev: EolItem[]): Promise<EolItem[]> {
         for (const [key, item] of prevMap.entries()) {
           const productSegment = key.split(':')[0];
           if (productSegment === product.label) {
-            results.push(item);
+            const freshDaysLeft = item.eol === false
+              ? EOL_NO_DATE_DAYS
+              : Math.round((new Date(item.eol).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            results.push({ ...item, daysLeft: freshDaysLeft });
           }
         }
       }
@@ -415,7 +421,7 @@ async function summarizeAndClassify(articles: Article[]) {
           continue;
         }
         const r = res.data;
-        if (batch[r.index]) {
+        if (r.index < batch.length && batch[r.index]) {
           batch[r.index].summaryJa = r.summaryJa;
           batch[r.index].category = r.category;
           batch[r.index].importance = r.importance;

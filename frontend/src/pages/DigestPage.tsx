@@ -4,18 +4,10 @@ import { fetchDigest, fetchMeta } from '../services/api';
 import { CATEGORY_META } from '../lib/categories';
 import type { Category } from '../lib/categories';
 
-function formatDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
 function addDays(dateStr: string, delta: number): string {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const date = new Date(y, m - 1, d); // local time
-  date.setDate(date.getDate() + delta);
-  return formatDate(date);
+  const date = new Date(dateStr + 'T00:00:00Z');
+  date.setUTCDate(date.getUTCDate() + delta);
+  return date.toISOString().slice(0, 10);
 }
 
 function safeHref(url: string): string {
@@ -42,10 +34,10 @@ export function DigestPage() {
     queryFn: fetchMeta,
   });
 
-  // Determine today: prefer meta.lastUpdated date, fallback to current date
+  // Determine today: prefer meta.lastUpdated UTC date, fallback to current UTC date
   const todayStr = meta?.lastUpdated
-    ? formatDate(new Date(meta.lastUpdated))
-    : formatDate(new Date());
+    ? meta.lastUpdated.slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
 
   const [currentDate, setCurrentDate] = useState<string | null>(null);
 
