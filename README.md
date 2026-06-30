@@ -6,17 +6,17 @@ ITニュース・技術トレンドを自動収集・AI要約し、ダッシュ�
 
 ## 概要
 
-techscope は、複数の RSS フィードから IT ニュース・技術情報を自動収集し、LLM（Groq / Gemini）で要約・分類して静的 JSON として GitHub Pages に公開します。React SPA のダッシュボードで閲覧でき、毎日自動更新されます。
+techscope は、複数の RSS フィードから IT ニュース・技術情報を自動収集し、LLM（Groq / Gemini）で要約・分類して静的 JSON として管理します。React SPA のダッシュボードで閲覧でき、毎日自動更新されます。
 
 ---
 
 ## 特徴
 
-- **$0 運用** — GitHub Actions（無料枠）+ GitHub Pages（無料）+ Groq API（無料枠）で完全無料運用
+- **$0 運用** — GitHub Actions（無料枠）+ Cloudflare Workers（無料枠）+ Gemini API（無料枠）で完全無料運用
 - **4 カテゴリ対応** — 技術トレンド / AI・LLM / セキュリティ / リリース情報
 - **EOL 監視** — ソフトウェア・ランタイムのサポート終了情報を追跡
 - **日次ダイジェスト** — LLM による日本語要約を毎朝自動生成
-- **静的アーキテクチャ** — サーバー不要、GitHub Pages のみで動作
+- **静的アーキテクチャ** — Cloudflare Workers Assets でホスティング
 
 ---
 
@@ -50,13 +50,13 @@ cp .env.example .env
 
 ```env
 # LLM プロバイダ（groq / gemini）
-LLM_PROVIDER=groq
+LLM_PROVIDER=gemini
 
-# Groq API キー（無料枠あり）
-GROQ_API_KEY=your_groq_api_key
-
-# Gemini API キー（Groq の代替）
+# Gemini API キー
 GEMINI_API_KEY=your_gemini_api_key
+
+# Groq API キー（代替）
+GROQ_API_KEY=your_groq_api_key
 ```
 
 ### ローカルでデータ収集
@@ -78,38 +78,44 @@ pnpm dev
 
 ---
 
-## デプロイ（GitHub Pages）
+## デプロイ（Cloudflare Workers）
 
-1. **GitHub リポジトリを作成**（Private 推奨）
+### 初回セットアップ
+
+1. **Cloudflare アカウントを準備し、wrangler でログイン**
 
    ```bash
-   gh repo create techscope --private
-   git remote add origin https://github.com/<your-username>/techscope.git
-   git push -u origin main
+   pnpm wrangler login
    ```
 
 2. **GitHub Secrets を設定**
 
    リポジトリの Settings → Secrets and variables → Actions で以下を追加：
 
-   | シークレット名  | 内容                              |
-   |----------------|-----------------------------------|
-   | `GROQ_API_KEY` | Groq の API キー（または Gemini） |
-   | `GEMINI_API_KEY` | Gemini の API キー（任意）      |
-   | `LLM_PROVIDER` | `groq` または `gemini`（任意、デフォルト: groq） |
+   | シークレット名           | 内容                                          |
+   |--------------------------|-----------------------------------------------|
+   | `GEMINI_API_KEY`         | Gemini の API キー                            |
+   | `GROQ_API_KEY`           | Groq の API キー（任意）                      |
+   | `LLM_PROVIDER`           | `gemini` または `groq`（任意、デフォルト: gemini） |
+   | `CLOUDFLARE_API_TOKEN`   | Cloudflare API トークン（Workers 権限）       |
+   | `CLOUDFLARE_ACCOUNT_ID`  | Cloudflare アカウント ID                      |
 
-3. **GitHub Pages を有効化**
+3. **手動デプロイ（確認用）**
 
-   Settings → Pages → Source を **GitHub Actions** に設定
+   ```bash
+   cd frontend && pnpm build
+   cd .. && pnpm wrangler deploy
+   ```
 
-4. **初回データ収集**
+### 自動運用フロー
 
-   Actions タブ → `Collect IT Data` → `Run workflow` で手動実行してデータを初期化
+GHA が以下の 2 段階で自動運用します：
 
-5. **以後は自動運用**
+1. **データ収集**（`collect.yml`）— 毎日 JST 06:00 に実行
+   - RSS フィード取得 → LLM 要約 → `frontend/public/data/` にコミット
 
-   - 毎日 JST 06:00 にデータ収集（`collect.yml`）
-   - 毎日 JST 06:30 に GitHub Pages へデプロイ（`deploy.yml`）
+2. **デプロイ**（`deploy.yml`）— collect 完了後、または master push 時に実行
+   - `frontend/` をビルド → Cloudflare Workers Assets にデプロイ
 
 ---
 
@@ -128,10 +134,10 @@ RSS Feeds (各種 IT メディア)
         |
         v
   GitHub Actions
-  (自動コミット → Pages デプロイ)
+  (自動コミット → Cloudflare Workers デプロイ)
         |
         v
-  GitHub Pages
+  Cloudflare Workers Assets
   (静的ホスティング)
         |
         v
@@ -144,25 +150,32 @@ RSS Feeds (各種 IT メディア)
 ## データソース一覧
 
 ### 技術トレンド
-- Hacker News (hn.algolia.com)
-- Dev.to
+- Hacker News
 - Zenn トレンド
 - Qiita トレンド
+- Publickey
+- GitHub Blog (Engineering)
+- Gigazine
 
 ### AI・LLM
-- The Batch (DeepLearning.AI)
+- Anthropic Blog
+- OpenAI News
+- Google AI Blog
 - Hugging Face Blog
-- OpenAI Blog
+- arXiv cs.AI
 
 ### セキュリティ
-- Krebs on Security
-- The Hacker News
 - JPCERT/CC
+- CISA Advisories
+- The Hacker News
+- Bleeping Computer
 
 ### リリース情報
-- GitHub Blog
-- Node.js ブログ
-- Docker Blog
+- Node.js Blog
+- Kubernetes Blog
+- AWS Blog
+- Vite Releases
+- Deno Releases
 
 ### EOL 監視
 - endoflife.date API
@@ -171,20 +184,7 @@ RSS Feeds (各種 IT メディア)
 
 ## LLM プロバイダ設定
 
-### Groq（デフォルト・推奨）
-
-無料枠が大きく、レスポンスが高速です。
-
-```env
-LLM_PROVIDER=groq
-GROQ_API_KEY=gsk_xxxx
-```
-
-[Groq Console](https://console.groq.com) で API キーを取得してください。
-
-### Gemini
-
-Google の Gemini API を使用します。
+### Gemini（デフォルト・推奨）
 
 ```env
 LLM_PROVIDER=gemini
@@ -193,21 +193,26 @@ GEMINI_API_KEY=AIzaxxxx
 
 [Google AI Studio](https://aistudio.google.com) で API キーを取得してください。
 
-### その他 OpenAI 互換 API
+### Groq（代替）
 
-環境変数でエンドポイントを上書きできます（`collect.ts` の設定を参照）。
+```env
+LLM_PROVIDER=groq
+GROQ_API_KEY=gsk_xxxx
+```
+
+[Groq Console](https://console.groq.com) で API キーを取得してください。
 
 ---
 
 ## econoguard との違い
 
-| 項目              | techscope          | econoguard             |
-|------------------|--------------------|------------------------|
-| 対象ドメイン      | IT ニュース・技術  | 経済・金融指標         |
-| リスクスコア      | なし               | あり（投資判断向け）   |
-| コレクター        | 静的コレクター一本 | 複数コレクター         |
-| LLM 用途         | ニュース要約       | 経済分析・リスク評価   |
-| EOL 監視         | あり               | なし                   |
+| 項目              | techscope              | econoguard             |
+|------------------|------------------------|------------------------|
+| 対象ドメイン      | IT ニュース・技術      | 経済・金融指標         |
+| リスクスコア      | なし                   | あり（投資判断向け）   |
+| コレクター        | 静的コレクター一本     | 複数コレクター         |
+| LLM 用途         | ニュース要約           | 経済分析・リスク評価   |
+| EOL 監視         | あり                   | なし                   |
 
 ---
 
