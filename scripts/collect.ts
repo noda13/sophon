@@ -106,6 +106,7 @@ const SOURCES = [
   { url: 'https://qiita.com/popular-items/feed', source: 'qiita', hint: 'trend' as Category },
   { url: 'https://www.publickey1.jp/atom.xml', source: 'publickey', hint: 'trend' as Category },
   { url: 'https://github.blog/engineering.atom', source: 'github-blog', hint: 'trend' as Category },
+  { url: 'https://gigazine.net/news/rss_2.0/', source: 'gigazine', hint: 'trend' as Category },
   // ai
   { url: 'https://www.anthropic.com/rss.xml', source: 'anthropic', hint: 'ai' as Category },
   { url: 'https://openai.com/news/rss/', source: 'openai', hint: 'ai' as Category },
