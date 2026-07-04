@@ -5,9 +5,9 @@ on:
     # NOTE: must match collect.yml `name:` exactly — renaming that field silently breaks data deploys.
     workflows: ["Collect IT Data"]
     types: [completed]
-    branches: [master]
+    branches: [main]
   push:
-    branches: [master]
+    branches: [main]
     paths-ignore:
       - 'frontend/public/data/**'
   workflow_dispatch:
