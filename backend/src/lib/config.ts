@@ -1,17 +1,27 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+const nodeEnv = process.env.NODE_ENV || 'development';
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
+  : null;
+
+// CORS — required in production; refuse to start rather than fall back to
+// permitting all origins.
+if (nodeEnv === 'production' && (!allowedOrigins || allowedOrigins.length === 0)) {
+  console.error('[config] ALLOWED_ORIGINS is required in production (comma-separated list of allowed origins)');
+  process.exit(1);
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '8902', 10),
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
   databaseUrl: process.env.DATABASE_URL || 'file:./dev.db',
   dataProvider: (process.env.DATA_PROVIDER || 'csv') as 'csv' | 'jquants' | 'db' | 'edinet' | 'composite',
   marketCapMaxYen: parseFloat(process.env.MARKET_CAP_MAX_YEN || '50000000000'),
   netCashRatioMin: parseFloat(process.env.NET_CASH_RATIO_MIN || '0.3'),
   mvpStockLimit: parseInt(process.env.MVP_STOCK_LIMIT || '30', 10),
-  allowedOrigins: process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
-    : null,
+  allowedOrigins,
   adminToken: process.env.ADMIN_TOKEN || '',
   jquants: {
     apiKey: process.env.JQUANTS_API_KEY || '',
