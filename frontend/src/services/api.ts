@@ -16,9 +16,16 @@ import {
   StaticStockDetailSchema,
 } from '../lib/schemas';
 
-// In Vite production builds import.meta.env.DEV is false, so this defaults to static (GitHub Pages) mode.
-// Set VITE_STATIC_DATA=false to force dynamic API mode in a production server deployment.
-const isStatic = import.meta.env.VITE_STATIC_DATA === 'true' || !import.meta.env.DEV;
+// VITE_STATIC_DATA=true|false always wins. Unset falls back to "static in production builds" so the
+// Vercel/GitHub Pages deployments keep working without extra env. A production build served together
+// with the backend must set VITE_STATIC_DATA=false.
+export function resolveStaticMode(flag: string | undefined, isDev: boolean): boolean {
+  if (flag === 'true') return true;
+  if (flag === 'false') return false;
+  return !isDev;
+}
+
+const isStatic = resolveStaticMode(import.meta.env.VITE_STATIC_DATA, import.meta.env.DEV);
 
 const api = axios.create({
   baseURL: '/api',

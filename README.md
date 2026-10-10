@@ -2,12 +2,37 @@
 
 清原達郎『わが投資術』（2024）の投資哲学に基づき、**ネットキャッシュ比率**と**キャッシュニュートラルPER**でスクリーニングする日本小型株バリュースクリーナー。
 
+## 免責事項
+
+本ツールは情報提供のみを目的としており、投資助言、特定銘柄の推奨、売買の勧誘ではありません。
+表示される指標とスコアは、公開データと簡易な近似式から機械的に算出した参考値です。
+データの正確性、完全性、最新性は保証しません。
+J-Quants の無料プランでは株価と財務が12週遅延するなど、データ源にも制約があります。
+投資に関する最終判断と、その結果についての責任は、利用者自身が負うものとします。
+
 ## Stack
 
 - Backend: Express 4 + Prisma 5 + Zod + TypeScript
 - Frontend: React 19 + Vite + Tailwind + TanStack Query + Recharts + react-router
 - DB: SQLite (Prisma)
 - Ports: backend 8902, frontend 3902
+
+## アーキテクチャ
+
+データは次の流れで画面に届きます。
+
+```
+DataProvider（csv / jquants / db）
+  → syncOrchestrator（取得・指標計算・SQLite へ保存）
+  → Strategy（スコア計算とランキング）
+  → Express API（/api/*）または 静的JSON（frontend/public/data/*.json）
+  → React フロントエンド
+```
+
+- **DataProvider**：銘柄一覧と財務・株価の取得元を差し替える層です（`backend/src/providers/`）。`DATA_PROVIDER` で選びます。
+- **syncOrchestrator**：Provider から取得したデータで NCR や CNPER などの指標を計算し、`Stock`、`FinancialStatement`、`ScreeningSnapshot` に保存します。`POST /api/admin/sync` と、毎日 17:00 JST の cron（`node-cron`）から呼ばれます。
+- **Strategy**：指標から銘柄ごとのスコアを計算し、ランキングを返します（`backend/src/strategies/`）。
+- **動的モードと静的モード**：フロントエンドは、バックエンドの API を呼ぶ動的モードと、`frontend/public/data/*.json` を読む静的モード（GitHub Pages / Vercel 向け）の2通りで動きます。切替は後述の `VITE_STATIC_DATA` で決まります。
 
 ## Phase Status
 
@@ -16,8 +41,13 @@
 | Phase 0 | CSV seed + ランキング1画面 | 完了 |
 | Phase 1a | Strategy パターン + 50銘柄 + StockDetail + 静的JSON配信 | **完了** |
 | Phase 1b | J-Quants スケルトン（`JQuantsProvider` 実装） | **完了** |
-| Phase 2 | EDINET XBRL + Graham/Buffett 戦略 + 証券会社CSV | 未着手 |
+| Phase 1c | Graham / Buffett / Lynch / Dividend / Composite 戦略（`strategies/index.ts` に登録済み、すべて `active: true`） | **完了** |
+| Phase 2 | EDINET XBRL + 証券会社CSV | 未着手 |
 | Phase 3 | マルチ戦略ダッシュボード + バックテスト | 未着手 |
+
+`DATA_PROVIDER=edinet` と `DATA_PROVIDER=composite` は Phase 2 の予定で、**現時点では実装されていません**。
+設定すると `resolveProvider()` が `Unknown DATA_PROVIDER` で例外を投げ、同期は失敗します。
+利用できる値は `csv`、`jquants`、`db` です。
 
 ## Quick Start（ローカル動的モード）
 
@@ -34,6 +64,13 @@ pnpm -C frontend dev
 
 # 同期トリガ（50銘柄をDBに取込）
 curl -X POST http://localhost:8902/api/admin/sync
+```
+
+## テスト
+
+```bash
+pnpm -C frontend test         # フロントエンド（vitest + Testing Library）
+pnpm -C frontend type-check
 ```
 
 ## ワンショット同期スクリプト
@@ -96,6 +133,8 @@ DATA_PROVIDER=csv pnpm exec tsx scripts/collect-static.ts
 | `csv` | `backend/seed/stocks.csv` から読込。J-Quants 不要。デフォルト |
 | `jquants` | J-Quants API 利用（`.env` に認証情報が必要） |
 | `db` | SQLite DBから読込（J-Quants 同期済みデータを静的JSON化するときに使用） |
+| `edinet` | **未実装**（Phase 2 予定）。指定すると同期時にエラーになる |
+| `composite` | **未実装**（Phase 2 予定）。指定すると同期時にエラーになる |
 
 ```bash
 # .env または環境変数で指定
@@ -120,7 +159,7 @@ JQUANTS_API_KEY=<ダッシュボードで発行したAPIキー>
 | 時価総額 | 500億超でペナルティ（-10点）、50億以下でボーナス（+5点） |
 | 赤字（profit ≤ 0） | スコア上限50点 |
 
-### 新しい Strategy の追加方法（Phase 2 以降）
+### 新しい Strategy の追加方法
 
 1. `backend/src/strategies/GrahamStrategy.ts` を作成し `InvestmentStrategy` を実装
 2. `backend/src/strategies/index.ts` の `strategies` 配列に追加
@@ -137,15 +176,97 @@ export class GrahamStrategy implements InvestmentStrategy {
 
 ## API エンドポイント
 
+ベースパスは `/api` です。
+エラーは `{ "error": "<メッセージ>" }` の JSON で返ります（400: クエリ不正、404: 対象なし、500: 内部エラー）。
+
+### 戦略・ランキング
+
 | Method | Path | 説明 |
 |---|---|---|
-| GET | `/api/strategies` | 全戦略一覧（未実装も含む） |
-| GET | `/api/strategies/:id/ranking` | 指定戦略でのランキング |
-| GET | `/api/stocks/:code` | 銘柄詳細 + スナップショット |
-| GET | `/api/stocks/:code/history` | 財務履歴（最大8期） |
-| GET | `/api/stocks/:code/strategies` | この銘柄の全activeストラテジースコア |
-| GET | `/api/ranking/net-cash-ratio` | NCR降順ランキング（後方互換エイリアス） |
-| POST | `/api/admin/sync` | 手動同期 |
+| GET | `/api/strategies` | 全戦略のメタ情報（`id`、`displayName`、`description`、`active`） |
+| GET | `/api/strategies/:id/ranking` | 指定戦略のランキング。存在しない `id` は 404、`active` でない戦略は 400 |
+| GET | `/api/ranking/net-cash-ratio` | NCR 降順ランキング（後方互換エイリアス） |
+| GET | `/api/ranking/cash-neutral-per` | CNPER 順ランキング（後方互換エイリアス） |
+
+`/api/strategies/:id/ranking` のクエリ：
+
+| パラメータ | 型 | 既定値 | 説明 |
+|---|---|---|---|
+| `limit` | 整数 1〜200 | 50 | 取得件数 |
+| `maxMarketCap` | 正の数 | `MARKET_CAP_MAX_YEN` | 時価総額の上限（円） |
+| `minMarketCap` | 正の数 | なし | 時価総額の下限（円） |
+| `excludeSectors` | カンマ区切り文字列 | なし | 除外する33業種名 |
+
+`/api/ranking/*` は `limit`（既定 50、1〜200）と `maxMarketCap` を受け付けます。
+
+### 銘柄
+
+| Method | Path | 説明 |
+|---|---|---|
+| GET | `/api/stocks` | 銘柄一覧（最新スナップショット付き） |
+| GET | `/api/stocks/:code` | 銘柄詳細（最新スナップショットと直近8期の財務） |
+| GET | `/api/stocks/:code/history` | 財務履歴（直近8期） |
+| GET | `/api/stocks/:code/strategies` | 当該銘柄の全 active 戦略スコア |
+
+`:code` は英数字大文字4桁（例：`7203`）です。
+`/api/stocks` のクエリは `limit`（既定 50、1〜200）、`sector`（33業種名の部分一致）、`orderBy`（`code` / `name` / `marketCap`、既定 `code`）です。
+
+### 管理
+
+| Method | Path | 説明 |
+|---|---|---|
+| POST | `/api/admin/sync` | 手動同期。同期中は 409 |
+| GET | `/api/admin/status` | 同期中かどうか、直近の収集ログ、銘柄数とスナップショット数 |
+
+`ADMIN_TOKEN` を設定すると、`/api/admin/*` は `Authorization: Bearer <ADMIN_TOKEN>` が必須になります（不一致は 401）。
+`NODE_ENV=production` で `ADMIN_TOKEN` が未設定の場合、管理エンドポイントは 503 を返して無効になります。
+
+```bash
+curl -X POST http://localhost:8902/api/admin/sync -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+## 環境変数
+
+### バックエンド（`.env.example` を `backend/.env` にコピーして使う）
+
+| 変数 | 既定値 | 説明 |
+|---|---|---|
+| `DATABASE_URL` | `file:./dev.db` | Prisma の接続先（SQLite） |
+| `DATA_PROVIDER` | `csv` | `csv` / `jquants` / `db`。`edinet` / `composite` は未実装 |
+| `JQUANTS_API_KEY` | 空 | J-Quants V2 の API キー。`jquants` 利用時に必須 |
+| `JQUANTS_REQ_INTERVAL_MS` | `13000` | J-Quants へのリクエスト間隔（ms）。Free プランの安全値 |
+| `JQUANTS_MAIL_ADDRESS` | 空 | V1 の旧認証。V2 では使われない |
+| `JQUANTS_PASSWORD` | 空 | V1 の旧認証。V2 では使われない |
+| `PORT` | `8902` | バックエンドの待受ポート |
+| `NODE_ENV` | `development` | `production` では `ALLOWED_ORIGINS` が必須になり、未設定だと起動時に終了する |
+| `ALLOWED_ORIGINS` | 空 | CORS で許可するオリジン（カンマ区切り）。開発時に空なら全オリジンを許可 |
+| `ADMIN_TOKEN` | 空 | `/api/admin/*` の Bearer トークン。本番では未設定だと管理 API が無効になる |
+| `MARKET_CAP_MAX_YEN` | `50000000000` | ランキングで使う時価総額の既定上限（500億円） |
+| `NET_CASH_RATIO_MIN` | `0.3` | `config` に読み込まれるが、現状のランキング処理では参照されていない |
+| `MVP_STOCK_LIMIT` | `30` | 同期で処理する銘柄数の上限（動作確認用。`scripts/full-sync.sh` は未指定時に `0`） |
+| `TZ` | `Asia/Tokyo` | タイムゾーン。cron は `Asia/Tokyo` 固定 |
+
+### フロントエンド（ビルド時に埋め込まれる）
+
+| 変数 | 既定値 | 説明 |
+|---|---|---|
+| `VITE_STATIC_DATA` | 未設定 | `true` で静的JSONモード、`false` で API モード。未設定なら開発サーバーは API モード、本番ビルドは静的モード |
+| `VITE_BASE_PATH` | `/` | 配信パス。GitHub Pages では `/waga-scope/` |
+| `VITE_API_URL` | `http://localhost:8902` | 開発サーバー（Vite）が `/api` をプロキシする先 |
+
+### 本番サーバー配備での注意（`VITE_STATIC_DATA`）
+
+`VITE_STATIC_DATA` が未設定のとき、本番ビルド（`vite build`）は静的JSONモードになります。
+GitHub Pages と Vercel の静的配信ではこの挙動を前提にしているため、既定値は変えていません。
+一方で、本番ビルドをバックエンドと一緒に配備する場合は、`VITE_STATIC_DATA=false` を指定してビルドしないと、フロントエンドが `/api` を呼ばず `/data/*.json` を読みにいきます。
+その結果、画面は空かエラーになります。
+
+```bash
+VITE_STATIC_DATA=false pnpm -C frontend build
+```
+
+`VITE_STATIC_DATA` は `vite build` 時に埋め込まれるため、ビルド後に環境変数を変えても反映されません。
+本番ビルドでの `VITE_STATIC_DATA=false` は明示指定として尊重されます。
 
 ## GitHub Actions
 
@@ -297,7 +418,6 @@ J-Quants から該当銘柄の財務データ取得 → 清原流ランキング
 
 ## 注意事項
 
-本ツールは投資判断支援を目的とし、個別銘柄の推奨ではありません。  
-投資に関する最終判断はご自身の責任で行ってください。
+投資に関する免責事項は冒頭の「免責事項」を参照してください。
 
 NetCash は清原流近似式（`現預金 − 負債合計`、投資有価証券は Phase 2 で補完）を使用しています。
