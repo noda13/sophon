@@ -60,5 +60,8 @@ jobs:
       - name: Type-check frontend
         run: pnpm -C frontend type-check
 
+      - name: Run frontend tests
+        run: pnpm -C frontend test
+
       - name: Build frontend
         run: pnpm -C frontend build
