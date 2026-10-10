@@ -1,38 +1,12 @@
-export type StrategyId = 'kiyohara' | 'graham' | 'buffett' | 'lynch' | 'dividend' | 'composite';
+import type {
+  RankingRow,
+  StockMetrics,
+  StrategyId,
+  StrategyMeta,
+  StrategyScore,
+} from '@waga-scope/shared';
 
-export interface StrategyMeta {
-  id: StrategyId;
-  displayName: string;
-  description: string;
-  active: boolean;
-}
-
-export interface StockMetrics {
-  code: string;
-  name: string;
-  sector33Name: string | null;
-  marketSegment: string | null;
-  marketCap: number;
-  netCash: number | null;
-  netCashRatio: number | null;
-  cashNeutralPer: number | null;
-  per: number | null;
-  pbr: number | null;
-  profit: number | null;
-  equity: number | null;
-}
-
-export interface StrategyScore {
-  score: number;
-  components: Record<string, number | null>;
-  reason: string;
-}
-
-export interface RankingRow extends StockMetrics {
-  rank: number;
-  strategyScore: StrategyScore;
-  snapshotAt: string;
-}
+export type { RankingRow, StockMetrics, StrategyId, StrategyMeta, StrategyScore };
 
 export interface RankingOpts {
   limit?: number;

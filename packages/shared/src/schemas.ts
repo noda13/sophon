@@ -6,8 +6,10 @@ export const StrategyScoreSchema = z.object({
   reason: z.string(),
 });
 
+export const StrategyIdSchema = z.enum(['kiyohara', 'graham', 'buffett', 'lynch', 'dividend', 'composite']);
+
 export const StrategyMetaSchema = z.object({
-  id: z.enum(['kiyohara', 'graham', 'buffett', 'lynch', 'dividend', 'composite']),
+  id: StrategyIdSchema,
   displayName: z.string(),
   description: z.string(),
   active: z.boolean(),
@@ -51,7 +53,7 @@ export const FinancialStatementSchema = z.object({
   sharesOutstanding: z.number().nullable(),
 });
 
-const SnapshotSchema = z.object({
+export const SnapshotSchema = z.object({
   id: z.string(),
   snapshotAt: z.string(),
   marketCap: z.number(),

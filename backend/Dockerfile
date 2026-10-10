@@ -14,6 +14,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
+COPY packages/shared ./packages/shared/
 
 RUN pnpm install --frozen-lockfile --filter waga-scope-backend...
 
