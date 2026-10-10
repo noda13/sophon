@@ -11,7 +11,6 @@ const codeSchema = z.string().regex(/^[0-9A-Z]{4}$/, 'Stock code must be a 4-cha
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
-  maxMarketCap: z.coerce.number().positive().optional(),
   sector: z.string().optional(),
   orderBy: z.enum(['code', 'name', 'marketCap']).optional().default('code'),
 });
@@ -30,27 +29,44 @@ router.get('/', asyncHandler(async (req, res) => {
     throw new BadRequestError(parsed.error.message);
   }
   const { limit, sector, orderBy } = parsed.data;
-  const prismaOrderBy: Prisma.StockOrderByWithRelationInput =
-    orderBy === 'name' ? { name: 'asc' } : { code: 'asc' };
+  const include = {
+    snapshots: {
+      orderBy: { snapshotAt: 'desc' as const },
+      take: 1,
+    },
+  };
+
+  if (orderBy === 'marketCap') {
+    const sectorFilter = sector
+      ? Prisma.sql`WHERE st.sector33Name LIKE '%' || ${sector} || '%'`
+      : Prisma.empty;
+    const ordered = await prisma.$queryRaw<{ code: string }[]>`
+      SELECT st.code AS code
+      FROM stocks st
+      LEFT JOIN screening_snapshots ss ON ss.id = (
+        SELECT s2.id FROM screening_snapshots s2
+        WHERE s2.code = st.code
+        ORDER BY s2.snapshotAt DESC, s2.id DESC LIMIT 1
+      )
+      ${sectorFilter}
+      ORDER BY COALESCE(ss.marketCap, 0) DESC, st.code ASC
+      LIMIT ${limit}
+    `;
+    const rows = await prisma.stock.findMany({
+      where: { code: { in: ordered.map(r => r.code) } },
+      include,
+    });
+    const byCode = new Map(rows.map(r => [r.code, r]));
+    res.json(ordered.map(r => byCode.get(r.code)).filter(Boolean));
+    return;
+  }
+
   const stocks = await prisma.stock.findMany({
     where: sector ? { sector33Name: { contains: sector } } : undefined,
-    take: orderBy === 'marketCap' ? undefined : limit,
-    orderBy: prismaOrderBy,
-    include: {
-      snapshots: {
-        orderBy: { snapshotAt: 'desc' },
-        take: 1,
-      },
-    },
+    take: limit,
+    orderBy: orderBy === 'name' ? { name: 'asc' } : { code: 'asc' },
+    include,
   });
-  if (orderBy === 'marketCap') {
-    stocks.sort(
-      (a, b) =>
-        ((b.snapshots[0]?.marketCap ?? 0) as number) -
-        ((a.snapshots[0]?.marketCap ?? 0) as number),
-    );
-    stocks.splice(limit);
-  }
   res.json(stocks);
 }));
 

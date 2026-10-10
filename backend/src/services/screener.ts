@@ -25,43 +25,54 @@ export interface RankingRow {
   snapshotAt: string;
 }
 
-/**
- * Fetch latest snapshots from DB and build StockMetrics array.
- * Uses 2 queries total (down from 2N+1) via distinct+orderBy.
- */
+const METRICS_CACHE_TTL_MS = 60_000;
+let metricsCache: { at: number; rows: StockMetrics[] } | null = null;
+
+export function invalidateScreenerCache(): void {
+  metricsCache = null;
+}
+
+interface MetricsRow {
+  code: string;
+  name: string;
+  sector33Name: string | null;
+  marketSegment: string | null;
+  marketCap: number;
+  netCash: number | null;
+  netCashRatio: number | null;
+  cashNeutralPer: number | null;
+  per: number | null;
+  pbr: number | null;
+  profit: number | null;
+  equity: number | null;
+}
+
 async function fetchStockMetrics(): Promise<StockMetrics[]> {
-  const snapshots = await prisma.screeningSnapshot.findMany({
-    orderBy: { snapshotAt: 'desc' },
-    distinct: ['code'],
-    include: { stock: true },
-  });
-
-  if (snapshots.length === 0) return [];
-
-  const stmtList = await prisma.financialStatement.findMany({
-    orderBy: { disclosedDate: 'desc' },
-    distinct: ['code'],
-    select: { code: true, profit: true, equity: true },
-  });
-  const stmtMap = new Map(stmtList.map(s => [s.code, s]));
-
-  return snapshots.map(snapshot => {
-    const stmt = stmtMap.get(snapshot.code);
-    return {
-      code: snapshot.code,
-      name: snapshot.stock.name,
-      sector33Name: snapshot.stock.sector33Name,
-      marketSegment: snapshot.stock.marketSegment,
-      marketCap: snapshot.marketCap,
-      netCash: snapshot.netCash,
-      netCashRatio: snapshot.netCashRatio,
-      cashNeutralPer: snapshot.cashNeutralPer,
-      per: snapshot.per,
-      pbr: snapshot.pbr,
-      profit: stmt?.profit ?? null,
-      equity: stmt?.equity ?? null,
-    };
-  });
+  if (metricsCache && Date.now() - metricsCache.at < METRICS_CACHE_TTL_MS) {
+    return metricsCache.rows;
+  }
+  // id tie-break keeps exactly one row per code when timestamps collide
+  const rows = await prisma.$queryRaw<MetricsRow[]>`
+    SELECT ss.code AS code, st.name AS name, st.sector33Name AS sector33Name,
+           st.marketSegment AS marketSegment, ss.marketCap AS marketCap,
+           ss.netCash AS netCash, ss.netCashRatio AS netCashRatio,
+           ss.cashNeutralPer AS cashNeutralPer, ss.per AS per, ss.pbr AS pbr,
+           fs.profit AS profit, fs.equity AS equity
+    FROM screening_snapshots ss
+    JOIN stocks st ON st.code = ss.code
+    LEFT JOIN financial_statements fs ON fs.id = (
+      SELECT f.id FROM financial_statements f
+      WHERE f.code = ss.code
+      ORDER BY f.disclosedDate DESC, f.id DESC LIMIT 1
+    )
+    WHERE ss.id = (
+      SELECT s2.id FROM screening_snapshots s2
+      WHERE s2.code = ss.code
+      ORDER BY s2.snapshotAt DESC, s2.id DESC LIMIT 1
+    )
+  `;
+  metricsCache = { at: Date.now(), rows };
+  return rows;
 }
 
 /**
