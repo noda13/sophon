@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+import { logger } from '../lib/logger.js';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { DataProvider, StockInfo, StatementRaw, PriceRaw } from './DataProvider.js';
@@ -44,7 +45,7 @@ function parseCsv(content: string): CsvRow[] {
   return lines.slice(1).flatMap(line => {
     const cols = line.split(',').map(c => c.trim());
     if (cols.length < EXPECTED_COLUMNS) {
-      console.warn(`[csv] skipping malformed line (${cols.length}/${EXPECTED_COLUMNS} cols): ${line.slice(0, 80)}`);
+      logger.warn(`[csv] skipping malformed line (${cols.length}/${EXPECTED_COLUMNS} cols): ${line.slice(0, 80)}`);
       return [];
     }
     return [{
