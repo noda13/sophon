@@ -53,6 +53,28 @@ describe('runSync', () => {
     expect(isSyncing()).toBe(false);
   });
 
+  it('stores a snapshot when netCash and netCashRatio cannot be computed', async () => {
+    const provider = makeProvider({
+      fetchStatements: async (code: string) => [
+        {
+          code,
+          fiscalYear: 2025,
+          typeOfCurrentPeriod: 'FY',
+          disclosedDate: new Date('2026-01-10'),
+          periodEndDate: new Date('2025-12-31'),
+          currentAssets: null,
+          totalAssets: null,
+          equity: null,
+          sharesOutstanding: 1000,
+        },
+      ],
+    });
+    await runSync({ provider });
+    const snap = await prisma.screeningSnapshot.findFirstOrThrow();
+    expect(snap.netCash).toBeNull();
+    expect(snap.netCashRatio).toBeNull();
+  });
+
   it('is idempotent for statements and prices on re-run', async () => {
     await runSync({ provider: makeProvider() });
     await runSync({ provider: makeProvider() });
