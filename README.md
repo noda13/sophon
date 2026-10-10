@@ -41,7 +41,8 @@ DataProvider（csv / jquants / db）
 | Phase 0 | CSV seed + ランキング1画面 | 完了 |
 | Phase 1a | Strategy パターン + 50銘柄 + StockDetail + 静的JSON配信 | **完了** |
 | Phase 1b | J-Quants スケルトン（`JQuantsProvider` 実装） | **完了** |
-| Phase 2 | EDINET XBRL + Graham/Buffett 戦略 + 証券会社CSV | 未着手 |
+| Phase 1c | Graham / Buffett / Lynch / Dividend / Composite 戦略（`strategies/index.ts` に登録済み、すべて `active: true`） | **完了** |
+| Phase 2 | EDINET XBRL + 証券会社CSV | 未着手 |
 | Phase 3 | マルチ戦略ダッシュボード + バックテスト | 未着手 |
 
 `DATA_PROVIDER=edinet` と `DATA_PROVIDER=composite` は Phase 2 の予定で、**現時点では実装されていません**。
@@ -158,7 +159,7 @@ JQUANTS_API_KEY=<ダッシュボードで発行したAPIキー>
 | 時価総額 | 500億超でペナルティ（-10点）、50億以下でボーナス（+5点） |
 | 赤字（profit ≤ 0） | スコア上限50点 |
 
-### 新しい Strategy の追加方法（Phase 2 以降）
+### 新しい Strategy の追加方法
 
 1. `backend/src/strategies/GrahamStrategy.ts` を作成し `InvestmentStrategy` を実装
 2. `backend/src/strategies/index.ts` の `strategies` 配列に追加
