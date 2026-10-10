@@ -1,3 +1,4 @@
+import { logger } from './logger.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -9,11 +10,12 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 // CORS — required in production; refuse to start rather than fall back to
 // permitting all origins.
 if (nodeEnv === 'production' && (!allowedOrigins || allowedOrigins.length === 0)) {
-  console.error('[config] ALLOWED_ORIGINS is required in production (comma-separated list of allowed origins)');
+  logger.fatal('[config] ALLOWED_ORIGINS is required in production (comma-separated list of allowed origins)');
   process.exit(1);
 }
 
 export const config = {
+  host: process.env.HOST || '127.0.0.1',
   port: parseInt(process.env.PORT || '8902', 10),
   nodeEnv,
   databaseUrl: process.env.DATABASE_URL || 'file:./dev.db',

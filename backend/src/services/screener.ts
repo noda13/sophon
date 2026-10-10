@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma.js';
+import { NotFoundError } from '../lib/errors.js';
 import { config } from '../lib/config.js';
 import type {
   StockMetrics,
@@ -82,7 +83,7 @@ export async function rankByStrategyId(
   opts?: RankingOpts
 ): Promise<StrategyRankingRow[]> {
   const strategy = getStrategy(strategyId);
-  if (!strategy) throw new Error(`Strategy not found: ${strategyId}`);
+  if (!strategy) throw new NotFoundError(`Strategy not found: ${strategyId}`);
   return rankByStrategy(strategy, opts);
 }
 
@@ -95,7 +96,7 @@ export async function getStockStrategyScores(code: string): Promise<Record<strin
     orderBy: { snapshotAt: 'desc' },
     include: { stock: true },
   });
-  if (!snapshot) throw new Error(`Stock ${code} not found`);
+  if (!snapshot) throw new NotFoundError(`Stock ${code} not found`);
 
   const stmt = await prisma.financialStatement.findFirst({
     where: { code },

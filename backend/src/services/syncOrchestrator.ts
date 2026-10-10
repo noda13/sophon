@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma.js';
+import { logger } from '../lib/logger.js';
 import { config } from '../lib/config.js';
 import { resolveProvider } from '../providers/index.js';
 import type { DataProvider } from '../providers/DataProvider.js';
@@ -12,7 +13,7 @@ export function isSyncing(): boolean {
 
 export async function runSync(opts?: { provider?: DataProvider }): Promise<{ stocks: number; snapshots: number }> {
   _syncInProgress = true;
-  console.log('[sync] starting runSync...');
+  logger.info('[sync] starting runSync...');
   const provider = opts?.provider ?? resolveProvider();
 
   const log = await prisma.collectionLog.create({
@@ -30,9 +31,9 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
     // If provider supports batch prefetch (e.g., JQuantsProvider V2),
     // use it to minimize per-code API calls.
     if (provider.prefetchAll) {
-      console.log('[sync] prefetching bulk data via batch endpoints...');
+      logger.info('[sync] prefetching bulk data via batch endpoints...');
       const pre = await provider.prefetchAll({ historyDays: 120 });
-      console.log(
+      logger.info(
         `[sync] prefetch done: ${pre.statementsCached} statements, ${pre.pricesCached} prices, ${pre.apiCalls} API calls`
       );
     }
@@ -54,13 +55,13 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
         ? ordinaryStocks.slice(0, config.mvpStockLimit)
         : ordinaryStocks;
 
-    console.log(
+    logger.info(
       `[sync] total=${stockList.length}, ordinary=${ordinaryStocks.length}, processing=${limited.length} (MVP_STOCK_LIMIT=${config.mvpStockLimit})`
     );
 
     for (const [idx, info] of limited.entries()) {
       if ((idx + 1) % 10 === 0 || idx === limited.length - 1) {
-        console.log(`[sync] ${idx + 1}/${limited.length} (${info.code} ${info.name})`);
+        logger.info(`[sync] ${idx + 1}/${limited.length} (${info.code} ${info.name})`);
       }
       // Upsert stock
       await prisma.stock.upsert({

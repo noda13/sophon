@@ -2,6 +2,7 @@ import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
 import { strategies, getStrategy } from '../strategies/index.js';
 import { rankByStrategyId } from '../services/screener.js';
+import { asyncHandler, BadRequestError, NotFoundError } from '../lib/errors.js';
 
 const router: RouterType = Router();
 
@@ -18,41 +19,33 @@ router.get('/', (_req, res) => {
 });
 
 // GET /api/strategies/:id/ranking
-router.get('/:id/ranking', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const strategy = getStrategy(id);
-    if (!strategy) {
-      res.status(404).json({ error: `Strategy not found: ${id}` });
-      return;
-    }
-    if (!strategy.meta.active) {
-      res.status(400).json({ error: `Strategy ${id} is not active in Phase 1` });
-      return;
-    }
-
-    const parsed = rankQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.message });
-      return;
-    }
-
-    const excludeSectors = parsed.data.excludeSectors
-      ? parsed.data.excludeSectors.split(',').map(s => s.trim())
-      : undefined;
-
-    const rows = await rankByStrategyId(id, {
-      limit: parsed.data.limit,
-      maxMarketCap: parsed.data.maxMarketCap,
-      minMarketCap: parsed.data.minMarketCap,
-      excludeSectors,
-    });
-
-    res.json(rows);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    res.status(500).json({ error: message });
+router.get('/:id/ranking', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const strategy = getStrategy(id);
+  if (!strategy) {
+    throw new NotFoundError(`Strategy not found: ${id}`);
   }
-});
+  if (!strategy.meta.active) {
+    throw new BadRequestError(`Strategy ${id} is not active in Phase 1`);
+  }
+
+  const parsed = rankQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    throw new BadRequestError(parsed.error.message);
+  }
+
+  const excludeSectors = parsed.data.excludeSectors
+    ? parsed.data.excludeSectors.split(',').map(s => s.trim())
+    : undefined;
+
+  const rows = await rankByStrategyId(id, {
+    limit: parsed.data.limit,
+    maxMarketCap: parsed.data.maxMarketCap,
+    minMarketCap: parsed.data.minMarketCap,
+    excludeSectors,
+  });
+
+  res.json(rows);
+}));
 
 export default router;

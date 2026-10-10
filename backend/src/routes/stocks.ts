@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { getStockStrategyScores } from '../services/screener.js';
+import { asyncHandler, BadRequestError, NotFoundError } from '../lib/errors.js';
 
 const router: RouterType = Router();
 
@@ -15,119 +16,85 @@ const listQuerySchema = z.object({
   orderBy: z.enum(['code', 'name', 'marketCap']).optional().default('code'),
 });
 
-router.get('/', async (req, res) => {
-  try {
-    const parsed = listQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.message });
-      return;
-    }
-    const { limit, sector, orderBy } = parsed.data;
-    const prismaOrderBy: Prisma.StockOrderByWithRelationInput =
-      orderBy === 'name' ? { name: 'asc' } : { code: 'asc' };
-    const stocks = await prisma.stock.findMany({
-      where: sector ? { sector33Name: { contains: sector } } : undefined,
-      take: orderBy === 'marketCap' ? undefined : limit,
-      orderBy: prismaOrderBy,
-      include: {
-        snapshots: {
-          orderBy: { snapshotAt: 'desc' },
-          take: 1,
-        },
-      },
-    });
-    if (orderBy === 'marketCap') {
-      stocks.sort(
-        (a, b) =>
-          ((b.snapshots[0]?.marketCap ?? 0) as number) -
-          ((a.snapshots[0]?.marketCap ?? 0) as number),
-      );
-      stocks.splice(limit);
-    }
-    res.json(stocks);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    res.status(500).json({ error: message });
+function parseCode(raw: string): string {
+  const parsed = codeSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new BadRequestError(parsed.error.message);
   }
-});
+  return parsed.data;
+}
 
-router.get('/:code', async (req, res) => {
-  try {
-    const parsed = codeSchema.safeParse(req.params.code);
-    if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.message });
-      return;
-    }
-    const code = parsed.data;
-    const stock = await prisma.stock.findUnique({
-      where: { code },
-      include: {
-        snapshots: {
-          orderBy: { snapshotAt: 'desc' },
-          take: 1,
-        },
-        statements: {
-          orderBy: { disclosedDate: 'desc' },
-          take: 8,
-        },
-      },
-    });
-    if (!stock) {
-      res.status(404).json({ error: `Stock ${code} not found` });
-      return;
-    }
-    res.json(stock);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    res.status(500).json({ error: message });
+router.get('/', asyncHandler(async (req, res) => {
+  const parsed = listQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    throw new BadRequestError(parsed.error.message);
   }
-});
+  const { limit, sector, orderBy } = parsed.data;
+  const prismaOrderBy: Prisma.StockOrderByWithRelationInput =
+    orderBy === 'name' ? { name: 'asc' } : { code: 'asc' };
+  const stocks = await prisma.stock.findMany({
+    where: sector ? { sector33Name: { contains: sector } } : undefined,
+    take: orderBy === 'marketCap' ? undefined : limit,
+    orderBy: prismaOrderBy,
+    include: {
+      snapshots: {
+        orderBy: { snapshotAt: 'desc' },
+        take: 1,
+      },
+    },
+  });
+  if (orderBy === 'marketCap') {
+    stocks.sort(
+      (a, b) =>
+        ((b.snapshots[0]?.marketCap ?? 0) as number) -
+        ((a.snapshots[0]?.marketCap ?? 0) as number),
+    );
+    stocks.splice(limit);
+  }
+  res.json(stocks);
+}));
+
+router.get('/:code', asyncHandler(async (req, res) => {
+  const code = parseCode(req.params.code);
+  const stock = await prisma.stock.findUnique({
+    where: { code },
+    include: {
+      snapshots: {
+        orderBy: { snapshotAt: 'desc' },
+        take: 1,
+      },
+      statements: {
+        orderBy: { disclosedDate: 'desc' },
+        take: 8,
+      },
+    },
+  });
+  if (!stock) {
+    throw new NotFoundError(`Stock ${code} not found`);
+  }
+  res.json(stock);
+}));
 
 // GET /api/stocks/:code/history — up to 8 most recent financial statements
-router.get('/:code/history', async (req, res) => {
-  try {
-    const parsed = codeSchema.safeParse(req.params.code);
-    if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.message });
-      return;
-    }
-    const code = parsed.data;
-    const stock = await prisma.stock.findUnique({ where: { code } });
-    if (!stock) {
-      res.status(404).json({ error: `Stock ${code} not found` });
-      return;
-    }
-    const statements = await prisma.financialStatement.findMany({
-      where: { code },
-      orderBy: { disclosedDate: 'desc' },
-      take: 8,
-    });
-    res.json(statements);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    res.status(500).json({ error: message });
+router.get('/:code/history', asyncHandler(async (req, res) => {
+  const code = parseCode(req.params.code);
+  const stock = await prisma.stock.findUnique({ where: { code } });
+  if (!stock) {
+    throw new NotFoundError(`Stock ${code} not found`);
   }
-});
+  const statements = await prisma.financialStatement.findMany({
+    where: { code },
+    orderBy: { disclosedDate: 'desc' },
+    take: 8,
+  });
+  res.json(statements);
+}));
 
 // GET /api/stocks/:code/strategies — all active strategy scores for this stock
-router.get('/:code/strategies', async (req, res) => {
-  try {
-    const parsed = codeSchema.safeParse(req.params.code);
-    if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.message });
-      return;
-    }
-    const code = parsed.data;
-    const scores = await getStockStrategyScores(code);
-    res.json(scores);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    if (message.includes('not found')) {
-      res.status(404).json({ error: message });
-      return;
-    }
-    res.status(500).json({ error: message });
-  }
-});
+router.get('/:code/strategies', asyncHandler(async (req, res) => {
+  const code = parseCode(req.params.code);
+  const scores = await getStockStrategyScores(code);
+  res.json(scores);
+}));
 
 export default router;

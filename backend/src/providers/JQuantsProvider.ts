@@ -1,4 +1,5 @@
 import type { DataProvider, StockInfo, StatementRaw, PriceRaw } from './DataProvider.js';
+import { logger } from '../lib/logger.js';
 import { config } from '../lib/config.js';
 
 // NOTE: J-Quants Free tier data has a 12-week delay.
@@ -89,7 +90,7 @@ export class JQuantsProvider implements DataProvider {
     const until = Date.now() + SLOW_DURATION_MS;
     if (until > this.slowModeUntil) {
       this.slowModeUntil = until;
-      console.error(
+      logger.warn(
         `[jquants] entering slow mode (${SLOW_INTERVAL_MS}ms interval) for ${SLOW_DURATION_MS / 1000}s`
       );
     }
@@ -99,7 +100,7 @@ export class JQuantsProvider implements DataProvider {
     this.consecutiveOk++;
     if (this.consecutiveOk >= CONSECUTIVE_OK_TO_SPEEDUP && Date.now() < this.slowModeUntil) {
       this.slowModeUntil = 0;
-      console.error('[jquants] resuming normal pace after sustained successes');
+      logger.info('[jquants] resuming normal pace after sustained successes');
     }
   }
 
@@ -149,7 +150,7 @@ export class JQuantsProvider implements DataProvider {
             res.status === 429
               ? [10_000, 30_000, 60_000][attempt - 1]
               : [2_000, 4_000, 8_000][attempt - 1];
-          console.error(
+          logger.warn(
             `[jquants] ${res.status} ${label ? `[${label}] ` : ''}retrying in ${wait / 1000}s (attempt ${attempt}/${MAX_RETRIES})`
           );
           await sleep(wait);
@@ -252,7 +253,7 @@ export class JQuantsProvider implements DataProvider {
     let apiCalls = 0;
 
     // --- 1. Fetch all prices for the latest available trading day (1 API call) ---
-    console.error(`[jquants] prefetch: prices for ${fmt(latestTradingDay)} (all stocks, 1 API call)`);
+    logger.info(`[jquants] prefetch: prices for ${fmt(latestTradingDay)} (all stocks, 1 API call)`);
     type JQuantsBar = Record<string, string | number | undefined>;
     const priceItems = await this.getPaginated<JQuantsBar>('/equities/bars/daily', {
       date: fmt(latestTradingDay),
@@ -273,7 +274,7 @@ export class JQuantsProvider implements DataProvider {
       arr.push(priceRaw);
       this.priceCache.set(code, arr);
     }
-    console.error(`[jquants] prefetch: got ${priceItems.length} prices for ${this.priceCache.size} unique codes`);
+    logger.info(`[jquants] prefetch: got ${priceItems.length} prices for ${this.priceCache.size} unique codes`);
 
     // --- 2. Fetch statements for each weekday in the history window ---
     const fromDate = new Date(latestTradingDay.getTime() - historyDays * MS_PER_DAY);
@@ -288,7 +289,7 @@ export class JQuantsProvider implements DataProvider {
       }
     }
 
-    console.error(
+    logger.info(
       `[jquants] prefetch: statements over ${tradingDays.length} weekdays (${fmt(fromDate)} → ${fmt(latestTradingDay)})`
     );
 
@@ -358,7 +359,7 @@ export class JQuantsProvider implements DataProvider {
 
       // Progress every 20 days
       if ((idx + 1) % 20 === 0 || idx === tradingDays.length - 1) {
-        console.error(
+        logger.info(
           `[jquants] prefetch: ${idx + 1}/${tradingDays.length} days done, ${totalStatements} statements, ${this.statementCache.size} unique codes`
         );
       }
@@ -392,12 +393,12 @@ export class JQuantsProvider implements DataProvider {
     const items = await this.getPaginated<JQuantsMaster>('/equities/master');
 
     if (items.length === 0) {
-      console.warn('[jquants] /equities/master returned 0 items — check API key and plan');
+      logger.warn('[jquants] /equities/master returned 0 items — check API key and plan');
     } else {
       // Warn if expected fields are missing (first item check)
       const first = items[0];
       if (!first['Code']) {
-        console.warn('[jquants] /equities/master: "Code" field missing from first item. Keys:', Object.keys(first));
+        logger.warn({ keys: Object.keys(first) }, '[jquants] /equities/master: "Code" field missing from first item');
       }
     }
 
@@ -456,7 +457,7 @@ export class JQuantsProvider implements DataProvider {
     });
 
     if (items.length > 0 && filtered.length === 0) {
-      console.warn(
+      logger.warn(
         `[jquants] /fins/summary code=${jqCode}: ${items.length} items returned but none matched DocType.includes("FinancialStatements"). ` +
           `Sample DocType values: ${items
             .slice(0, 3)
@@ -564,7 +565,7 @@ export class JQuantsProvider implements DataProvider {
       const hasAbbrev = first['C'] !== undefined;
       const hasFull = first['Close'] !== undefined;
       if (!hasAbbrev && !hasFull) {
-        console.warn(
+        logger.warn(
           `[jquants] /equities/bars/daily code=${jqCode}: neither "C" nor "Close" found. ` +
             `Keys in first item: ${Object.keys(first).join(', ')}`
         );
