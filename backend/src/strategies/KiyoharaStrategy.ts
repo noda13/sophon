@@ -6,6 +6,7 @@ import type {
   RankingRow,
   RankingOpts,
 } from './InvestmentStrategy.js';
+import { rankStocks, BILLION } from './rankStocks.js';
 
 export class KiyoharaStrategy implements InvestmentStrategy {
   readonly meta: StrategyMeta = {
@@ -67,7 +68,6 @@ export class KiyoharaStrategy implements InvestmentStrategy {
     components.cnperScore = cnperScore;
 
     // --- Size bonus (small cap preferred) ---
-    const BILLION = 100_000_000; // 1億
     let sizeBonus = 0;
     if (m.marketCap > 500 * BILLION) {
       sizeBonus = -10;
@@ -113,32 +113,8 @@ export class KiyoharaStrategy implements InvestmentStrategy {
   }
 
   rank(stocks: StockMetrics[], opts?: RankingOpts): RankingRow[] {
-    const BILLION = 100_000_000;
-    const limit = opts?.limit ?? 50;
-    const maxMarketCap = opts?.maxMarketCap ?? 500 * BILLION;
-    const minMarketCap = opts?.minMarketCap ?? 0;
-    const excludeSectors = opts?.excludeSectors ?? [];
-
-    const now = new Date().toISOString();
-
-    const filtered = stocks.filter(s => {
-      if (s.marketCap > maxMarketCap) return false;
-      if (s.marketCap < minMarketCap) return false;
-      if (excludeSectors.length > 0 && s.sector33Name && excludeSectors.includes(s.sector33Name)) {
-        return false;
-      }
-      return true;
+    return rankStocks(this, stocks, opts, {
+      defaultMaxMarketCap: 500 * BILLION,
     });
-
-    const scored = filtered.map(s => ({
-      ...s,
-      rank: 0,
-      strategyScore: this.score(s),
-      snapshotAt: now,
-    }));
-
-    scored.sort((a, b) => b.strategyScore.score - a.strategyScore.score);
-
-    return scored.slice(0, limit).map((row, i) => ({ ...row, rank: i + 1 }));
   }
 }
