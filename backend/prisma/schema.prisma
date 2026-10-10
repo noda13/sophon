@@ -73,6 +73,7 @@ model ScreeningSnapshot {
 
   stock Stock @relation(fields: [code], references: [code])
 
+  @@index([code, snapshotAt])
   @@index([snapshotAt, netCashRatio])
   @@index([snapshotAt, cashNeutralPer])
   @@map("screening_snapshots")

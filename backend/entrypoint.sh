@@ -1,7 +1,8 @@
 #!/bin/sh
+set -e
 
 echo "Running Prisma migrations..."
-pnpm prisma migrate deploy || echo "Migration failed or already exists"
+pnpm prisma migrate deploy
 
 echo "Starting waga-scope server..."
-pnpm run dev
+exec pnpm run start

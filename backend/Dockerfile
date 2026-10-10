@@ -1,6 +1,5 @@
+# Build context is the repository root (pnpm-lock.yaml lives there).
 FROM node:24-slim
-
-WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     openssl \
@@ -9,19 +8,28 @@ RUN apt-get update && apt-get install -y \
 
 RUN npm install -g pnpm@9
 
-COPY package.json ./
+WORKDIR /app
 
-RUN pnpm install --no-frozen-lockfile
+# Workspace manifests are required for --frozen-lockfile to match the lockfile importers.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
+COPY packages/shared ./packages/shared/
 
-COPY prisma ./prisma/
+RUN pnpm install --frozen-lockfile --filter waga-scope-backend...
 
+WORKDIR /app/backend
+
+COPY backend/prisma ./prisma/
 RUN pnpm run prisma:generate
 
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+COPY backend/ ./
 
-COPY . .
+RUN chmod +x entrypoint.sh \
+    && chown -R node:node /app
+
+USER node
 
 EXPOSE 8902
 
-CMD ["/bin/sh", "/app/entrypoint.sh"]
+CMD ["/bin/sh", "/app/backend/entrypoint.sh"]

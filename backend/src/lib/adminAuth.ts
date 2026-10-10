@@ -2,19 +2,14 @@ import { timingSafeEqual } from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { config } from './config.js';
 
-export function requireAdminToken(_req: Request, res: Response, next: NextFunction): void {
+export function requireAdminToken(req: Request, res: Response, next: NextFunction): void {
   if (!config.adminToken) {
-    if (config.nodeEnv === 'production') {
-      res.status(503).json({ error: 'Admin endpoint disabled: ADMIN_TOKEN not configured' });
-      return;
-    }
-    next();
+    res.status(503).json({ error: 'Admin endpoint disabled: ADMIN_TOKEN not configured' });
     return;
   }
-  const auth = _req.headers.authorization;
-  const provided = Buffer.from(auth ?? '');
+  const provided = Buffer.from(req.headers.authorization ?? '');
   const expected = Buffer.from(`Bearer ${config.adminToken}`);
-  // Use timingSafeEqual to prevent timing-based token enumeration attacks
+  // timingSafeEqual prevents timing-based token enumeration
   const match = provided.length === expected.length && timingSafeEqual(provided, expected);
   if (!match) {
     res.status(401).json({ error: 'Unauthorized' });

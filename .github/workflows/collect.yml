@@ -2,9 +2,16 @@ name: Collect Static Data
 
 on:
   workflow_dispatch:
+  schedule:
+    # 東証の大引け(15:30 JST = 06:30 UTC)後、平日 08:00 UTC
+    - cron: '0 8 * * 1-5'
 
 permissions:
   contents: write
+
+concurrency:
+  group: collect-static-data
+  cancel-in-progress: false
 
 jobs:
   collect:
@@ -16,13 +23,11 @@ jobs:
       JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
           cache: 'pnpm'

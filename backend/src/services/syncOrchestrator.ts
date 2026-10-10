@@ -1,7 +1,9 @@
 import prisma from '../lib/prisma.js';
+import { logger } from '../lib/logger.js';
 import { config } from '../lib/config.js';
 import { resolveProvider } from '../providers/index.js';
 import type { DataProvider } from '../providers/DataProvider.js';
+import { invalidateScreenerCache } from './screener.js';
 import { computeMarketCap, computeMetrics } from './metricCalculator.js';
 
 let _syncInProgress = false;
@@ -12,27 +14,28 @@ export function isSyncing(): boolean {
 
 export async function runSync(opts?: { provider?: DataProvider }): Promise<{ stocks: number; snapshots: number }> {
   _syncInProgress = true;
-  console.log('[sync] starting runSync...');
-  const provider = opts?.provider ?? resolveProvider();
-
-  const log = await prisma.collectionLog.create({
-    data: {
-      jobType: 'full',
-      status: 'running',
-      startedAt: new Date(),
-    },
-  });
-
+  logger.info('[sync] starting runSync...');
+  let logId: string | null = null;
   let stocksProcessed = 0;
   let snapshotsCreated = 0;
 
   try {
+    const provider = opts?.provider ?? resolveProvider();
+    const log = await prisma.collectionLog.create({
+      data: {
+        jobType: 'full',
+        status: 'running',
+        startedAt: new Date(),
+      },
+    });
+    logId = log.id;
+
     // If provider supports batch prefetch (e.g., JQuantsProvider V2),
     // use it to minimize per-code API calls.
     if (provider.prefetchAll) {
-      console.log('[sync] prefetching bulk data via batch endpoints...');
+      logger.info('[sync] prefetching bulk data via batch endpoints...');
       const pre = await provider.prefetchAll({ historyDays: 120 });
-      console.log(
+      logger.info(
         `[sync] prefetch done: ${pre.statementsCached} statements, ${pre.pricesCached} prices, ${pre.apiCalls} API calls`
       );
     }
@@ -54,91 +57,75 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
         ? ordinaryStocks.slice(0, config.mvpStockLimit)
         : ordinaryStocks;
 
-    console.log(
+    logger.info(
       `[sync] total=${stockList.length}, ordinary=${ordinaryStocks.length}, processing=${limited.length} (MVP_STOCK_LIMIT=${config.mvpStockLimit})`
     );
 
     for (const [idx, info] of limited.entries()) {
       if ((idx + 1) % 10 === 0 || idx === limited.length - 1) {
-        console.log(`[sync] ${idx + 1}/${limited.length} (${info.code} ${info.name})`);
+        logger.info(`[sync] ${idx + 1}/${limited.length} (${info.code} ${info.name})`);
       }
-      // Upsert stock
-      await prisma.stock.upsert({
-        where: { code: info.code },
-        update: {
-          name: info.name,
-          sector33Name: info.sector33Name ?? null,
-          marketSegment: info.marketSegment ?? null,
-        },
-        create: {
-          code: info.code,
-          name: info.name,
-          sector33Name: info.sector33Name ?? null,
-          sector33Code: info.sector33Code ?? null,
-          sector17Code: info.sector17Code ?? null,
-          marketSegment: info.marketSegment ?? null,
-          scaleCategory: info.scaleCategory ?? null,
-        },
-      });
-
-      // Upsert financial statements
       const statements = await provider.fetchStatements(info.code);
-      if (statements.length > 0) {
-        await prisma.$transaction(
-          statements.map(stmt =>
-            prisma.financialStatement.upsert({
-              where: {
-                code_fiscalYear_typeOfCurrentPeriod: {
-                  code: stmt.code,
-                  fiscalYear: stmt.fiscalYear,
-                  typeOfCurrentPeriod: stmt.typeOfCurrentPeriod,
-                },
-              },
-              update: {
-                netSales: stmt.netSales ?? null,
-                operatingProfit: stmt.operatingProfit ?? null,
-                ordinaryProfit: stmt.ordinaryProfit ?? null,
-                profit: stmt.profit ?? null,
-                totalAssets: stmt.totalAssets ?? null,
-                equity: stmt.equity ?? null,
-                currentAssets: stmt.currentAssets ?? null,
-                cashAndEquivalents: stmt.cashAndEquivalents ?? null,
-                sharesOutstanding: stmt.sharesOutstanding ?? null,
-              },
-              create: {
+      const prices = await provider.fetchPrices(info.code);
+
+      // One transaction per stock: a single fsync instead of one per row
+      await prisma.$transaction([
+        prisma.stock.upsert({
+          where: { code: info.code },
+          update: {
+            name: info.name,
+            sector33Name: info.sector33Name ?? null,
+            marketSegment: info.marketSegment ?? null,
+          },
+          create: {
+            code: info.code,
+            name: info.name,
+            sector33Name: info.sector33Name ?? null,
+            sector33Code: info.sector33Code ?? null,
+            sector17Code: info.sector17Code ?? null,
+            marketSegment: info.marketSegment ?? null,
+            scaleCategory: info.scaleCategory ?? null,
+          },
+        }),
+        ...statements.map(stmt => {
+          const fields = {
+            netSales: stmt.netSales ?? null,
+            operatingProfit: stmt.operatingProfit ?? null,
+            ordinaryProfit: stmt.ordinaryProfit ?? null,
+            profit: stmt.profit ?? null,
+            totalAssets: stmt.totalAssets ?? null,
+            equity: stmt.equity ?? null,
+            currentAssets: stmt.currentAssets ?? null,
+            cashAndEquivalents: stmt.cashAndEquivalents ?? null,
+            sharesOutstanding: stmt.sharesOutstanding ?? null,
+          };
+          return prisma.financialStatement.upsert({
+            where: {
+              code_fiscalYear_typeOfCurrentPeriod: {
                 code: stmt.code,
                 fiscalYear: stmt.fiscalYear,
                 typeOfCurrentPeriod: stmt.typeOfCurrentPeriod,
-                disclosedDate: stmt.disclosedDate,
-                periodEndDate: stmt.periodEndDate,
-                netSales: stmt.netSales ?? null,
-                operatingProfit: stmt.operatingProfit ?? null,
-                ordinaryProfit: stmt.ordinaryProfit ?? null,
-                profit: stmt.profit ?? null,
-                totalAssets: stmt.totalAssets ?? null,
-                equity: stmt.equity ?? null,
-                currentAssets: stmt.currentAssets ?? null,
-                cashAndEquivalents: stmt.cashAndEquivalents ?? null,
-                sharesOutstanding: stmt.sharesOutstanding ?? null,
               },
-            })
-          )
-        );
-      }
-
-      // Upsert prices
-      const prices = await provider.fetchPrices(info.code);
-      if (prices.length > 0) {
-        await prisma.$transaction(
-          prices.map(price =>
-            prisma.dailyPrice.upsert({
-              where: { code_date: { code: price.code, date: price.date } },
-              update: { close: price.close },
-              create: { code: price.code, date: price.date, close: price.close },
-            })
-          )
-        );
-      }
+            },
+            update: fields,
+            create: {
+              code: stmt.code,
+              fiscalYear: stmt.fiscalYear,
+              typeOfCurrentPeriod: stmt.typeOfCurrentPeriod,
+              disclosedDate: stmt.disclosedDate,
+              periodEndDate: stmt.periodEndDate,
+              ...fields,
+            },
+          });
+        }),
+        ...prices.map(price =>
+          prisma.dailyPrice.upsert({
+            where: { code_date: { code: price.code, date: price.date } },
+            update: { close: price.close },
+            create: { code: price.code, date: price.date, close: price.close },
+          })
+        ),
+      ]);
 
       // Get latest statement and price
       const recentStmts = await prisma.financialStatement.findMany({
@@ -189,7 +176,7 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
     });
 
     await prisma.collectionLog.update({
-      where: { id: log.id },
+      where: { id: logId },
       data: {
         status: 'success',
         completedAt: new Date(),
@@ -200,16 +187,19 @@ export async function runSync(opts?: { provider?: DataProvider }): Promise<{ sto
     return { stocks: stocksProcessed, snapshots: snapshotsCreated };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    await prisma.collectionLog.update({
-      where: { id: log.id },
-      data: {
-        status: 'failed',
-        completedAt: new Date(),
-        message,
-      },
-    });
+    if (logId) {
+      await prisma.collectionLog.update({
+        where: { id: logId },
+        data: {
+          status: 'failed',
+          completedAt: new Date(),
+          message,
+        },
+      });
+    }
     throw err;
   } finally {
+    invalidateScreenerCache();
     _syncInProgress = false;
   }
 }

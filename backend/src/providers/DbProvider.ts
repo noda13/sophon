@@ -1,4 +1,5 @@
 import type { DataProvider, StockInfo, StatementRaw, PriceRaw } from './DataProvider.js';
+import { logger } from '../lib/logger.js';
 import prisma from '../lib/prisma.js';
 
 /**
@@ -96,7 +97,7 @@ export class DbProvider implements DataProvider {
   }
 
   async prefetchAll(): Promise<{ statementsCached: number; pricesCached: number; apiCalls: number }> {
-    console.log('  DbProvider.prefetchAll: loading all statements from DB...');
+    logger.info('  DbProvider.prefetchAll: loading all statements from DB...');
     const stmts = await prisma.financialStatement.findMany({
       orderBy: { disclosedDate: 'desc' },
     });
@@ -123,7 +124,7 @@ export class DbProvider implements DataProvider {
       this._statementCache.set(r.code, arr);
     }
 
-    console.log('  DbProvider.prefetchAll: loading all prices from DB...');
+    logger.info('  DbProvider.prefetchAll: loading all prices from DB...');
     const prices = await prisma.dailyPrice.findMany({
       orderBy: { date: 'desc' },
     });
@@ -136,7 +137,7 @@ export class DbProvider implements DataProvider {
     }
 
     this._prefetched = true;
-    console.log(`  DbProvider.prefetchAll: cached ${this._statementCache.size} statement groups, ${this._priceCache.size} price groups`);
+    logger.info(`  DbProvider.prefetchAll: cached ${this._statementCache.size} statement groups, ${this._priceCache.size} price groups`);
     return {
       statementsCached: stmts.length,
       pricesCached: prices.length,
