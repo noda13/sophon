@@ -2,9 +2,50 @@
   "name": "sophon",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@10.33.4",
   "engines": {
     "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "type-check": "tsc -b",
+    "test": "vitest run",
+    "collect": "tsx src/collector/cli.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^4.0.113",
+    "@ai-sdk/groq": "^4.0.77",
+    "@ark-ui/react": "^5.40.0",
+    "@tanstack/react-query": "^5.107.1",
+    "@tanstack/react-router": "^1.170.46",
+    "@tanstack/react-table": "^9.3.1",
+    "ai": "^7.0.164",
+    "feedsmith": "^3.0.1",
+    "p-retry": "^9.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "recharts": "^3.10.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@tanstack/router-plugin": "^1.168.48",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "jsdom": "^31.0.0",
+    "msw": "^3.0.4",
+    "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.1.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -13,6 +54,18 @@
       "esbuild",
       "prisma",
       "workerd"
-    ]
+    ],
+    "packageExtensions": {
+      "@testing-library/jest-dom": {
+        "peerDependencies": {
+          "vitest": "*"
+        },
+        "peerDependenciesMeta": {
+          "vitest": {
+            "optional": true
+          }
+        }
+      }
+    }
   }
 }
