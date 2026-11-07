@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "4331",
+    "name": "テイクアンドギヴ・ニーズ",
+    "sector33Name": "サービス業",
+    "sector33Code": "9050",
+    "sector17Code": "10",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 2",
+    "updatedAt": "2026-05-13T13:41:23.074Z",
+    "snapshots": [
+      {
+        "id": "static-4331",
+        "snapshotAt": "2026-05-13T13:41:23.074Z",
+        "marketCap": 10469736531,
+        "netCash": -34257000000,
+        "netCashRatio": -3.272002108034709,
+        "cashNeutralPer": 1177.0193823947368,
+        "per": 275.51938239473685,
+        "pbr": 0.5860145825030785
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-4331-2025-FY",
+      "code": "4331",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-02-13T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 35709000000,
+      "operatingProfit": 1626000000,
+      "ordinaryProfit": null,
+      "profit": 38000000,
+      "totalAssets": 52123000000,
+      "equity": 17866000000,
+      "cashAndEquivalents": 6202000000,
+      "sharesOutstanding": 14602143
+    },
+    {
+      "id": "static-4331-2025-2Q",
+      "code": "4331",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-11-12T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 21306000000,
+      "operatingProfit": -465000000,
+      "ordinaryProfit": null,
+      "profit": -501000000,
+      "totalAssets": 53252000000,
+      "equity": 17249000000,
+      "cashAndEquivalents": 7497000000,
+      "sharesOutstanding": 14602233
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": -15,
+        "sizeBonus": 0
+      },
+      "reason": "NCR=-3.27, CNPER=1177.0, 105億円 → 対象外"
+    },
+    "graham": {
+      "score": 20,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 20,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=161.5, PBR=0.59, PER=275.5 → 対象外"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=0.2%, PBR=0.59 → 対象外"
+    },
+    "lynch": {
+      "score": 4,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 4,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=275.5, 時価総額105億 → 対象外"
+    },
+    "dividend": {
+      "score": 5,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り0.36%, NCR=-3.27, PBR=0.59 → 対象外"
+    },
+    "composite": {
+      "score": 6,
+      "components": {
+        "kiyohara": 0,
+        "graham": 20,
+        "buffett": 0,
+        "lynch": 4,
+        "dividend": 5
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:20, バフェット流:0, リンチ流:4, 配当・インカム流:5"
+    }
+  }
+}

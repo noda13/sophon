@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "8392",
+    "name": "大分銀行",
+    "sector33Name": "銀行業",
+    "sector33Code": "7050",
+    "sector17Code": "15",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 2",
+    "updatedAt": "2026-05-13T13:41:23.443Z",
+    "snapshots": [
+      {
+        "id": "static-8392",
+        "snapshotAt": "2026-05-13T13:41:23.443Z",
+        "marketCap": 144372519680,
+        "netCash": -4326939000000,
+        "netCashRatio": -29.97065514677315,
+        "cashNeutralPer": 597.2898102698371,
+        "per": 19.285669206518836,
+        "pbr": 0.6121941401360314
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8392-2025-3Q",
+      "code": "8392",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-09T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 69466000000,
+      "operatingProfit": null,
+      "ordinaryProfit": null,
+      "profit": 7486000000,
+      "totalAssets": 4562767000000,
+      "equity": 235828000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 15101728
+    },
+    {
+      "id": "static-8392-2025-2Q",
+      "code": "8392",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-11-10T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 44601000000,
+      "operatingProfit": null,
+      "ordinaryProfit": null,
+      "profit": 4431000000,
+      "totalAssets": 4481088000000,
+      "equity": 225484000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 15086732
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": -15,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-29.97, CNPER=597.3, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 73,
+      "components": {
+        "grahamProductScore": 48,
+        "pbrScore": 20,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=11.8, PBR=0.61, PER=19.3 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=3.2%, PBR=0.61 → 対象外"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=19.3, 時価総額1444億 → 対象外"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り5.19%, NCR=-29.97, PBR=0.61 → 様子見"
+    },
+    "composite": {
+      "score": 26,
+      "components": {
+        "kiyohara": 0,
+        "graham": 73,
+        "buffett": 0,
+        "lynch": 22,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:73, バフェット流:0, リンチ流:22, 配当・インカム流:35"
+    }
+  }
+}

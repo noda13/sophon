@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "8283",
+    "name": "ＰＡＬＴＡＣ",
+    "sector33Name": "卸売業",
+    "sector33Code": "6050",
+    "sector17Code": "13",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-05-13T13:41:23.436Z",
+    "snapshots": [
+      {
+        "id": "static-8283",
+        "snapshotAt": "2026-05-13T13:41:23.436Z",
+        "marketCap": 304431810816,
+        "netCash": -244110000000,
+        "netCashRatio": -0.8018544426933795,
+        "cashNeutralPer": 31.671005243418016,
+        "per": 17.57689438891455,
+        "pbr": 1.01552757821981
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8283-2025-3Q",
+      "code": "8283",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-06T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 950636000000,
+      "operatingProfit": 21947000000,
+      "ordinaryProfit": null,
+      "profit": 17320000000,
+      "totalAssets": 543887000000,
+      "equity": 299777000000,
+      "cashAndEquivalents": 66110000000,
+      "sharesOutstanding": 61081824
+    },
+    {
+      "id": "static-8283-2025-2Q",
+      "code": "8283",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-11-04T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 625135000000,
+      "operatingProfit": 13894000000,
+      "ordinaryProfit": null,
+      "profit": 11137000000,
+      "totalAssets": 530646000000,
+      "equity": 297210000000,
+      "cashAndEquivalents": 69765000000,
+      "sharesOutstanding": 61467748
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 6,
+        "cnperScore": -8,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.80, CNPER=31.7, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 52,
+      "components": {
+        "grahamProductScore": 35,
+        "pbrScore": 12,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=17.8, PBR=1.02, PER=17.6 → 買い候補"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=5.8%, PBR=1.02 → 対象外"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=17.6, 時価総額3044億 → 対象外"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り5.69%, NCR=-0.80, PBR=1.02 → 様子見"
+    },
+    "composite": {
+      "score": 24,
+      "components": {
+        "kiyohara": 0,
+        "graham": 52,
+        "buffett": 10,
+        "lynch": 22,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:52, バフェット流:10, リンチ流:22, 配当・インカム流:35"
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "9692",
+    "name": "シーイーシー",
+    "sector33Name": "情報･通信業",
+    "sector33Code": "5250",
+    "sector17Code": "10",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-05-13T13:41:23.536Z",
+    "snapshots": [
+      {
+        "id": "static-9692",
+        "snapshotAt": "2026-05-13T13:41:23.536Z",
+        "marketCap": 63357241920,
+        "netCash": -13458000000,
+        "netCashRatio": -0.21241454950001082,
+        "cashNeutralPer": 21.385089621380846,
+        "per": 17.638430378619155,
+        "pbr": 1.560177347878549
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-9692-2025-3Q",
+      "code": "9692",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2025-12-09T00:00:00.000Z",
+      "periodEndDate": "2025-10-31T00:00:00.000Z",
+      "netSales": 47273000000,
+      "operatingProfit": 5224000000,
+      "ordinaryProfit": null,
+      "profit": 3592000000,
+      "totalAssets": 54067000000,
+      "equity": 40609000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 31210464
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 9,
+        "cnperScore": -8,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.21, CNPER=21.4, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 32,
+      "components": {
+        "grahamProductScore": 22,
+        "pbrScore": 5,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=27.5, PBR=1.56, PER=17.6 → 様子見"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=8.8%, PBR=1.56 → 対象外"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=17.6, 時価総額634億 → 対象外"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り5.67%, NCR=-0.21, PBR=1.56 → 様子見"
+    },
+    "composite": {
+      "score": 20,
+      "components": {
+        "kiyohara": 0,
+        "graham": 32,
+        "buffett": 10,
+        "lynch": 22,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:32, バフェット流:10, リンチ流:22, 配当・インカム流:35"
+    }
+  }
+}

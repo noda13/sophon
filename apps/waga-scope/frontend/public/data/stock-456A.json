@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "456A",
+    "name": "ＨＵＭＡＮ　ＭＡＤＥ",
+    "sector33Name": "小売業",
+    "sector33Code": "6100",
+    "sector17Code": "14",
+    "marketSegment": "グロース",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.107Z",
+    "snapshots": [
+      {
+        "id": "static-456A",
+        "snapshotAt": "2026-05-13T13:41:23.107Z",
+        "marketCap": 77809200000,
+        "netCash": -2223000000,
+        "netCashRatio": -0.028569886337348284,
+        "cashNeutralPer": 38.58833172613308,
+        "per": 37.51648987463838,
+        "pbr": 9.46353685234736
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-456A-2025-3Q",
+      "code": "456A",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2025-12-12T00:00:00.000Z",
+      "periodEndDate": "2025-10-31T00:00:00.000Z",
+      "netSales": 9953000000,
+      "operatingProfit": 3215000000,
+      "ordinaryProfit": null,
+      "profit": 2074000000,
+      "totalAssets": 10445000000,
+      "equity": 8222000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 21980000
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 10,
+        "cnperScore": -8,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.03, CNPER=38.6, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=355.0, PBR=9.46, PER=37.5 → 対象外"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 50,
+        "qualityBonus": 0,
+        "valuationPenalty": -10
+      },
+      "reason": "ROE=25.2%, PBR=9.46 → 様子見"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=37.5, 時価総額778億 → 対象外"
+    },
+    "dividend": {
+      "score": 0,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り2.67%, NCR=-0.03, PBR=9.46 → 対象外"
+    },
+    "composite": {
+      "score": 8,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 40,
+        "lynch": 0,
+        "dividend": 0
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:40, リンチ流:0, 配当・インカム流:0"
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "1909",
+    "name": "日本ドライケミカル",
+    "sector33Name": "機械",
+    "sector33Code": "3600",
+    "sector17Code": "8",
+    "marketSegment": "スタンダード",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:22.809Z",
+    "snapshots": [
+      {
+        "id": "static-1909",
+        "snapshotAt": "2026-05-13T13:41:22.809Z",
+        "marketCap": 81918932940,
+        "netCash": -18335000000,
+        "netCashRatio": -0.2238188333511269,
+        "cashNeutralPer": 24.42239535688185,
+        "per": 19.955891093788065,
+        "pbr": 2.348391277699739
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-1909-2025-3Q",
+      "code": "1909",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-05T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 43007000000,
+      "operatingProfit": 5965000000,
+      "ordinaryProfit": null,
+      "profit": 4105000000,
+      "totalAssets": 53218000000,
+      "equity": 34883000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 6703677
+    },
+    {
+      "id": "static-1909-2025-2Q",
+      "code": "1909",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-11-11T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 26602000000,
+      "operatingProfit": 3387000000,
+      "ordinaryProfit": null,
+      "profit": 2187000000,
+      "totalAssets": 52554000000,
+      "equity": 33202000000,
+      "cashAndEquivalents": 10015799000,
+      "sharesOutstanding": 6703712
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 9,
+        "cnperScore": -8,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.22, CNPER=24.4, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=46.9, PBR=2.35, PER=20.0 → 対象外"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=11.8%, PBR=2.35 → 様子見"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=20.0, 時価総額819億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り5.01%, NCR=-0.22, PBR=2.35 → 様子見"
+    },
+    "composite": {
+      "score": 15,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 25,
+        "lynch": 22,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:25, リンチ流:22, 配当・インカム流:25"
+    }
+  }
+}

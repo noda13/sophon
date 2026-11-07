@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "3223",
+    "name": "エスエルディー",
+    "sector33Name": "小売業",
+    "sector33Code": "6100",
+    "sector17Code": "14",
+    "marketSegment": "スタンダード",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:22.960Z",
+    "snapshots": [
+      {
+        "id": "static-3223",
+        "snapshotAt": "2026-05-13T13:41:22.960Z",
+        "marketCap": 1577903085,
+        "netCash": -609000000,
+        "netCashRatio": -0.3859552628987984,
+        "cashNeutralPer": 25.429105639534885,
+        "per": 18.347710290697673,
+        "pbr": 2.8689147
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-3223-2025-3Q",
+      "code": "3223",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-01-14T00:00:00.000Z",
+      "periodEndDate": "2025-11-30T00:00:00.000Z",
+      "netSales": 2763000000,
+      "operatingProfit": 94000000,
+      "ordinaryProfit": null,
+      "profit": 86000000,
+      "totalAssets": 1159000000,
+      "equity": 550000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 1560735
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 5,
+      "components": {
+        "ncrScore": 8,
+        "cnperScore": -8,
+        "sizeBonus": 5
+      },
+      "reason": "NCR=-0.39, CNPER=25.4, 16億円 → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=52.6, PBR=2.87, PER=18.3 → 対象外"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 40,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=15.6%, PBR=2.87 → 様子見"
+    },
+    "lynch": {
+      "score": 37,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 15,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=18.3, 時価総額16億 → 様子見"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り5.45%, NCR=-0.39, PBR=2.87 → 様子見"
+    },
+    "composite": {
+      "score": 22,
+      "components": {
+        "kiyohara": 5,
+        "graham": 5,
+        "buffett": 40,
+        "lynch": 37,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:5, グレアム流:5, バフェット流:40, リンチ流:37, 配当・インカム流:25"
+    }
+  }
+}

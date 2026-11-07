@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "4259",
+    "name": "エクサウィザーズ",
+    "sector33Name": "情報･通信業",
+    "sector33Code": "5250",
+    "sector17Code": "10",
+    "marketSegment": "グロース",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.067Z",
+    "snapshots": [
+      {
+        "id": "static-4259",
+        "snapshotAt": "2026-05-13T13:41:23.067Z",
+        "marketCap": 58824954028,
+        "netCash": -4474000000,
+        "netCashRatio": -0.07605615803576196,
+        "cashNeutralPer": 91.07763169496403,
+        "per": 84.64022162302159,
+        "pbr": 15.215973623383341
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-4259-2025-3Q",
+      "code": "4259",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-12T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 8354000000,
+      "operatingProfit": 1027000000,
+      "ordinaryProfit": null,
+      "profit": 695000000,
+      "totalAssets": 8340000000,
+      "equity": 3866000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 85007159
+    },
+    {
+      "id": "static-4259-2025-2Q",
+      "code": "4259",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-11-11T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 5238000000,
+      "operatingProfit": 546000000,
+      "ordinaryProfit": null,
+      "profit": 385000000,
+      "totalAssets": 7857000000,
+      "equity": 3489000000,
+      "cashAndEquivalents": 3506000000,
+      "sharesOutstanding": 84680538
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 10,
+        "cnperScore": -15,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.08, CNPER=91.1, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=1287.9, PBR=15.22, PER=84.6 → 対象外"
+    },
+    "buffett": {
+      "score": 30,
+      "components": {
+        "roeScore": 40,
+        "qualityBonus": 0,
+        "valuationPenalty": -10
+      },
+      "reason": "ROE=18.0%, PBR=15.22 → 様子見"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=84.6, 時価総額588億 → 対象外"
+    },
+    "dividend": {
+      "score": 0,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り1.18%, NCR=-0.08, PBR=15.22 → 対象外"
+    },
+    "composite": {
+      "score": 6,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 30,
+        "lynch": 0,
+        "dividend": 0
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:30, リンチ流:0, 配当・インカム流:0"
+    }
+  }
+}

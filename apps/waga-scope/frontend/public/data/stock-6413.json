@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "6413",
+    "name": "理想科学工業",
+    "sector33Name": "機械",
+    "sector33Code": "3600",
+    "sector17Code": "8",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 2",
+    "updatedAt": "2026-05-13T13:41:23.246Z",
+    "snapshots": [
+      {
+        "id": "static-6413",
+        "snapshotAt": "2026-05-13T13:41:23.246Z",
+        "marketCap": 80083334760,
+        "netCash": -25461000000,
+        "netCashRatio": -0.31793131587618717,
+        "cashNeutralPer": 32.71678076875388,
+        "per": 24.824344314941104,
+        "pbr": 1.1925681254467477
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-6413-2025-3Q",
+      "code": "6413",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-03T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 56473000000,
+      "operatingProfit": 3689000000,
+      "ordinaryProfit": null,
+      "profit": 3226000000,
+      "totalAssets": 92613000000,
+      "equity": 67152000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 63306984
+    },
+    {
+      "id": "static-6413-2025-2Q",
+      "code": "6413",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-11-05T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 37620000000,
+      "operatingProfit": 2540000000,
+      "ordinaryProfit": null,
+      "profit": 1791000000,
+      "totalAssets": 89905000000,
+      "equity": 65475000000,
+      "cashAndEquivalents": 15469000000,
+      "sharesOutstanding": 63770984
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 8,
+        "cnperScore": -8,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.32, CNPER=32.7, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 33,
+      "components": {
+        "grahamProductScore": 21,
+        "pbrScore": 12,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=29.6, PBR=1.19, PER=24.8 → 様子見"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=4.8%, PBR=1.19 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=24.8, 時価総額801億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り4.03%, NCR=-0.32, PBR=1.19 → 対象外"
+    },
+    "composite": {
+      "score": 12,
+      "components": {
+        "kiyohara": 0,
+        "graham": 33,
+        "buffett": 0,
+        "lynch": 8,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:33, バフェット流:0, リンチ流:8, 配当・インカム流:18"
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "9005",
+    "name": "東急",
+    "sector33Name": "陸運業",
+    "sector33Code": "5050",
+    "sector17Code": "12",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-05-13T13:41:23.473Z",
+    "snapshots": [
+      {
+        "id": "static-9005",
+        "snapshotAt": "2026-05-13T13:41:23.473Z",
+        "marketCap": 1141070959110,
+        "netCash": -1858564000000,
+        "netCashRatio": -1.628789152122163,
+        "cashNeutralPer": 40.39912402841751,
+        "per": 15.367959045252526,
+        "pbr": 1.2379357150017412
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-9005-2025-3Q",
+      "code": "9005",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-10T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 784614000000,
+      "operatingProfit": 88220000000,
+      "ordinaryProfit": null,
+      "profit": 74250000000,
+      "totalAssets": 2780317000000,
+      "equity": 921753000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 570820890
+    },
+    {
+      "id": "static-9005-2025-2Q",
+      "code": "9005",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-11-11T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 518986000000,
+      "operatingProfit": 58880000000,
+      "ordinaryProfit": null,
+      "profit": 56236000000,
+      "totalAssets": 2760849000000,
+      "equity": 906397000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 571106751
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 2,
+        "cnperScore": -15,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-1.63, CNPER=40.4, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 50,
+      "components": {
+        "grahamProductScore": 33,
+        "pbrScore": 12,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=19.0, PBR=1.24, PER=15.4 → 買い候補"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=8.1%, PBR=1.24 → 対象外"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=15.4, 時価総額11411億 → 対象外"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り6.51%, NCR=-1.63, PBR=1.24 → 様子見"
+    },
+    "composite": {
+      "score": 23,
+      "components": {
+        "kiyohara": 0,
+        "graham": 50,
+        "buffett": 10,
+        "lynch": 22,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:50, バフェット流:10, リンチ流:22, 配当・インカム流:35"
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "6150",
+    "name": "タケダ機械",
+    "sector33Name": "機械",
+    "sector33Code": "3600",
+    "sector17Code": "8",
+    "marketSegment": "スタンダード",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:23.220Z",
+    "snapshots": [
+      {
+        "id": "static-6150",
+        "snapshotAt": "2026-05-13T13:41:23.220Z",
+        "marketCap": 3061312290,
+        "netCash": -2297000000,
+        "netCashRatio": -0.7503318127664786,
+        "cashNeutralPer": 33.70007729559748,
+        "per": 19.253536415094338,
+        "pbr": 0.5764097702880814
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-6150-2025-2Q",
+      "code": "6150",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2026-01-14T00:00:00.000Z",
+      "periodEndDate": "2025-11-30T00:00:00.000Z",
+      "netSales": 2309000000,
+      "operatingProfit": 230000000,
+      "ordinaryProfit": null,
+      "profit": 159000000,
+      "totalAssets": 7608000000,
+      "equity": 5311000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 919313
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 3,
+      "components": {
+        "ncrScore": 6,
+        "cnperScore": -8,
+        "sizeBonus": 5
+      },
+      "reason": "NCR=-0.75, CNPER=33.7, 31億円 → 対象外"
+    },
+    "graham": {
+      "score": 75,
+      "components": {
+        "grahamProductScore": 50,
+        "pbrScore": 20,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=11.1, PBR=0.58, PER=19.3 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=3.0%, PBR=0.58 → 対象外"
+    },
+    "lynch": {
+      "score": 32,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 10,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=19.3, 時価総額31億 → 様子見"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り5.19%, NCR=-0.75, PBR=0.58 → 様子見"
+    },
+    "composite": {
+      "score": 29,
+      "components": {
+        "kiyohara": 3,
+        "graham": 75,
+        "buffett": 0,
+        "lynch": 32,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:3, グレアム流:75, バフェット流:0, リンチ流:32, 配当・インカム流:35"
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "6676",
+    "name": "バッファロー",
+    "sector33Name": "電気機器",
+    "sector33Code": "3650",
+    "sector17Code": "9",
+    "marketSegment": "スタンダード",
+    "scaleCategory": "TOPIX Small 2",
+    "updatedAt": "2026-05-13T13:41:23.275Z",
+    "snapshots": [
+      {
+        "id": "static-6676",
+        "snapshotAt": "2026-05-13T13:41:23.275Z",
+        "marketCap": 61960209840,
+        "netCash": -28980000000,
+        "netCashRatio": -0.4677195263675692,
+        "cashNeutralPer": 13.274005231353087,
+        "per": 9.043965821048022,
+        "pbr": 1.4905030031272553
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-6676-2025-3Q",
+      "code": "6676",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-12T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 90438000000,
+      "operatingProfit": 7751000000,
+      "ordinaryProfit": null,
+      "profit": 6851000000,
+      "totalAssets": 70550000000,
+      "equity": 41570000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 11869772
+    },
+    {
+      "id": "static-6676-2025-2Q",
+      "code": "6676",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-11-12T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 60102000000,
+      "operatingProfit": 5548000000,
+      "ordinaryProfit": null,
+      "profit": 4616000000,
+      "totalAssets": 70925000000,
+      "equity": 41615000000,
+      "cashAndEquivalents": 26512000000,
+      "sharesOutstanding": 12093612
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 6,
+      "components": {
+        "ncrScore": 8,
+        "cnperScore": 8,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.47, CNPER=13.3, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 77,
+      "components": {
+        "grahamProductScore": 45,
+        "pbrScore": 12,
+        "perScore": 20,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=13.5, PBR=1.49, PER=9.0 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 40,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=16.5%, PBR=1.49 → 様子見"
+    },
+    "lynch": {
+      "score": 50,
+      "components": {
+        "perScore": 50,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=9.0, 時価総額620億 → 注目"
+    },
+    "dividend": {
+      "score": 50,
+      "components": {
+        "earningsYieldScore": 50,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り11.06%, NCR=-0.47, PBR=1.49 → 良好"
+    },
+    "composite": {
+      "score": 45,
+      "components": {
+        "kiyohara": 6,
+        "graham": 77,
+        "buffett": 40,
+        "lynch": 50,
+        "dividend": 50
+      },
+      "reason": "総合(均等加重): 清原流:6, グレアム流:77, バフェット流:40, リンチ流:50, 配当・インカム流:50"
+    }
+  }
+}

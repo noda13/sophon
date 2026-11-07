@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "7383",
+    "name": "ネットプロテクションズホールディングス",
+    "sector33Name": "その他金融業",
+    "sector33Code": "7200",
+    "sector17Code": "16",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-05-13T13:41:23.346Z",
+    "snapshots": [
+      {
+        "id": "static-7383",
+        "snapshotAt": "2026-05-13T13:41:23.346Z",
+        "marketCap": 53302519464,
+        "netCash": -69576000000,
+        "netCashRatio": -1.3053041525924671,
+        "cashNeutralPer": 77.5748228939394,
+        "per": 33.65058046969697,
+        "pbr": 2.5467042266602964
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-7383-2025-3Q",
+      "code": "7383",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-13T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 18959000000,
+      "operatingProfit": 2532000000,
+      "ordinaryProfit": null,
+      "profit": 1584000000,
+      "totalAssets": 90506000000,
+      "equity": 20930000000,
+      "cashAndEquivalents": 23119000000,
+      "sharesOutstanding": 99444999
+    },
+    {
+      "id": "static-7383-2025-2Q",
+      "code": "7383",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-11-14T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 12403000000,
+      "operatingProfit": 1549000000,
+      "ordinaryProfit": null,
+      "profit": 955000000,
+      "totalAssets": 81469000000,
+      "equity": 20289000000,
+      "cashAndEquivalents": 21929000000,
+      "sharesOutstanding": 99403999
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 3,
+        "cnperScore": -15,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-1.31, CNPER=77.6, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=85.7, PBR=2.55, PER=33.7 → 対象外"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=7.6%, PBR=2.55 → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=33.7, 時価総額533億 → 対象外"
+    },
+    "dividend": {
+      "score": 0,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り2.97%, NCR=-1.31, PBR=2.55 → 対象外"
+    },
+    "composite": {
+      "score": 2,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 10,
+        "lynch": 0,
+        "dividend": 0
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:10, リンチ流:0, 配当・インカム流:0"
+    }
+  }
+}

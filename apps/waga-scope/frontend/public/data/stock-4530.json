@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "4530",
+    "name": "久光製薬",
+    "sector33Name": "医薬品",
+    "sector33Code": "3250",
+    "sector17Code": "5",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-05-13T13:41:23.103Z",
+    "snapshots": [
+      {
+        "id": "static-4530",
+        "snapshotAt": "2026-05-13T13:41:23.103Z",
+        "marketCap": 438307052850,
+        "netCash": -70695000000,
+        "netCashRatio": -0.16129103910220138,
+        "cashNeutralPer": 42.80925591673675,
+        "per": 36.86350318334735,
+        "pbr": 1.6137130370673087
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-4530-2025-3Q",
+      "code": "4530",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-01-06T00:00:00.000Z",
+      "periodEndDate": "2025-11-30T00:00:00.000Z",
+      "netSales": 114514000000,
+      "operatingProfit": 12608000000,
+      "ordinaryProfit": null,
+      "profit": 11890000000,
+      "totalAssets": 342309000000,
+      "equity": 271614000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 70073070
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 9,
+        "cnperScore": -15,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.16, CNPER=42.8, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 5,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=59.5, PBR=1.61, PER=36.9 → 対象外"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=4.4%, PBR=1.61 → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=36.9, 時価総額4383億 → 対象外"
+    },
+    "dividend": {
+      "score": 5,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り2.71%, NCR=-0.16, PBR=1.61 → 対象外"
+    },
+    "composite": {
+      "score": 2,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 5
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:0, リンチ流:0, 配当・インカム流:5"
+    }
+  }
+}

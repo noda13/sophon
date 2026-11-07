@@ -1,0 +1,133 @@
+{
+  "profile": {
+    "code": "2002",
+    "name": "日清製粉グループ本社",
+    "sector33Name": "食料品",
+    "sector33Code": "3050",
+    "sector17Code": "1",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-05-13T13:41:22.818Z",
+    "snapshots": [
+      {
+        "id": "static-2002",
+        "snapshotAt": "2026-05-13T13:41:22.818Z",
+        "marketCap": 605806555909.5,
+        "netCash": -321489000000,
+        "netCashRatio": -0.5306793016086582,
+        "cashNeutralPer": 40.45615618469962,
+        "per": 26.430197456895424,
+        "pbr": 1.1462190240584191
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-2002-2025-3Q",
+      "code": "2002",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-06T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 653955000000,
+      "operatingProfit": 37498000000,
+      "ordinaryProfit": null,
+      "profit": 22921000000,
+      "totalAssets": 850015000000,
+      "equity": 528526000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 285825221
+    },
+    {
+      "id": "static-2002-2025-3Q",
+      "code": "2002",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-01-30T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 653955000000,
+      "operatingProfit": 37498000000,
+      "ordinaryProfit": null,
+      "profit": 22921000000,
+      "totalAssets": 850015000000,
+      "equity": 528526000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 285825221
+    },
+    {
+      "id": "static-2002-2025-2Q",
+      "code": "2002",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-10-30T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 431310000000,
+      "operatingProfit": 22633000000,
+      "ordinaryProfit": null,
+      "profit": 10325000000,
+      "totalAssets": 798315000000,
+      "equity": 515678000000,
+      "cashAndEquivalents": 82082000000,
+      "sharesOutstanding": 289574965
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 7,
+        "cnperScore": -15,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.53, CNPER=40.5, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 33,
+      "components": {
+        "grahamProductScore": 21,
+        "pbrScore": 12,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=30.3, PBR=1.15, PER=26.4 → 様子見"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=4.3%, PBR=1.15 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=26.4, 時価総額6058億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り3.78%, NCR=-0.53, PBR=1.15 → 対象外"
+    },
+    "composite": {
+      "score": 12,
+      "components": {
+        "kiyohara": 0,
+        "graham": 33,
+        "buffett": 0,
+        "lynch": 8,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:33, バフェット流:0, リンチ流:8, 配当・インカム流:18"
+    }
+  }
+}

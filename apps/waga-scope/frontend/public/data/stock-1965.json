@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "1965",
+    "name": "テクノ菱和",
+    "sector33Name": "建設業",
+    "sector33Code": "2050",
+    "sector17Code": "3",
+    "marketSegment": "スタンダード",
+    "scaleCategory": "-",
+    "updatedAt": "2026-05-13T13:41:22.815Z",
+    "snapshots": [
+      {
+        "id": "static-1965",
+        "snapshotAt": "2026-05-13T13:41:22.815Z",
+        "marketCap": 164029504000,
+        "netCash": -30946000000,
+        "netCashRatio": -0.1886611813445464,
+        "cashNeutralPer": 24.08889350135903,
+        "per": 20.26556758092414,
+        "pbr": 2.7787010892581865
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-1965-2025-3Q",
+      "code": "1965",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-02-06T00:00:00.000Z",
+      "periodEndDate": "2025-12-31T00:00:00.000Z",
+      "netSales": 69884000000,
+      "operatingProfit": 11288000000,
+      "ordinaryProfit": null,
+      "profit": 8094000000,
+      "totalAssets": 89977000000,
+      "equity": 59031000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 20503688
+    },
+    {
+      "id": "static-1965-2025-2Q",
+      "code": "1965",
+      "fiscalYear": 2025,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2025-11-07T00:00:00.000Z",
+      "periodEndDate": "2025-09-30T00:00:00.000Z",
+      "netSales": 43619000000,
+      "operatingProfit": 6357000000,
+      "ordinaryProfit": null,
+      "profit": 4545000000,
+      "totalAssets": 81534000000,
+      "equity": 55306000000,
+      "cashAndEquivalents": 20997000000,
+      "sharesOutstanding": 20503708
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 9,
+        "cnperScore": -8,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=-0.19, CNPER=24.1, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=56.3, PBR=2.78, PER=20.3 → 対象外"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=13.7%, PBR=2.78 → 様子見"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=20.3, 時価総額1640億 → 対象外"
+    },
+    "dividend": {
+      "score": 8,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り4.93%, NCR=-0.19, PBR=2.78 → 対象外"
+    },
+    "composite": {
+      "score": 8,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 25,
+        "lynch": 8,
+        "dividend": 8
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:25, リンチ流:8, 配当・インカム流:8"
+    }
+  }
+}
