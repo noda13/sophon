@@ -90,7 +90,7 @@ DATA_PROVIDER=csv bash scripts/full-sync.sh
 # 静的JSON生成をスキップ
 SKIP_STATIC=1 bash scripts/full-sync.sh
 
-# 静的JSON生成 → git push → GitHub Pages デプロイまで一発
+# 静的JSON生成 → git push → Vercel デプロイまで一発
 PUSH_STATIC=1 bash scripts/full-sync.sh
 
 # 静的JSONを CSV 50銘柄サンプルにする（デモ用）
@@ -99,21 +99,21 @@ STATIC_PROVIDER=csv PUSH_STATIC=1 bash scripts/full-sync.sh
 
 Ctrl+C でバックエンドごと安全に停止。ログは `backend/.cache/{backend,sync}.log`。
 
-## GitHub Pages 更新（週次デプロイ）
+## 静的JSON更新（週次デプロイ）
 
-Pages は静的JSON（J-Quants 全銘柄、約3,757銘柄）をビルドして配信する。GHA の `deploy.yml` が `frontend/` への push を検知してデプロイする。
+フロントエンドは静的JSON（J-Quants 全銘柄、約3,757銘柄）をビルドして Vercel で配信する。`main` への push を Vercel が検知してデプロイする。
 
 **週次更新の手順（ローカルで実行するだけ）：**
 
 ```bash
-# J-Quants 全銘柄同期 → 静的JSON生成 → git push → GitHub Pages デプロイ（推奨）
+# J-Quants 全銘柄同期 → 静的JSON生成 → git push → Vercel デプロイ（推奨）
 PUSH_STATIC=1 bash scripts/full-sync.sh
 
 # 同期なし・DBのデータをそのまま静的JSON化してpush（DB更新不要なとき）
 DATA_PROVIDER=db PUSH_STATIC=1 bash scripts/full-sync.sh
 ```
 
-push すると GHA `deploy.yml` が自動起動し、数分で GitHub Pages に反映される。
+push すると Vercel が自動でデプロイし、数分で反映される。
 
 ## 静的JSON生成（単体）
 
@@ -273,9 +273,9 @@ VITE_STATIC_DATA=false pnpm -C frontend build
 | ワークフロー | トリガ | 処理 |
 |---|---|---|
 | `collect.yml` | 手動のみ（`workflow_dispatch`） | 静的JSON生成 → main にコミット（GHA節約のため無効化中） |
-| `deploy.yml` | `frontend/` への push、手動 | Vite ビルド → GitHub Pages デプロイ |
+| `ci.yml` | 手動のみ（`workflow_dispatch`） | backend / frontend の型チェック・テスト・ビルド（単一ジョブ） |
 
-静的JSONの更新は手元で行い、push すると `deploy.yml` が自動起動する（上記「GitHub Pages 更新」参照）。  
+静的JSONの更新は手元で行い、push すると Vercel が自動デプロイする（上記「静的JSON更新」参照）。  
 Secrets `JQUANTS_API_KEY` を設定すれば自動で `jquants` モードに切替（V2 API）。
 
 ## J-Quants 実データモード（V2 API）

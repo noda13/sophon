@@ -29,7 +29,7 @@ DATA_PROVIDER="${DATA_PROVIDER:-jquants}"
 DATABASE_URL="${DATABASE_URL:-file:./prisma/dev.db}"
 MVP_STOCK_LIMIT="${MVP_STOCK_LIMIT:-0}"
 SKIP_STATIC="${SKIP_STATIC:-0}"
-PUSH_STATIC="${PUSH_STATIC:-0}"   # 1 にすると静的JSON生成後に git push（GitHub Pages デプロイ）
+PUSH_STATIC="${PUSH_STATIC:-0}"   # 1 にすると静的JSON生成後に git push（Vercel デプロイ）
 POLL_INTERVAL="${POLL_INTERVAL:-30}"
 
 LOG_DIR="backend/.cache"
@@ -152,16 +152,16 @@ else
   log "generating static JSON (DATA_PROVIDER=$STATIC_PROVIDER)..."
   DATABASE_URL="$DATABASE_URL" DATA_PROVIDER="$STATIC_PROVIDER" pnpm exec tsx scripts/collect-static.ts
 
-  # ---- GitHub Pages へ push（任意） ----
+  # ---- Vercel 向けに push（任意） ----
   if [ "$PUSH_STATIC" = "1" ]; then
-    log "pushing static JSON to origin/main → triggers GitHub Pages deploy..."
+    log "pushing static JSON to origin/main → triggers Vercel deploy..."
     git add frontend/public/data/
     if git diff --staged --quiet; then
       log "static JSON unchanged, nothing to push."
     else
       git commit -m "chore: update static data [$(date '+%Y-%m-%d %H:%M JST')]"
       git push origin main
-      log "pushed. GitHub Pages deploy workflow should start shortly."
+      log "pushed. Vercel deploy should start shortly."
     fi
   fi
 fi
