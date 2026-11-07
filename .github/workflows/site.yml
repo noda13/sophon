@@ -4,7 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'apps/*/frontend/**'
+      - 'src/web/**'
+      - 'src/shared/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'tsconfig*.json'
       - 'scripts/build-site.mjs'
       - 'pnpm-lock.yaml'
       - '.github/workflows/site.yml'
@@ -23,11 +28,17 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ github.ref }}
+
+      # データはコードと別ブランチ（履歴なしの単一コミット）で管理している。
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: data
+          path: data
 
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
 
@@ -45,7 +56,7 @@ jobs:
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
-          path: site-dist
+          path: dist
 
   deploy:
     environment:

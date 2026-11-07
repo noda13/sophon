@@ -1,0 +1,157 @@
+name: Collect data
+
+on:
+  schedule:
+    - cron: '17 8 * * 1-5' # stock（平日）
+    - cron: '17 21 * * *' # tech
+    - cron: '17 22 * * *' # issue
+    - cron: '17 0 * * *' # econ
+  workflow_dispatch:
+    inputs:
+      source:
+        description: '収集する source'
+        type: choice
+        options: [all, stock, tech, issue, econ]
+        default: all
+
+permissions:
+  contents: write
+
+# data ブランチへの push が競合しないよう、source が違っても直列に流す。
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+      failed_sources: ${{ steps.collect.outputs.failed_sources }}
+    steps:
+      - name: Resolve sources
+        id: plan
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          INPUT_SOURCE: ${{ inputs.source }}
+        run: |
+          case "$SCHEDULE" in
+            '17 8 * * 1-5') sources=stock ;;
+            '17 21 * * *') sources=tech ;;
+            '17 22 * * *') sources=issue ;;
+            '17 0 * * *') sources=econ ;;
+            *) sources="${INPUT_SOURCE:-all}" ;;
+          esac
+          if [ "$sources" = all ]; then sources="stock tech issue econ"; fi
+          # stock は J-Quants のレート制限に合わせて 1 リクエストずつ進めるため、他より長く取る。
+          case " $sources " in
+            *' stock '*) timeout_ms=2400000 ;;
+            *) timeout_ms=900000 ;;
+          esac
+          echo "sources=$sources" >> "$GITHUB_OUTPUT"
+          echo "timeout_ms=$timeout_ms" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: data
+          path: data
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # 失敗した source があってもデータの push と deploy は行い、最後の step でジョブを失敗にする。
+      - name: Run collection
+        id: collect
+        continue-on-error: true
+        env:
+          SOURCES: ${{ steps.plan.outputs.sources }}
+          COLLECT_TIMEOUT_MS: ${{ steps.plan.outputs.timeout_ms }}
+          SOPHON_DATA_DIR: data
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+          RSSHUB_URL: ${{ secrets.RSSHUB_URL }}
+          JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
+        # $SOURCES は単語分割して source 名ごとの引数にする
+        run: pnpm collect $SOURCES
+
+      # data ブランチは履歴を持たず、実行のたびに単一コミットで置き換える。
+      - name: Commit data
+        id: commit
+        working-directory: data
+        env:
+          SOURCES: ${{ steps.plan.outputs.sources }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git checkout --orphan data-next
+            git add -A
+            git commit -m "chore: update data (${SOURCES}) $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git push --force origin data-next:data
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fail when a source failed
+        if: steps.collect.outcome == 'failure'
+        run: exit 1
+
+  site:
+    needs: collect
+    if: always() && needs.collect.outputs.changed == 'true'
+    uses: ./.github/workflows/site.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+  notify-failure:
+    needs: collect
+    if: failure() && needs.collect.result == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      FAILED_SOURCES: ${{ needs.collect.outputs.failed_sources }}
+    steps:
+      - name: Report failure to issue
+        run: |
+          now=$(date -u '+%Y-%m-%d %H:%M UTC')
+          failed="${FAILED_SOURCES:-不明（収集前の step で失敗）}"
+          existing=$(gh issue list --label collect-failure --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "再度失敗しました（${now}）。
+          失敗した source: ${failed}
+          実行: ${RUN_URL}"
+          else
+            gh label create collect-failure --description "収集ジョブの失敗" --color D73A4A || true
+            gh issue create \
+              --title "収集ジョブが失敗しました" \
+              --label collect-failure \
+              --body "収集ジョブが失敗しました（${now}）。
+          失敗した source: ${failed}
+          実行: ${RUN_URL}
+
+          画面の「更新が古い」表示と meta.json の run.errors で状況を確認し、原因が解消したらこの Issue を閉じてください。"
+          fi
