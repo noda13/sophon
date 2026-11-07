@@ -4,8 +4,8 @@ WORKDIR /app
 RUN npm install -g pnpm@10
 COPY package.json pnpm-lock.yaml* ./
 RUN pnpm install --ignore-scripts
-RUN pnpm exec prisma generate
 COPY . .
+RUN pnpm exec prisma generate
 EXPOSE 8902
 RUN chmod +x entrypoint.sh
 CMD ["./entrypoint.sh"]

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../generated/prisma/index.js';
 
 // Global singleton to prevent connection pool exhaustion under tsx watch / test reloads.
 // In production each process creates exactly one instance (g.prisma is never set).

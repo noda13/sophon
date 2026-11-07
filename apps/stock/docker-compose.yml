@@ -22,6 +22,7 @@ services:
       - "8902:8902"
     volumes:
       - ./backend/src:/app/backend/src
+      - /app/backend/src/generated
       - ./backend/prisma:/app/backend/prisma
       - ./backend/seed:/app/backend/seed
       - backend_data:/app/backend/prisma/migrations

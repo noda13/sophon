@@ -1,6 +1,6 @@
 import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma/index.js';
 import prisma from '../lib/prisma.js';
 import { getStockStrategyScores } from '../services/screener.js';
 import { asyncHandler, BadRequestError, NotFoundError } from '../lib/errors.js';

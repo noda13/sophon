@@ -24,6 +24,7 @@ services:
       - "127.0.0.1:8901:8901"
     volumes:
       - ./backend/src:/app/backend/src
+      - /app/backend/src/generated
       - ./backend/prisma:/app/backend/prisma
 
   frontend:
