@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model NewsArticle {
+  id             Int      @id @default(autoincrement())
+  sourceId       String   @unique
+  source         String
+  originalTitle  String
+  originalUrl    String
+  publishedAt    DateTime
+  summaryJa      String   @default("")
+  relevanceScore Float    @default(0)
+  riskCategories String   @default("[]")
+  rawContent     String?
+  createdAt      DateTime @default(now())
+
+  @@index([publishedAt])
+  @@index([source])
+  @@map("news_articles")
+}
+
+model EconomicIndicator {
+  id            Int      @id @default(autoincrement())
+  code          String
+  name          String
+  value         Float
+  previousValue Float?
+  unit          String   @default("")
+  source        String
+  recordedAt    DateTime
+  createdAt     DateTime @default(now())
+
+  @@unique([code, recordedAt])
+  @@map("economic_indicators")
+}
+
+model RiskAssessment {
+  id         Int      @id @default(autoincrement())
+  category   String
+  score      Int
+  level      String
+  summaryJa  String
+  factorsJa  String
+  assessedAt DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([category, assessedAt])
+  @@map("risk_assessments")
+}
+
+model CollectionLog {
+  id                Int       @id @default(autoincrement())
+  jobType           String
+  status            String
+  message           String?
+  startedAt         DateTime  @default(now())
+  completedAt       DateTime?
+  articlesCollected Int       @default(0)
+  tokensUsed        Int       @default(0)
+
+  @@index([startedAt])
+  @@map("collection_logs")
+}

@@ -1,0 +1,41 @@
+# Dev setup: NODE_ENV=development, so production-only config checks (ADMIN_SECRET, ALLOWED_ORIGINS) are not enforced.
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: econoguard-backend
+    environment:
+      DATABASE_URL: file:./dev.db
+      NODE_ENV: development
+      PORT: 8901
+      TZ: Asia/Tokyo
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+      NEWSAPI_KEY: ${NEWSAPI_KEY:-}
+      FRED_API_KEY: ${FRED_API_KEY:-}
+      OPENEXCHANGERATES_APP_ID: ${OPENEXCHANGERATES_APP_ID:-}
+      ADMIN_SECRET: ${ADMIN_SECRET:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING: 1
+    ports:
+      - "127.0.0.1:8901:8901"
+    volumes:
+      - ./backend/src:/app/backend/src
+      - ./backend/prisma:/app/backend/prisma
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: econoguard-frontend
+    ports:
+      - "3901:3901"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/frontend/src
+    environment:
+      VITE_API_URL: http://backend:8901
