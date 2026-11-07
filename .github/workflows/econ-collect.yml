@@ -1,4 +1,4 @@
-name: Collect Economic Data
+name: Collect Economic Data (econ)
 
 on:
   schedule:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: collect-data
+  group: collect-push
   cancel-in-progress: false
 
 jobs:
@@ -20,13 +20,12 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
-        with:
-          version: 10
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
@@ -37,13 +36,14 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+        working-directory: apps/econ
         run: pnpm exec tsx scripts/collect-static.ts
 
       - name: Commit data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add frontend/public/data/
+          git add apps/econ/frontend/public/data/
           if git diff --staged --quiet; then
             echo "No changes"
           else
@@ -54,7 +54,7 @@ jobs:
 
   deploy:
     needs: collect
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/econ-deploy.yml
     permissions:
       contents: read
       pages: write

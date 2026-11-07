@@ -1,10 +1,22 @@
-name: CI
+name: CI (stock)
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'apps/stock/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+      - '.github/workflows/stock-ci.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'apps/stock/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+      - '.github/workflows/stock-ci.yml'
   workflow_dispatch:
 
 permissions:
@@ -27,31 +39,32 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '24'
-          cache: 'pnpm'
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm -C backend exec prisma generate
+        run: pnpm --filter ./apps/stock/backend exec prisma generate
 
       - name: Type-check backend
-        run: pnpm -C backend build
+        run: pnpm --filter ./apps/stock/backend run build
 
       - name: Validate Prisma schema
-        run: pnpm -C backend exec prisma validate
+        run: pnpm --filter ./apps/stock/backend exec prisma validate
         env:
           DATABASE_URL: file:./ci.db
 
       - name: Run backend tests
-        run: pnpm -C backend test
+        run: pnpm --filter ./apps/stock/backend run test
 
       - name: Type-check frontend
-        run: pnpm -C frontend type-check
+        run: pnpm --filter ./apps/stock/frontend run type-check
 
       - name: Run frontend tests
-        run: pnpm -C frontend test
+        run: pnpm --filter ./apps/stock/frontend run test
 
       - name: Build frontend
-        run: pnpm -C frontend build
+        run: pnpm --filter ./apps/stock/frontend run build

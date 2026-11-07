@@ -1,4 +1,4 @@
-name: Collect Static Data
+name: Collect Static Data (stock)
 
 on:
   schedule:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: collect-static-data
+  group: collect-push
   cancel-in-progress: false
 
 jobs:
@@ -30,26 +30,29 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '24'
-          cache: 'pnpm'
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm -C backend exec prisma generate
+        run: pnpm --filter ./apps/stock/backend exec prisma generate
 
       - name: Generate static JSON
+        working-directory: apps/stock
         run: pnpm exec tsx scripts/collect-static.ts
 
       - name: Commit and push updated data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add frontend/public/data/
+          git add apps/stock/frontend/public/data/
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "chore: update static data [$(date -u '+%Y-%m-%d %H:%M UTC')]"
+            git pull --rebase
             git push
           fi

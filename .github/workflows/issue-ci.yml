@@ -1,10 +1,22 @@
-name: CI
+name: CI (issue)
 
 on:
   push:
-    branches: [master]
+    branches: [main]
+    paths:
+      - 'apps/issue/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+      - '.github/workflows/issue-ci.yml'
   pull_request:
-    branches: [master]
+    branches: [main]
+    paths:
+      - 'apps/issue/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+      - '.github/workflows/issue-ci.yml'
   workflow_dispatch:
 
 permissions:
@@ -23,13 +35,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'pnpm'
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
@@ -37,16 +48,16 @@ jobs:
       # --ignore-scripts skips the @prisma/client postinstall, so the client must be generated
       # before type checking. Needs no DB connection.
       - name: Generate Prisma client
-        run: pnpm --filter ./backend run prisma:generate
+        run: pnpm --filter ./apps/issue/backend run prisma:generate
 
       # backend has no lint script/config and no build script (runs via tsx, not compiled),
       # so only type checking is run here.
       - name: Type check (backend)
-        run: pnpm --filter ./backend exec tsc --noEmit
+        run: pnpm --filter ./apps/issue/backend exec tsc --noEmit
 
       # no lint script/config exists in the repo yet, so lint is skipped here.
       - name: Type check (frontend)
-        run: pnpm --filter ./frontend run type-check
+        run: pnpm --filter ./apps/issue/frontend run type-check
 
       - name: Build (frontend)
-        run: pnpm --filter ./frontend run build
+        run: pnpm --filter ./apps/issue/frontend run build

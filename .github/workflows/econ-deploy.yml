@@ -1,12 +1,12 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages (econ)
 
 on:
   push:
     branches: [main]
     paths:
-      - 'frontend/**'
+      - 'apps/econ/frontend/**'
       - 'pnpm-lock.yaml'
-      - '.github/workflows/deploy.yml'
+      - '.github/workflows/econ-deploy.yml'
   workflow_dispatch:
   workflow_call:
 
@@ -29,26 +29,26 @@ jobs:
           ref: ${{ github.ref }}
 
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
-        with:
-          version: 10
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build
-        run: cd frontend && pnpm run build
+        working-directory: apps/econ/frontend
+        run: pnpm run build
         env:
           VITE_STATIC_DATA: 'true'
           VITE_BASE_PATH: /econoguard/
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
-          path: frontend/dist
+          path: apps/econ/frontend/dist
 
   deploy:
     environment:
