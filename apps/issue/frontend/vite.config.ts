@@ -9,7 +9,7 @@ export default defineConfig({
       '/api': 'http://localhost:8902',
     },
   },
-  base: process.env.VITE_BASE_PATH || '/',
+  base: process.env.SITE_BASE || process.env.VITE_BASE_PATH || '/',
   build: {
     outDir: 'dist',
   },

@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { buildDataUrlPattern, buildNavigateFallbackDenylist } from './pwa-config';
 
-const base = process.env.VITE_BASE_PATH || '/';
+const base = process.env.SITE_BASE || process.env.VITE_BASE_PATH || '/';
 const dataUrlPattern = buildDataUrlPattern(base);
 
 export default defineConfig({

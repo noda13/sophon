@@ -8,7 +8,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
   },
-  base: process.env.VITE_BASE_PATH || '/',
+  base: process.env.SITE_BASE || process.env.VITE_BASE_PATH || '/',
   server: {
     port: 3902,
     host: '0.0.0.0',
