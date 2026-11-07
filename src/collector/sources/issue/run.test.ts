@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LLM_DISABLED_ERROR } from '../../core/llm';
 import { buildFeeds, issueId, newIssue } from './feeds';
 import { createSource } from './run';
 import {
@@ -142,7 +143,8 @@ describe('issue source without an LLM key', () => {
     const result = await source.run(ctx());
 
     expect(result.counts).toMatchObject({ issues: 8, newIssues: 8, failedSources: 1, classified: 0, llmSkipped: 1, ideas: 0 });
-    expect(result.errors).toEqual(['feed failed: x_jijicom']);
+    expect(result.errors).toEqual(['feed failed: x_jijicom', LLM_DISABLED_ERROR]);
+    expect(result.forceFailed).toBe(true);
     const issues = IssuesFileSchema.parse(read('issues.json'));
     expect(issues.every((i) => i.classifiedAt === null && i.category === '')).toBe(true);
     expect(IdeasFileSchema.parse(read('ideas.json'))).toEqual([]);
@@ -212,6 +214,7 @@ describe('issue source with an LLM key', () => {
     expect(calls).toEqual({ classify: 1, idea: 1 });
     expect(result.counts).toMatchObject({ issues: 9, classified: 9, classifyFailed: 0, ideasGenerated: 1, ideas: 1, llmSkipped: 0 });
     expect(result.errors).toEqual([]);
+    expect(result.forceFailed).toBe(false);
 
     const issues = IssuesFileSchema.parse(read('issues.json'));
     expect(issues.every((i) => i.classifiedAt === now.toISOString())).toBe(true);

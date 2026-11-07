@@ -9,7 +9,7 @@ import {
   type RiskAssessment,
 } from '../../../shared/schema/econ';
 import { jsonFile, readJson, writeJsonBatch, type JsonFile } from '../../core/io';
-import { detectProvider } from '../../core/llm';
+import { detectProvider, LLM_DISABLED_ERROR } from '../../core/llm';
 import { collectFeeds } from '../../core/rss';
 import type { CollectorSource, RunContext, RunResult } from '../../core/source';
 import { assess, mergeRisks } from './assess';
@@ -75,6 +75,7 @@ async function run(ctx: RunContext): Promise<RunResult> {
     }
   } else {
     console.log('No LLM API key set (GROQ_API_KEY or GEMINI_API_KEY); skipping summaries and risk assessment');
+    errors.push(LLM_DISABLED_ERROR);
   }
 
   const published = selectPublishedNews(news);
@@ -115,6 +116,7 @@ async function run(ctx: RunContext): Promise<RunResult> {
       events: events.length,
     },
     errors,
+    forceFailed: !llm,
   };
 }
 

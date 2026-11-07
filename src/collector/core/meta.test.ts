@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -73,6 +73,26 @@ describe('beginRun', () => {
       counts: { issues: 30, failedSources: 1 },
       errors: ['RSS failed: reuters'],
     });
+  });
+
+  it('sanitizes errors with the given env before writing', () => {
+    const env = { RSSHUB_URL: 'https://rsshub.internal.example', GROQ_API_KEY: 'gsk_secretvalue' };
+    beginRun('issue', dir, undefined, env).finish({ issues: 1 }, [
+      'All 1 RSS sources failed: HTTP 503 for https://rsshub.internal.example/twitter/user/x',
+      'groq said gsk_secretvalue is invalid',
+    ]);
+    const text = readFileSync(join(dir, 'meta.json'), 'utf-8');
+    expect(text).not.toContain('rsshub.internal');
+    expect(text).not.toContain('gsk_secretvalue');
+    expect(stored().run.errors).toEqual([
+      'All 1 RSS sources failed: HTTP 503 for <url>',
+      'groq said *** is invalid',
+    ]);
+  });
+
+  it('records failed when forced, even if output was produced', () => {
+    beginRun('tech', dir).finish({ articles: 10 }, ['LLM disabled: no API key'], true);
+    expect(stored().run.status).toBe('failed');
   });
 
   it('records a failed run when the caller reports only an error', () => {

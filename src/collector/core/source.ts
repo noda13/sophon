@@ -9,6 +9,8 @@ export interface RunContext {
 export interface RunResult {
   counts: Record<string, number>;
   errors: string[];
+  /** true なら errors の有無にかかわらず run.status を failed にする。 */
+  forceFailed?: boolean;
 }
 
 export interface CollectorSource {

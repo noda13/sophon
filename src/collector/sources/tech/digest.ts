@@ -28,12 +28,21 @@ export function selectDigestCandidates(articles: readonly Article[], limit = DIG
 
 const isHttpUrl = (url: string) => /^https?:\/\//i.test(url);
 
-// URL の scheme 検証は画面側の safeHref とは別に、ここでも落としておく（多層防御）。
-export function assembleDigest(draft: DigestDraft, now: Date): Digest {
+// LLM が返すのは候補の index だけで、url と title は候補から引く。index が範囲外のハイライトと、同じ記事の重複は捨てる。
+// 候補の URL も RSS 由来なので、画面側の safeHref とは別に scheme をここでも検証する（多層防御）。
+export function assembleDigest(draft: DigestDraft, candidates: readonly Article[], now: Date): Digest {
+  const used = new Set<number>();
   const sections = draft.sections
     .map((section) => ({
       category: section.category,
-      highlights: section.highlights.filter((h) => isHttpUrl(h.url)).slice(0, DIGEST_MAX_HIGHLIGHTS),
+      highlights: section.highlights
+        .flatMap(({ index }) => {
+          const article = candidates[index];
+          if (!article || used.has(index) || !isHttpUrl(article.originalUrl)) return [];
+          used.add(index);
+          return [{ title: article.originalTitle, summaryJa: article.summaryJa, url: article.originalUrl }];
+        })
+        .slice(0, DIGEST_MAX_HIGHLIGHTS),
     }))
     .filter((section) => section.highlights.length > 0);
   return {
@@ -53,7 +62,7 @@ export async function buildDigest(articles: readonly Article[], now: Date, confi
     config,
   });
   if (!draft) throw new Error('LLM returned no digest');
-  return assembleDigest(draft, now);
+  return assembleDigest(draft, candidates, now);
 }
 
 // 索引は digest/ の実ファイルから作り直す。差分更新にすると、手で消した日や取りこぼした日が索引に残る。

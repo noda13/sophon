@@ -13,6 +13,7 @@ import {
   type Digest,
 } from '../../../shared/schema/tech';
 import { readJson } from '../../core/io';
+import { LLM_DISABLED_ERROR } from '../../core/llm';
 import type { RunContext } from '../../core/source';
 import type { TechFeed } from './feeds';
 import { runTech, source } from './run';
@@ -73,8 +74,8 @@ const digestReply = () =>
       {
         category: 'ai',
         highlights: [
-          { title: 'Alpha', summaryJa: '要約', url: 'https://e.com/alpha' },
-          { title: 'bad', summaryJa: '要約', url: 'javascript:alert(1)' },
+          { index: 0 },
+          { index: 99 },
         ],
       },
     ],
@@ -147,7 +148,8 @@ describe('runTech without an LLM key', () => {
       summarized: 0,
       digest: 0,
     });
-    expect(result.errors).toEqual(['RSS failed: feed-gone', 'EOL failed: Go']);
+    expect(result.errors).toEqual(['RSS failed: feed-gone', 'EOL failed: Go', LLM_DISABLED_ERROR]);
+    expect(result.forceFailed).toBe(true);
 
     const articles = readArticles();
     expect(articles.map((a) => a.originalTitle)).toEqual(['Alpha', 'Beta', 'Gamma CVE']);
@@ -197,6 +199,8 @@ describe('runTech with an LLM key', () => {
     const result = await runTech(ctx(llmEnv), fast);
 
     expect(result.counts).toMatchObject({ summarized: 3, summaryFailed: 0, digest: 1, llmSkipped: 0 });
+    expect(result.forceFailed).toBe(false);
+    expect(result.errors).not.toContain(LLM_DISABLED_ERROR);
     expect(result.errors).toEqual(['RSS failed: feed-gone', 'EOL failed: Go']);
     const articles = readArticles();
     expect(articles.every((a) => a.summaryJa.startsWith('要約') && a.category === 'ai')).toBe(true);
@@ -204,7 +208,7 @@ describe('runTech with an LLM key', () => {
 
     const latest = readLatestDigest();
     expect(latest).toMatchObject({ date: '2026-11-07', overviewJa: '今日の概要' });
-    expect(latest.sections[0]!.highlights).toEqual([{ title: 'Alpha', summaryJa: '要約', url: 'https://e.com/alpha' }]);
+    expect(latest.sections[0]!.highlights).toEqual([{ title: 'Alpha', summaryJa: '要約0', url: 'https://e.com/alpha' }]);
     expect(readJson(dir, 'digest/2026-11-07.json', DigestSchema, null as never)).toEqual(latest);
     expect(readJson(dir, 'digest/index.json', DigestIndexSchema, null as never)).toEqual({ dates: ['2026-11-07'] });
   });

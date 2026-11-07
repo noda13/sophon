@@ -28,6 +28,7 @@ export const DEFAULT_MODELS: Record<LlmProvider, string> = {
   groq: 'llama-3.3-70b-versatile',
 };
 
+export const LLM_DISABLED_ERROR = 'LLM disabled: no API key';
 export const DEFAULT_MAX_ATTEMPTS = 3;
 export const DEFAULT_TIMEOUT_MS = 120_000;
 

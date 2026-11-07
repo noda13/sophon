@@ -17,6 +17,7 @@ import {
   type RiskAssessment,
   type RiskCategory,
 } from '../../../shared/schema/econ';
+import { LLM_DISABLED_ERROR } from '../../core/llm';
 import { ECON_FEEDS } from './feeds';
 import { ASSETS } from './indicators';
 import { source } from './run';
@@ -182,7 +183,8 @@ describe('run without an LLM key', () => {
         risks: 0,
         events: 3,
       },
-      errors: [],
+      errors: [LLM_DISABLED_ERROR],
+      forceFailed: true,
     });
   });
 
@@ -199,7 +201,8 @@ describe('run without an LLM key', () => {
     expect(read('risk-history.json')).toEqual(history);
     expect(read('composite-risk.json')).toEqual(prevComposite);
     expect(result.counts.risks).toBe(4);
-    expect(result.errors).toEqual([]);
+    expect(result.errors).toEqual([LLM_DISABLED_ERROR]);
+    expect(result.forceFailed).toBe(true);
   });
 
   it('treats an empty key as unset', async () => {
@@ -354,7 +357,9 @@ describe('run with an LLM key', () => {
     );
     seed('seen-ids.json', ['old']);
 
-    await run(KEYED);
+    const keyed = await run(KEYED);
+    expect(keyed.forceFailed).toBe(false);
+    expect(keyed.errors).not.toContain(LLM_DISABLED_ERROR);
 
     const news = NewsFileSchema.parse(read('news.json'));
     expect(news).toHaveLength(5);
@@ -389,8 +394,8 @@ describe('run with an LLM key', () => {
 
 describe('run health', () => {
   it('reports feeds that failed and counts them', async () => {
-    useWorld({ feed: (s) => (s === 'ft' || s === 'wsj' ? new HttpResponse('', { status: 404 }) : xml(rss(`${s} headline`, `https://e.com/${s}`))) });
-    const result = await run();
+    useWorld(llmWorld({ feed: (s) => (s === 'ft' || s === 'wsj' ? new HttpResponse('', { status: 404 }) : xml(rss(`${s} headline`, `https://e.com/${s}`))) }));
+    const result = await run(KEYED);
     expect(result.errors).toEqual(['RSS failed: wsj, ft']);
     expect(result.counts).toMatchObject({ feeds: ECON_FEEDS.length, failedFeeds: 2, articles: ECON_FEEDS.length - 2 });
   });
@@ -402,11 +407,11 @@ describe('run health', () => {
   });
 
   it('carries cached indicators forward as stale and names the ones it could not refresh', async () => {
-    useWorld({ yahoo: (symbol) => (symbol === '^VIX' ? new HttpResponse('', { status: 500 }) : yahooReply(100)) });
+    useWorld(llmWorld({ yahoo: (symbol) => (symbol === '^VIX' ? new HttpResponse('', { status: 500 }) : yahooReply(100)) }));
     seed('indicators.json', [
       { code: 'VIX', name: '恐怖指数(VIX)', value: 22, previousValue: 21, unit: 'pt', source: 'yahoo', recordedAt: '2026-11-01T00:00:00.000Z' },
     ]);
-    const result = await run();
+    const result = await run(KEYED);
     const vix = IndicatorsFileSchema.parse(read('indicators.json')).find((i) => i.code === 'VIX');
     expect(vix).toMatchObject({ value: 22, stale: true, recordedAt: '2026-11-01T00:00:00.000Z' });
     expect(result.errors).toEqual(['indicators unavailable or stale: VIX']);
@@ -414,16 +419,16 @@ describe('run health', () => {
   });
 
   it('warns when the event definitions are about to run out', async () => {
-    useWorld();
-    const result = await run({}, new Date('2028-01-01T00:00:00.000Z'));
+    useWorld(llmWorld());
+    const result = await run(KEYED, new Date('2028-01-01T00:00:00.000Z'));
     expect(result.errors).toEqual([expect.stringContaining('ECONOMIC_EVENTS has no events after')]);
     expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('[events]'));
     expect(read('events.json')).toEqual([]);
   });
 
   it('does not warn about event coverage while the definitions are far enough ahead', async () => {
-    useWorld();
-    expect((await run()).errors).toEqual([]);
+    useWorld(llmWorld());
+    expect((await run(KEYED)).errors).toEqual([]);
     expect(console.warn).not.toHaveBeenCalledWith(expect.stringContaining('[events]'));
   });
 });
