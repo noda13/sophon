@@ -82,14 +82,14 @@ export async function runSources(
     }
 
     const dir = sourceDir(id, opts.root);
-    const handle = beginRun(id, dir, now);
+    const handle = beginRun(id, dir, now, env);
     let meta: Meta;
     try {
       const result = await withTimeout(
         load().then((source) => source.run({ dir, now: now(), env })),
         timeoutMs,
       );
-      meta = handle.finish(result.counts, result.errors);
+      meta = handle.finish(result.counts, result.errors, result.forceFailed);
     } catch (e) {
       meta = handle.finish({}, [errorMessage(e)]);
     }

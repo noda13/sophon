@@ -15,7 +15,7 @@ on:
         default: all
 
 permissions:
-  contents: write
+  contents: read
 
 # data ブランチへの push が競合しないよう、source が違っても直列に流す。
 concurrency:
@@ -26,9 +26,12 @@ jobs:
   collect:
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    permissions:
+      contents: read
     outputs:
-      changed: ${{ steps.commit.outputs.changed }}
       failed_sources: ${{ steps.collect.outputs.failed_sources }}
+      collect_outcome: ${{ steps.collect.outcome }}
+      sources: ${{ steps.plan.outputs.sources }}
     steps:
       - name: Resolve sources
         id: plan
@@ -41,7 +44,13 @@ jobs:
             '17 21 * * *') sources=tech ;;
             '17 22 * * *') sources=issue ;;
             '17 0 * * *') sources=econ ;;
-            *) sources="${INPUT_SOURCE:-all}" ;;
+            *)
+              sources="${INPUT_SOURCE:-all}"
+              case "$sources" in
+                all | stock | tech | issue | econ) ;;
+                *) echo "invalid source input" >&2; exit 1 ;;
+              esac
+              ;;
           esac
           if [ "$sources" = all ]; then sources="stock tech issue econ"; fi
           # stock は J-Quants のレート制限に合わせて 1 リクエストずつ進めるため、他より長く取る。
@@ -55,11 +64,13 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ github.ref }}
+          persist-credentials: false
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: data
           path: data
+          persist-credentials: false
 
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
 
@@ -72,7 +83,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      # 失敗した source があってもデータの push と deploy は行い、最後の step でジョブを失敗にする。
+      # 失敗した source があってもデータの公開と deploy は行い、publish ジョブの最後でワークフローを失敗にする。
       - name: Run collection
         id: collect
         continue-on-error: true
@@ -88,12 +99,47 @@ jobs:
         # $SOURCES は単語分割して source 名ごとの引数にする
         run: pnpm collect $SOURCES
 
+      # .git を artifact に含めないため、コピーしてからアップロードする。
+      - name: Stage data for publish
+        run: rsync -a --exclude='/.git/' data/ staged-data/
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: collected-data
+          path: staged-data
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  # 書き込み権限はこのジョブだけに持たせ、収集コードと API キーのあるジョブから切り離す。
+  publish:
+    needs: collect
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: data
+          path: data
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: collected-data
+          path: incoming
+
+      - name: Replace data contents
+        run: rsync -a --delete --exclude='/.git/' incoming/ data/
+
       # data ブランチは履歴を持たず、実行のたびに単一コミットで置き換える。
       - name: Commit data
         id: commit
         working-directory: data
         env:
-          SOURCES: ${{ steps.plan.outputs.sources }}
+          SOURCES: ${{ needs.collect.outputs.sources }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -110,12 +156,12 @@ jobs:
           fi
 
       - name: Fail when a source failed
-        if: steps.collect.outcome == 'failure'
+        if: needs.collect.outputs.collect_outcome == 'failure'
         run: exit 1
 
   site:
-    needs: collect
-    if: always() && needs.collect.outputs.changed == 'true'
+    needs: publish
+    if: always() && needs.publish.outputs.changed == 'true'
     uses: ./.github/workflows/site.yml
     permissions:
       contents: read
@@ -123,8 +169,8 @@ jobs:
       id-token: write
 
   notify-failure:
-    needs: collect
-    if: failure() && needs.collect.result == 'failure'
+    needs: [collect, publish]
+    if: failure() && (needs.collect.result == 'failure' || needs.publish.result == 'failure')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -138,7 +184,7 @@ jobs:
       - name: Report failure to issue
         run: |
           now=$(date -u '+%Y-%m-%d %H:%M UTC')
-          failed="${FAILED_SOURCES:-不明（収集前の step で失敗）}"
+          failed="${FAILED_SOURCES:-不明（収集前、または data の公開で失敗）}"
           existing=$(gh issue list --label collect-failure --state open --json number --jq '.[0].number // empty')
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "再度失敗しました（${now}）。

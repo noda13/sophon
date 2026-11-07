@@ -102,6 +102,26 @@ describe('runSources', () => {
     expect(lines).toEqual(['issue: partial items=5']);
   });
 
+  it('exits 1 when a source forces failed despite produced output', async () => {
+    const registry: SourceRegistry = {
+      tech: entry('tech', async () => ({ counts: { articles: 5 }, errors: ['LLM disabled: no API key'], forceFailed: true })),
+    };
+    const res = await runSources(['tech'], registry, opts());
+    expect(res.exitCode).toBe(1);
+    expect(res.failedSources).toEqual(['tech']);
+    expect(meta('tech').run.errors).toEqual(['LLM disabled: no API key']);
+  });
+
+  it('sanitizes a thrown error with the run env before it reaches meta.json', async () => {
+    const registry: SourceRegistry = {
+      issue: entry('issue', async () => {
+        throw new Error('fetch https://rsshub.internal.example/x failed with key gsk_secretvalue');
+      }),
+    };
+    await runSources(['issue'], registry, opts({ env: { GROQ_API_KEY: 'gsk_secretvalue' } }));
+    expect(meta('issue').run.errors).toEqual(['fetch <url> failed with key ***']);
+  });
+
   it('reports an unimplemented source, exits 1 and leaves meta.json alone', async () => {
     const res = await runSources(['econ'], {}, opts());
     expect(res.exitCode).toBe(1);

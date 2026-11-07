@@ -1,7 +1,7 @@
 import { ArticlesFileSchema, DigestIndexSchema, DigestSchema, EolFileSchema, type Article } from '../../../shared/schema/tech';
 import { processInBatches, DEFAULT_INTERVAL_MS, DEFAULT_MAX_ITEMS, MAX_SUMMARY_ATTEMPTS } from '../../core/batch';
 import { jsonFile, readJson, writeJson, writeJsonBatch, type JsonFile } from '../../core/io';
-import { detectProvider, generateStructured } from '../../core/llm';
+import { detectProvider, generateStructured, LLM_DISABLED_ERROR } from '../../core/llm';
 import { collectFeeds, type FetchFeedOptions } from '../../core/rss';
 import type { CollectorSource, RunContext, RunResult } from '../../core/source';
 import { applySummaries, capFreshPerFeed, MAX_ARTICLES, retainArticles, toArticle } from './articles';
@@ -104,11 +104,12 @@ export async function runTech(ctx: RunContext, opts: TechRunOptions = {}): Promi
     }
   } else {
     console.log('No LLM configured, skipping AI processing');
+    errors.push(LLM_DISABLED_ERROR);
   }
 
   files['articles.json'] = jsonFile(ArticlesFileSchema, articles);
   writeJsonBatch(dir, files);
-  return { counts, errors };
+  return { counts, errors, forceFailed: !llm };
 }
 
 export const source: CollectorSource = {

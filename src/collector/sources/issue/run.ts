@@ -3,7 +3,7 @@ import { buildFeeds, ISSUE_RETENTION, newIssue, seenIdsOf, type IssueFeed } from
 import { generateIdeas, toIdeas } from './ideas';
 import { buildCategorySummary } from './summary';
 import { jsonFile, readJson, writeJsonBatch } from '../../core/io';
-import { detectProvider } from '../../core/llm';
+import { detectProvider, LLM_DISABLED_ERROR } from '../../core/llm';
 import { collectFeeds } from '../../core/rss';
 import type { CollectorSource, RunContext, RunResult } from '../../core/source';
 import {
@@ -61,6 +61,7 @@ export function createSource(deps: IssueSourceDeps = {}): CollectorSource {
         counts.ideaFailed = ideaRun.failed;
       } else {
         counts.llmSkipped = 1;
+        errors.push(LLM_DISABLED_ERROR);
         console.log('  No LLM API key, skipping classification and idea generation');
       }
 
@@ -73,7 +74,7 @@ export function createSource(deps: IssueSourceDeps = {}): CollectorSource {
         'category-summary.json': jsonFile(CategorySummaryFileSchema, buildCategorySummary(issues)),
       });
 
-      return { counts, errors };
+      return { counts, errors, forceFailed: !config };
     },
   };
 }
