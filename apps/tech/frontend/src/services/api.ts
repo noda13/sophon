@@ -1,4 +1,3 @@
-import { CATEGORIES } from '../lib/categories';
 import type { Category } from '../lib/categories';
 
 async function fetchStaticJson<T>(filename: string, fallback: T): Promise<T> {

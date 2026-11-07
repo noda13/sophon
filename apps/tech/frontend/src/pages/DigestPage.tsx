@@ -112,7 +112,7 @@ export function DigestPage() {
       )}
 
       {/* Digest content */}
-      {!isLoading && (digest?.overviewJa || (digest?.sections?.length ?? 0) > 0) && (
+      {!isLoading && digest && (digest.overviewJa || (digest.sections?.length ?? 0) > 0) && (
         <div className="space-y-6">
           {/* Overview */}
           <section className="bg-gray-900 border border-gray-800 rounded-lg p-5">
