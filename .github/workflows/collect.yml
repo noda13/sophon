@@ -1,6 +1,9 @@
 name: Collect Static Data
 
 on:
+  schedule:
+    # 平日 08:00 UTC (17:00 JST、東証の大引け後)
+    - cron: '0 8 * * 1-5'
   workflow_dispatch:
 
 permissions:
