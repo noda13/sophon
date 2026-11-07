@@ -4,6 +4,8 @@ export interface RunContext {
   dir: string;
   now: Date;
   env: NodeJS.ProcessEnv;
+  /** タイムアウトで abort される。source は fetch 等に渡し、abort 後はデータを書かないこと。 */
+  signal?: AbortSignal;
 }
 
 export interface RunResult {

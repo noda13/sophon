@@ -12,6 +12,8 @@ import { scoreToLevel } from './composite';
 const LLM_WEIGHT = 0.7;
 const MAX_NEWS_IN_PROMPT = 20;
 const MAX_SOURCE_NEWS_IDS = 3;
+// 4 カテゴリの要約・因子・変化理由で 1.5k 前後。thinking 付きモデルでも途中で切れない余裕を持たせる。
+const ASSESS_MAX_OUTPUT_TOKENS = 4096;
 
 const SYSTEM = `あなたはグローバル経済リスクアナリストです。提供データに基づき、4カテゴリのリスクを0-100で評価してください。
 
@@ -102,6 +104,7 @@ export async function assess(
   prev: readonly RiskAssessment[],
   config: LlmConfig,
   now: Date,
+  opts: { signal?: AbortSignal } = {},
 ): Promise<RiskAssessment[]> {
   const prevMap = new Map(prev.map((r) => [r.category, r.score]));
   const newsIdSet = new Set(news.map((a) => a.id));
@@ -119,7 +122,12 @@ export async function assess(
     for (const r of prev) ctx += `- ${r.category}: ${r.score}\n`;
   }
 
-  const response = await generateStructured(ResponseSchema, ctx, { system: SYSTEM, config });
+  const response = await generateStructured(ResponseSchema, ctx, {
+    system: SYSTEM,
+    config,
+    maxOutputTokens: ASSESS_MAX_OUTPUT_TOKENS,
+    signal: opts.signal,
+  });
   if (!response) throw new Error('LLM is not configured');
 
   const assessedAt = now.toISOString();

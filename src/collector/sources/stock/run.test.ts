@@ -5,7 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RankingFileSchema, StockDetailSchema, StocksFileSchema } from '../../../shared/schema/stock';
-import { run } from './run';
+import { removeStaleDetails, run } from './run';
 
 const BASE = 'https://api.jquants.com/v2';
 const server = setupServer();
@@ -23,7 +23,8 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-const ctx = (env: NodeJS.ProcessEnv) => ({ dir, now: new Date('2026-06-01T00:00:00Z'), env });
+const ctx = (env: NodeJS.ProcessEnv, signal?: AbortSignal) => ({ dir, now: new Date('2026-06-01T00:00:00Z'), env, signal });
+const env = { JQUANTS_API_KEY: 'k', JQUANTS_REQ_INTERVAL_MS: '0' };
 const readJson = (name: string) => JSON.parse(readFileSync(join(dir, name), 'utf-8'));
 
 function mockApi() {
@@ -117,5 +118,78 @@ describe('stock source run', () => {
     expect(result.counts.stocks).toBe(0);
     expect(result.errors.join()).toMatch(/left unchanged/);
     expect(readdirSync(dir)).toEqual([]);
+  });
+
+  it('writes the data and reports the failed day when under 10% of days fail', async () => {
+    mockApi();
+    // Returning nothing falls through to the mockApi handler for every other date.
+    server.use(
+      http.get(`${BASE}/fins/summary`, ({ request }) =>
+        new URL(request.url).searchParams.get('date') === '20260105' ? new HttpResponse('nope', { status: 400 }) : undefined,
+      ),
+    );
+
+    const result = await run(ctx(env));
+
+    expect(result.counts).toMatchObject({ stocks: 2, details: 3 });
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatch(/statements for 20260105: .*HTTP 400/);
+    expect(StocksFileSchema.parse(readJson('stocks.json'))).toHaveLength(2);
+  });
+
+  it('writes nothing when too many statement days fail', async () => {
+    mockApi();
+    let n = 0;
+    server.use(http.get(`${BASE}/fins/summary`, () => (++n % 2 === 0 ? new HttpResponse('nope', { status: 400 }) : undefined)));
+
+    await expect(run(ctx(env))).rejects.toThrow(/statements failed/);
+    expect(readdirSync(dir)).toEqual([]);
+  });
+
+  it('rejects without writing when the signal is already aborted', async () => {
+    mockApi();
+    const controller = new AbortController();
+    controller.abort(new Error('timed out'));
+
+    await expect(run(ctx(env, controller.signal))).rejects.toThrow('timed out');
+    expect(readdirSync(dir)).toEqual([]);
+  });
+
+  it('rejects without writing when the signal aborts while statements are being fetched', async () => {
+    mockApi();
+    const controller = new AbortController();
+    let n = 0;
+    server.use(
+      http.get(`${BASE}/fins/summary`, () => {
+        if (++n === 5) controller.abort(new Error('timed out'));
+        return undefined;
+      }),
+    );
+
+    await expect(run(ctx(env, controller.signal))).rejects.toThrow('timed out');
+    expect(n).toBe(5);
+    expect(readdirSync(dir)).toEqual([]);
+  });
+});
+
+describe('removeStaleDetails', () => {
+  const detailDir = () => join(dir, 'stocks');
+
+  it('deletes json files outside the keep set and leaves everything else', () => {
+    mkdirSync(detailDir());
+    for (const name of ['1301.json', '0000.json', 'notes.txt']) writeFileSync(join(detailDir(), name), '{}');
+
+    removeStaleDetails(dir, new Set(['1301.json']));
+
+    expect(readdirSync(detailDir()).sort()).toEqual(['1301.json', 'notes.txt']);
+  });
+
+  it('does nothing when the detail directory does not exist', () => {
+    expect(() => removeStaleDetails(dir, new Set())).not.toThrow();
+  });
+
+  it('rethrows errors other than a missing directory', () => {
+    writeFileSync(detailDir(), 'not a directory');
+    expect(() => removeStaleDetails(dir, new Set())).toThrow();
   });
 });

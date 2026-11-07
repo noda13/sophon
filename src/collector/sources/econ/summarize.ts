@@ -6,6 +6,8 @@ import { MAX_NEWS } from './feeds';
 
 const BATCH_SIZE = 10;
 const MAX_PER_RUN = 50;
+// 10 件の要約（2-3 文）で 2k 前後。thinking 付きモデルでも途中で切れない余裕を持たせる。
+const SUMMARIZE_MAX_OUTPUT_TOKENS = 8192;
 const MAX_SEEN_IDS = 2000;
 export const MIN_RELEVANCE = 30;
 
@@ -49,6 +51,7 @@ export interface SummarizeResult {
 export interface SummarizeOptions {
   sleep?: (ms: number) => Promise<void>;
   intervalMs?: number;
+  signal?: AbortSignal;
 }
 
 export async function summarize(
@@ -56,14 +59,16 @@ export async function summarize(
   config: LlmConfig,
   opts: SummarizeOptions = {},
 ): Promise<SummarizeResult> {
-  const attemptsBefore = new Map(articles.map((a) => [a, a.summaryAttempts]));
-  let batchErrors = 0;
-
-  const { attempted, failed, batches } = await processInBatches(
+  const { attempted, failed } = await processInBatches(
     articles,
     async (batch) => {
       const prompt = batch.map((a, j) => `[${j}] ${a.source}: ${a.originalTitle}`).join('\n');
-      const response = await generateStructured(ResponseSchema, prompt, { system: SYSTEM, config });
+      const response = await generateStructured(ResponseSchema, prompt, {
+        system: SYSTEM,
+        config,
+        maxOutputTokens: SUMMARIZE_MAX_OUTPUT_TOKENS,
+        signal: opts.signal,
+      });
       if (!response) throw new Error('LLM is not configured');
 
       let accepted = 0;
@@ -87,24 +92,15 @@ export async function summarize(
       max: MAX_PER_RUN,
       intervalMs: opts.intervalMs ?? DEFAULT_INTERVAL_MS,
       sleep: opts.sleep,
+      signal: opts.signal,
       isDone: (a) => a.summaryJa !== '',
       attemptsKey: 'summaryAttempts',
       maxAttempts: MAX_SUMMARY_ATTEMPTS,
       onBatchError: (error) => {
-        batchErrors++;
         console.error('  Summarize failed:', error instanceof Error ? error.message : error);
       },
     },
   );
-
-  // Every call failing means the provider was down or out of quota, not that the articles are
-  // unsummarizable; charging them an attempt would exhaust a backlog after a few bad runs.
-  if (batches > 0 && batchErrors === batches) {
-    for (const [article, attempts] of attemptsBefore) {
-      if (attempts === undefined) delete article.summaryAttempts;
-      else article.summaryAttempts = attempts;
-    }
-  }
 
   return { attempted, failed };
 }

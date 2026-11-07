@@ -1,5 +1,7 @@
+import pRetry from 'p-retry';
 import { z } from 'zod';
 import { EOL_NO_DATE_DAYS, type EolItem } from '../../../shared/schema/tech';
+import { HttpStatusError } from '../../core/rss';
 
 // typescript は endoflife.date に存在せず（404）、残すと毎回の実行が partial になるため外してある。
 export const EOL_PRODUCTS = [
@@ -69,35 +71,86 @@ export function carryForward(prev: readonly EolItem[], label: string, today: Dat
     .filter((item) => item.daysLeft >= 0);
 }
 
+export interface CollectEolOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  /** 最初の試行に加える再試行の回数（429、5xx、timeout、ネットワークエラーのみ）。 */
+  retries?: number;
+  minRetryDelayMs?: number;
+}
+
 export interface CollectEolResult {
   items: EolItem[];
   failedProducts: string[];
+  /** failedProducts の label をキーにした、短い失敗理由。 */
+  failureReasons: Record<string, string>;
+}
+
+const DEFAULT_TIMEOUT_MS = 10_000;
+const DEFAULT_RETRIES = 2;
+const DEFAULT_MIN_RETRY_DELAY_MS = 1_000;
+
+function isRetryable(error: Error): boolean {
+  if (error instanceof HttpStatusError) return error.status === 429 || error.status >= 500;
+  return error instanceof TypeError || error.name === 'TimeoutError';
+}
+
+export function shortReason(error: unknown): string {
+  if (error instanceof HttpStatusError) return `HTTP ${error.status}`;
+  if (error instanceof z.ZodError) return 'unexpected response shape';
+  if (error instanceof Error) {
+    if (error.name === 'TimeoutError') return 'timeout';
+    if (error.name === 'AbortError') return 'aborted';
+    if (error instanceof TypeError) return 'network error';
+    return error.message.slice(0, 100);
+  }
+  return String(error).slice(0, 100);
+}
+
+async function fetchCycles(product: EolProduct, opts: CollectEolOptions): Promise<unknown> {
+  return pRetry(
+    async () => {
+      const url = `https://endoflife.date/api/${product.id}.json`;
+      const timeout = AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'Sophon/1.0' },
+        signal: opts.signal ? AbortSignal.any([timeout, opts.signal]) : timeout,
+      });
+      if (!res.ok) {
+        await res.body?.cancel();
+        throw new HttpStatusError(res.status, url);
+      }
+      return res.json();
+    },
+    {
+      retries: opts.retries ?? DEFAULT_RETRIES,
+      minTimeout: opts.minRetryDelayMs ?? DEFAULT_MIN_RETRY_DELAY_MS,
+      signal: opts.signal,
+      shouldRetry: ({ error }) => isRetryable(error),
+    },
+  );
 }
 
 export async function collectEol(
   prev: readonly EolItem[],
   today: Date,
   products: readonly EolProduct[] = EOL_PRODUCTS,
+  opts: CollectEolOptions = {},
 ): Promise<CollectEolResult> {
   const failedProducts: string[] = [];
+  const failureReasons: Record<string, string> = {};
   const perProduct = await Promise.all(
     products.map(async (product): Promise<EolItem[]> => {
       try {
-        const res = await fetch(`https://endoflife.date/api/${product.id}.json`, {
-          headers: { 'User-Agent': 'Sophon/1.0' },
-          signal: AbortSignal.timeout(10_000),
-        });
-        if (!res.ok) {
-          await res.body?.cancel();
-          throw new Error(`HTTP ${res.status}`);
-        }
-        return toEolItems(product.label, CyclesSchema.parse(await res.json()), today);
+        return toEolItems(product.label, CyclesSchema.parse(await fetchCycles(product, opts)), today);
       } catch (e) {
-        console.warn(`  ${product.label}: fetch failed (${e instanceof Error ? e.message : e}), using cache`);
+        const reason = shortReason(e);
+        console.warn(`  ${product.label}: fetch failed (${reason}), using cache`);
         failedProducts.push(product.label);
+        failureReasons[product.label] = reason;
         return carryForward(prev, product.label, today);
       }
     }),
   );
-  return { items: perProduct.flat(), failedProducts };
+  return { items: perProduct.flat(), failedProducts, failureReasons };
 }

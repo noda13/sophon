@@ -1,10 +1,11 @@
-import { processInBatches, type BatchResult } from '../../core/batch';
 import { generateStructured, type LlmConfig } from '../../core/llm';
 import { IDEA_MIN_APPIFIABILITY, type Idea, type Issue } from '../../../shared/schema/issue';
+import { processInBatchesWithin, type BudgetedBatchResult, type LlmBudget } from './budget';
 import { buildIdeaPrompt, IDEA_SYSTEM, IdeaResponseSchema, type IdeaResponse } from './prompts';
 
 export const IDEA_MAX_ITEMS = 20;
 export const IDEA_INTERVAL_MS = 3_000;
+export const IDEA_MAX_OUTPUT_TOKENS = 2048;
 const DIFFICULTIES = ['low', 'medium', 'high'] as const;
 type Difficulty = (typeof DIFFICULTIES)[number];
 
@@ -41,11 +42,15 @@ export interface IdeaOptions {
   sleep?: (ms: number) => Promise<void>;
   maxAttempts?: number;
   onError?: (message: string) => void;
+  signal?: AbortSignal;
+  budget?: LlmBudget;
+  /** 1 件生成するたびに呼ぶ。途中で打ち切られても生成済みの分を保存できるようにする。 */
+  onProgress?: () => void;
 }
 
 // 1 件ずつ呼ぶ。バッチにまとめると 1 件の失敗で全件が失敗扱いになる。
-export function generateIdeas(issues: Issue[], opts: IdeaOptions): Promise<BatchResult> {
-  return processInBatches(
+export function generateIdeas(issues: Issue[], opts: IdeaOptions): Promise<BudgetedBatchResult> {
+  return processInBatchesWithin(
     issues.filter(isIdeaTarget),
     async ([issue]) => {
       if (!issue) return;
@@ -53,15 +58,20 @@ export function generateIdeas(issues: Issue[], opts: IdeaOptions): Promise<Batch
         system: IDEA_SYSTEM,
         config: opts.config,
         maxAttempts: opts.maxAttempts,
+        maxOutputTokens: IDEA_MAX_OUTPUT_TOKENS,
+        signal: opts.signal,
       });
       if (!response) throw new Error('LLM is not configured');
       applyIdea(issue, response, opts.now);
+      opts.onProgress?.();
     },
     {
       batchSize: 1,
       intervalMs: IDEA_INTERVAL_MS,
       max: IDEA_MAX_ITEMS,
       sleep: opts.sleep,
+      signal: opts.signal,
+      budget: opts.budget,
       isDone: (i) => !!i.ideaGeneratedAt,
       attemptsKey: 'ideaAttempts',
       onBatchError: (e) => opts.onError?.(`idea generation: ${e instanceof Error ? e.message : String(e)}`),

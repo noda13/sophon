@@ -396,7 +396,7 @@ describe('run health', () => {
   it('reports feeds that failed and counts them', async () => {
     useWorld(llmWorld({ feed: (s) => (s === 'ft' || s === 'wsj' ? new HttpResponse('', { status: 404 }) : xml(rss(`${s} headline`, `https://e.com/${s}`))) }));
     const result = await run(KEYED);
-    expect(result.errors).toEqual(['RSS failed: wsj, ft']);
+    expect(result.errors).toEqual(['RSS failed: wsj (HTTP 404)', 'RSS failed: ft (HTTP 404)']);
     expect(result.counts).toMatchObject({ feeds: ECON_FEEDS.length, failedFeeds: 2, articles: ECON_FEEDS.length - 2 });
   });
 
@@ -414,7 +414,7 @@ describe('run health', () => {
     const result = await run(KEYED);
     const vix = IndicatorsFileSchema.parse(read('indicators.json')).find((i) => i.code === 'VIX');
     expect(vix).toMatchObject({ value: 22, stale: true, recordedAt: '2026-11-01T00:00:00.000Z' });
-    expect(result.errors).toEqual(['indicators unavailable or stale: VIX']);
+    expect(result.errors).toEqual(['indicators unavailable or stale: VIX (HTTP 500)']);
     expect(result.counts).toMatchObject({ indicators: ASSETS.length, unavailableIndicators: 1 });
   });
 

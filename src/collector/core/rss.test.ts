@@ -3,6 +3,8 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   HttpStatusError,
+  MAX_RESPONSE_BYTES,
+  ResponseTooLargeError,
   articleId,
   collectFeeds,
   fetchFeed,
@@ -188,6 +190,21 @@ describe('fetchFeed retry and timeout', () => {
     expect(calls).toBe(2);
   });
 
+  it('does not stack the exponential backoff on top of Retry-After', async () => {
+    let calls = 0;
+    server.use(
+      http.get('https://e.com/f', () => {
+        if (calls++ === 0) return new HttpResponse(null, { status: 429, headers: { 'Retry-After': '1' } });
+        return xml(rss(rssItem('a', 'https://e.com/a')));
+      }),
+    );
+    const started = Date.now();
+    await fetchFeed('https://e.com/f', { minRetryDelayMs: 800 });
+    const elapsed = Date.now() - started;
+    expect(elapsed).toBeGreaterThanOrEqual(900);
+    expect(elapsed).toBeLessThan(1_600);
+  });
+
   it('retries a 503', async () => {
     let calls = 0;
     server.use(
@@ -246,6 +263,99 @@ describe('fetchFeed retry and timeout', () => {
     await expect(fetchFeed('https://e.com/slow', { timeoutMs: 20, retries: 0 })).rejects.toMatchObject({
       name: 'TimeoutError',
     });
+  });
+});
+
+describe('fetchFeed response size cap', () => {
+  it('rejects without retrying when Content-Length exceeds the cap', async () => {
+    let calls = 0;
+    server.use(
+      http.get('https://e.com/big', () => {
+        calls++;
+        return new HttpResponse('x', { headers: { 'Content-Length': String(MAX_RESPONSE_BYTES + 1) } });
+      }),
+    );
+    await expect(fetchFeed('https://e.com/big', fast)).rejects.toBeInstanceOf(ResponseTooLargeError);
+    expect(calls).toBe(1);
+  });
+
+  it('cuts off a streamed body without Content-Length once it passes the cap', async () => {
+    let calls = 0;
+    server.use(
+      http.get('https://e.com/stream', () => {
+        calls++;
+        const chunk = new Uint8Array(1024 * 1024).fill(97);
+        let sent = 0;
+        const body = new ReadableStream<Uint8Array>({
+          pull(controller) {
+            if (sent++ < 8) controller.enqueue(chunk);
+            else controller.close();
+          },
+        });
+        return new HttpResponse(body);
+      }),
+    );
+    await expect(fetchFeed('https://e.com/stream', fast)).rejects.toBeInstanceOf(ResponseTooLargeError);
+    expect(calls).toBe(1);
+  });
+
+  it('accepts a body just under the cap', async () => {
+    server.use(http.get('https://e.com/ok', () => xml(rss(rssItem('a', 'https://e.com/a')))));
+    expect(await fetchFeed('https://e.com/ok')).toHaveLength(1);
+  });
+});
+
+describe('fetchFeed signal', () => {
+  it('rejects with the abort reason and does not retry when aborted mid-request', async () => {
+    let calls = 0;
+    server.use(
+      http.get('https://e.com/slow', async () => {
+        calls++;
+        await new Promise((r) => setTimeout(r, 500));
+        return xml(rss(''));
+      }),
+    );
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(new Error('stop')), 20);
+    await expect(fetchFeed('https://e.com/slow', { ...fast, signal: controller.signal })).rejects.toThrow('stop');
+    expect(calls).toBe(1);
+  });
+
+  it('does not issue a request when already aborted', async () => {
+    let calls = 0;
+    server.use(http.get('https://e.com/f', () => { calls++; return xml(rss('')); }));
+    await expect(fetchFeed('https://e.com/f', { signal: AbortSignal.abort() })).rejects.toThrow();
+    expect(calls).toBe(0);
+  });
+
+  it('interrupts the Retry-After wait', async () => {
+    let calls = 0;
+    server.use(
+      http.get('https://e.com/f', () => {
+        calls++;
+        return new HttpResponse(null, { status: 429, headers: { 'Retry-After': '10' } });
+      }),
+    );
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(new Error('stop')), 50);
+    const started = Date.now();
+    await expect(fetchFeed('https://e.com/f', { ...fast, signal: controller.signal })).rejects.toThrow('stop');
+    expect(Date.now() - started).toBeLessThan(2_000);
+    expect(calls).toBe(1);
+  });
+
+  it('collectFeeds propagates its signal to every fetch', async () => {
+    let calls = 0;
+    server.use(http.get('https://a.test/rss', () => { calls++; return xml(rss('')); }));
+    const result = await collectFeeds<FeedSource, Rec>({
+      sources: [{ url: 'https://a.test/rss', source: 'a' }],
+      existing: [],
+      toRecord,
+      limit: 10,
+      signal: AbortSignal.abort(),
+    }).catch((e: unknown) => e);
+    expect(result).toBeInstanceOf(Error);
+    expect(calls).toBe(0);
   });
 });
 

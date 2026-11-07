@@ -81,18 +81,24 @@ const chat = (content: unknown) =>
 
 interface ChatBody {
   messages: Array<{ role: string; content: string }>;
+  max_tokens?: number;
 }
 
+type LlmHook = (kind: 'classify' | 'idea', callNumber: number, body: ChatBody) => Response | undefined;
+
 // index 0 は appifiability 80（アイデア対象）、それ以外は 30。
-function mockLlm() {
+function mockLlm(hook?: LlmHook) {
   const calls = { classify: 0, idea: 0 };
   server.use(
     http.post(GROQ_URL, async ({ request }) => {
-      const { messages } = (await request.json()) as ChatBody;
+      const body = (await request.json()) as ChatBody;
+      const { messages } = body;
       const system = messages.find((m) => m.role === 'system')?.content ?? '';
       const user = messages.find((m) => m.role === 'user')?.content ?? '';
       if (system.includes('社会課題アナリスト')) {
         calls.classify++;
+        const hooked = hook?.('classify', calls.classify, body);
+        if (hooked) return hooked;
         const items = JSON.parse(user) as Array<{ index: number }>;
         return chat({
           results: items.map(({ index }) => ({
@@ -107,6 +113,8 @@ function mockLlm() {
         });
       }
       calls.idea++;
+      const hooked = hook?.('idea', calls.idea, body);
+      if (hooked) return hooked;
       return chat({ proposedAppIdea: '見守りアプリ', mvpFeatures: ['通知'], targetUsers: '家族', difficulty: 'low' });
     }),
   );
@@ -143,7 +151,7 @@ describe('issue source without an LLM key', () => {
     const result = await source.run(ctx());
 
     expect(result.counts).toMatchObject({ issues: 8, newIssues: 8, failedSources: 1, classified: 0, llmSkipped: 1, ideas: 0 });
-    expect(result.errors).toEqual(['feed failed: x_jijicom', LLM_DISABLED_ERROR]);
+    expect(result.errors).toEqual(['RSS failed: x_jijicom (HTTP 404)', LLM_DISABLED_ERROR]);
     expect(result.forceFailed).toBe(true);
     const issues = IssuesFileSchema.parse(read('issues.json'));
     expect(issues.every((i) => i.classifiedAt === null && i.category === '')).toBe(true);
@@ -228,7 +236,7 @@ describe('issue source with an LLM key', () => {
     expect(CategorySummaryFileSchema.parse(read('category-summary.json')).reduce((n, s) => n + s.count, 0)).toBe(9);
   });
 
-  it('records failures, counts the attempt, and still writes valid output', async () => {
+  it('records failures, keeps the attempts untouched when every batch fails, and still writes valid output', async () => {
     mockFeeds();
     server.use(http.post(GROQ_URL, () => new HttpResponse('boom', { status: 500 })));
     const result = await source.run(ctx(env));
@@ -237,7 +245,7 @@ describe('issue source with an LLM key', () => {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatch(/^classify batch 1:/);
     const issues = IssuesFileSchema.parse(read('issues.json'));
-    expect(issues.every((i) => i.classifyAttempts === 1 && i.classifiedAt === null)).toBe(true);
+    expect(issues.every((i) => !i.classifyAttempts && i.classifiedAt === null)).toBe(true);
   });
 
   it('stops retrying an issue after 3 failed attempts', async () => {
@@ -250,5 +258,122 @@ describe('issue source with an LLM key', () => {
     expect(result.counts.classified).toBe(1);
     const issues = IssuesFileSchema.parse(read('issues.json'));
     expect(issues.find((i) => i.originalUrl.includes('/old/'))?.classifiedAt).toBeNull();
+  });
+
+  const classifyBody = (body: ChatBody) => JSON.parse(body.messages.find((m) => m.role === 'user')!.content) as Array<{ index: number }>;
+  const classifyAll = (items: Array<{ index: number }>) =>
+    chat({
+      results: items.map(({ index }) => ({
+        index,
+        summaryJa: `要約${index}`,
+        category: 'aging_care',
+        severityScore: 50,
+        urgencyScore: 40,
+        appifiabilityScore: index === 0 ? 80 : 30,
+        affectedDomain: ['高齢者'],
+      })),
+    });
+
+  it('charges an attempt only to the failed batch when another batch succeeds', async () => {
+    mockFeeds({ perFeed: 2 });
+    mockLlm((kind, n, body) => {
+      if (kind !== 'classify') return undefined;
+      return n === 1 ? new HttpResponse('boom', { status: 500 }) : classifyAll(classifyBody(body));
+    });
+    const result = await source.run(ctx(env));
+
+    expect(result.counts).toMatchObject({ issues: 18, classified: 8, classifyFailed: 10 });
+    const issues = IssuesFileSchema.parse(read('issues.json'));
+    expect(issues.filter((i) => i.classifyAttempts === 1)).toHaveLength(10);
+    expect(issues.filter((i) => i.classifiedAt !== null)).toHaveLength(8);
+    expect(issues.filter((i) => i.classifiedAt !== null).every((i) => !i.classifyAttempts)).toBe(true);
+  });
+
+  it('drops one invalid entry instead of failing the whole batch', async () => {
+    mockFeeds();
+    mockLlm((kind, _n, body) => {
+      if (kind !== 'classify') return undefined;
+      const items = classifyBody(body);
+      return chat({
+        results: items.map(({ index }) => ({
+          index,
+          summaryJa: index === 3 ? '' : `要約${index}`,
+          category: 'aging_care',
+          severityScore: 50,
+          urgencyScore: 40,
+          appifiabilityScore: 30,
+          affectedDomain: [],
+        })),
+      });
+    });
+    const result = await source.run(ctx(env));
+
+    expect(result.counts).toMatchObject({ classified: 8, classifyFailed: 1 });
+    expect(result.errors).toEqual([]);
+    const issues = IssuesFileSchema.parse(read('issues.json'));
+    expect(issues.filter((i) => i.classifiedAt === null)).toHaveLength(1);
+    expect(issues.find((i) => i.classifiedAt === null)?.classifyAttempts).toBe(1);
+  });
+
+  it('writes issues.json and ideas.json after each batch so a later timeout keeps the earlier work', async () => {
+    mockFeeds({ perFeed: 2 });
+    const seenOnDisk: { classifiedBeforeBatch2?: number; ideasBeforeIdea2?: number } = {};
+    mockLlm((kind, n, body) => {
+      if (kind === 'classify' && n === 2) {
+        seenOnDisk.classifiedBeforeBatch2 = IssuesFileSchema.parse(read('issues.json')).filter((i) => i.classifiedAt).length;
+        return classifyAll(classifyBody(body));
+      }
+      if (kind === 'idea' && n === 2) {
+        seenOnDisk.ideasBeforeIdea2 = IdeasFileSchema.parse(read('ideas.json')).length;
+      }
+      return undefined;
+    });
+    await source.run(ctx(env));
+
+    expect(seenOnDisk).toEqual({ classifiedBeforeBatch2: 10, ideasBeforeIdea2: 1 });
+    expect(IdeasFileSchema.parse(read('ideas.json'))).toHaveLength(2);
+  });
+
+  it('defers the rest to the next run, without charging attempts, once the LLM budget is spent', async () => {
+    mockFeeds({ perFeed: 2 });
+    let clockMs = 0;
+    const budgeted = createSource({ sleep: async () => {}, llmMaxAttempts: 1, llmBudgetMs: 1_000, clock: () => clockMs });
+    const calls = mockLlm((kind, _n, body) => {
+      if (kind !== 'classify') return undefined;
+      clockMs += 2_000;
+      return classifyAll(classifyBody(body));
+    });
+    const result = await budgeted.run(ctx(env));
+
+    expect(calls).toEqual({ classify: 1, idea: 0 });
+    expect(result.counts).toMatchObject({ classified: 10, classifyFailed: 0, ideasGenerated: 0, ideaFailed: 0, llmDeferred: 9 });
+    expect(result.errors).toEqual(['LLM budget exceeded: 9 items deferred to next run']);
+    const issues = IssuesFileSchema.parse(read('issues.json'));
+    expect(issues.filter((i) => i.classifiedAt === null)).toHaveLength(8);
+    expect(issues.every((i) => !i.classifyAttempts && !i.ideaAttempts)).toBe(true);
+  });
+
+  it('caps the output size of classify and idea calls', async () => {
+    mockFeeds();
+    const limits: Record<string, number | undefined> = {};
+    mockLlm((kind, _n, body) => {
+      limits[kind] = body.max_tokens;
+      return undefined;
+    });
+    await source.run(ctx(env));
+
+    expect(limits).toEqual({ classify: 8192, idea: 2048 });
+  });
+
+  it('stops at the next batch when the run signal aborts', async () => {
+    mockFeeds({ perFeed: 2 });
+    const controller = new AbortController();
+    const calls = mockLlm((kind, _n, body) => {
+      if (kind !== 'classify') return undefined;
+      controller.abort(new Error('run timed out'));
+      return classifyAll(classifyBody(body));
+    });
+    await expect(source.run({ ...ctx(env), signal: controller.signal })).rejects.toThrow('run timed out');
+    expect(calls).toEqual({ classify: 1, idea: 0 });
   });
 });

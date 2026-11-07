@@ -106,6 +106,15 @@ describe('beginRun', () => {
     expect(() => run.finish({}, [])).toThrow('already finished');
   });
 
+  it('allows finish to be retried after a rejected write', () => {
+    const run = beginRun('tech', dir);
+    expect(() => run.finish({ articles: Number.NaN }, [])).toThrow();
+    expect(stored().run.errors).toEqual([UNFINISHED_RUN_ERROR]);
+    run.finish({}, ['boom']);
+    expect(stored().run).toEqual({ status: 'failed', counts: {}, errors: ['boom'] });
+    expect(() => run.finish({}, [])).toThrow('already finished');
+  });
+
   it('leaves only meta.json in the directory', () => {
     beginRun('tech', dir).finish({ a: 1 }, []);
     expect(readdirSync(dir)).toEqual(['meta.json']);

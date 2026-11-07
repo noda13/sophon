@@ -5,6 +5,7 @@ import { generateStructured, type LlmConfig } from '../../core/llm';
 import {
   buildDigestPrompt,
   DIGEST_MAX_HIGHLIGHTS,
+  DIGEST_MAX_OUTPUT_TOKENS,
   DIGEST_SYSTEM,
   DigestDraftSchema,
   type DigestDraft,
@@ -54,12 +55,19 @@ export function assembleDigest(draft: DigestDraft, candidates: readonly Article[
 }
 
 /** 要約済みの記事がなければ null。LLM の失敗は throw する。 */
-export async function buildDigest(articles: readonly Article[], now: Date, config: LlmConfig): Promise<Digest | null> {
+export async function buildDigest(
+  articles: readonly Article[],
+  now: Date,
+  config: LlmConfig,
+  signal?: AbortSignal,
+): Promise<Digest | null> {
   const candidates = selectDigestCandidates(articles);
   if (candidates.length === 0) return null;
   const draft = await generateStructured(DigestDraftSchema, buildDigestPrompt(candidates), {
     system: DIGEST_SYSTEM,
     config,
+    maxOutputTokens: DIGEST_MAX_OUTPUT_TOKENS,
+    signal,
   });
   if (!draft) throw new Error('LLM returned no digest');
   return assembleDigest(draft, candidates, now);

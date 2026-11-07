@@ -28,7 +28,7 @@ function requestIntervalFrom(env: NodeJS.ProcessEnv): number | undefined {
     : undefined;
 }
 
-function removeStaleDetails(dir: string, keep: Set<string>): void {
+export function removeStaleDetails(dir: string, keep: Set<string>): void {
   let names: string[];
   try {
     names = readdirSync(join(dir, DETAIL_DIR));
@@ -47,8 +47,13 @@ export async function run(ctx: RunContext): Promise<RunResult> {
     return { counts: emptyCounts(), errors: ['JQUANTS_API_KEY is not set; stock data was left unchanged'] };
   }
 
-  const client = createJQuantsClient({ apiKey, requestIntervalMs: requestIntervalFrom(ctx.env) });
-  const market = await fetchMarketData(client, { now: ctx.now, log: (line) => console.log(`  stock: ${line}`) });
+  const client = createJQuantsClient({ apiKey, requestIntervalMs: requestIntervalFrom(ctx.env), signal: ctx.signal });
+  const market = await fetchMarketData(client, {
+    now: ctx.now,
+    signal: ctx.signal,
+    log: (line) => console.log(`  stock: ${line}`),
+  });
+  ctx.signal?.throwIfAborted();
 
   const stocks = market.stocks.filter((s) => CODE_PATTERN.test(s.code));
   const allMetrics: StockMetrics[] = [];
@@ -56,6 +61,7 @@ export async function run(ctx: RunContext): Promise<RunResult> {
     const m = buildStockMetrics(info, market.statements.get(info.code) ?? [], market.prices.get(info.code));
     if (m) allMetrics.push(m);
   }
+  ctx.signal?.throwIfAborted();
   if (allMetrics.length === 0) {
     return {
       counts: { ...emptyCounts(), apiCalls: market.apiCalls },
@@ -94,7 +100,9 @@ export async function run(ctx: RunContext): Promise<RunResult> {
     );
   }
 
+  ctx.signal?.throwIfAborted();
   writeJsonBatch(ctx.dir, files);
+  ctx.signal?.throwIfAborted();
   removeStaleDetails(ctx.dir, detailFiles);
 
   return {

@@ -1,7 +1,7 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MetaSchema, type Meta, type SourceId } from '../shared/schema/meta';
 import { UNFINISHED_RUN_ERROR } from './core/meta';
 import type { CollectorSource, RunContext, RunResult, SourceRegistry } from './core/source';
@@ -13,7 +13,10 @@ beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'sophon-cli-'));
   lines = [];
 });
-afterEach(() => rmSync(root, { recursive: true, force: true }));
+afterEach(() => {
+  vi.restoreAllMocks();
+  rmSync(root, { recursive: true, force: true });
+});
 
 const meta = (id: SourceId): Meta => MetaSchema.parse(JSON.parse(readFileSync(join(root, id, 'meta.json'), 'utf-8')));
 const entry =
@@ -40,7 +43,7 @@ describe('runSources', () => {
     };
     const now = new Date('2026-01-02T03:04:05Z');
     await runSources(['tech'], registry, opts({ now: () => now, env: { FOO: 'bar' } }));
-    expect(seen).toEqual({ dir: join(root, 'tech'), now, env: { FOO: 'bar' } });
+    expect(seen).toEqual({ dir: join(root, 'tech'), now, env: { FOO: 'bar' }, signal: expect.any(AbortSignal) });
   });
 
   it('isolates a throwing source and keeps going', async () => {
@@ -86,10 +89,123 @@ describe('runSources', () => {
       stock: entry('stock', () => new Promise<RunResult>(() => {})),
       tech: entry('tech', async () => ({ counts: {}, errors: [] })),
     };
-    const res = await runSources(['stock', 'tech'], registry, opts({ timeoutMs: 20 }));
+    const res = await runSources(['stock', 'tech'], registry, opts({ timeoutMs: 20, abortGraceMs: 10 }));
     expect(res.failedSources).toEqual(['stock']);
     expect(meta('stock').run.errors[0]).toMatch(/timed out/);
     expect(meta('tech').run.status).toBe('ok');
+  });
+
+  it('aborts ctx.signal when the source times out', async () => {
+    let signal: AbortSignal | undefined;
+    const registry: SourceRegistry = {
+      stock: entry('stock', (ctx) => {
+        signal = ctx.signal;
+        return new Promise<RunResult>(() => {});
+      }),
+    };
+    await runSources(['stock'], registry, opts({ timeoutMs: 20, abortGraceMs: 10 }));
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it('does not abort the signal of a source that finishes in time', async () => {
+    let signal: AbortSignal | undefined;
+    const registry: SourceRegistry = {
+      stock: entry('stock', async (ctx) => {
+        signal = ctx.signal;
+        return { counts: {}, errors: [] };
+      }),
+    };
+    await runSources(['stock'], registry, opts({ timeoutMs: 1000 }));
+    expect(signal?.aborted).toBe(false);
+  });
+
+  it('waits for an aborted run to settle before starting the next source', async () => {
+    const order: string[] = [];
+    const registry: SourceRegistry = {
+      stock: entry(
+        'stock',
+        (ctx) =>
+          new Promise<RunResult>((resolve) => {
+            ctx.signal?.addEventListener('abort', () => setTimeout(() => (order.push('stock settled'), resolve({ counts: {}, errors: [] })), 30));
+          }),
+      ),
+      tech: entry('tech', async () => {
+        order.push('tech started');
+        return { counts: {}, errors: [] };
+      }),
+    };
+    const res = await runSources(['stock', 'tech'], registry, opts({ timeoutMs: 20, abortGraceMs: 1000 }));
+    expect(order).toEqual(['stock settled', 'tech started']);
+    expect(res.failedSources).toEqual(['stock']);
+    expect(meta('stock').run.errors[0]).toMatch(/timed out/);
+  });
+
+  it('runs the remaining sources after a timeout even if the run never settles', async () => {
+    const registry: SourceRegistry = {
+      stock: entry('stock', () => new Promise<RunResult>(() => {})),
+      tech: entry('tech', async () => ({ counts: { digests: 1 }, errors: [] })),
+    };
+    const out = join(root, 'github_output');
+    const res = await runSources(['stock', 'tech'], registry, opts({ timeoutMs: 10, abortGraceMs: 10, env: { GITHUB_OUTPUT: out } }));
+    expect(meta('tech').run.status).toBe('ok');
+    expect(res.exitCode).toBe(1);
+    expect(readFileSync(out, 'utf-8')).toBe('failed_sources=stock\n');
+  });
+
+  it('falls back to a failed meta.json when the counts are rejected by the schema', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const registry: SourceRegistry = {
+      stock: entry('stock', async () => ({ counts: { stocks: Number.NaN }, errors: [] })),
+      tech: entry('tech', async () => ({ counts: { digests: 1 }, errors: [] })),
+    };
+    const res = await runSources(['stock', 'tech'], registry, opts());
+    expect(res.failedSources).toEqual(['stock']);
+    expect(meta('stock').run.status).toBe('failed');
+    expect(meta('stock').run.counts).toEqual({});
+    expect(meta('stock').run.errors[0]).toMatch(/failed to write meta\.json/);
+    expect(meta('tech').run.status).toBe('ok');
+    expect(err).toHaveBeenCalled();
+  });
+
+  it('keeps going and reports failed when finish cannot write meta.json at all', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const out = join(root, 'github_output');
+    const registry: SourceRegistry = {
+      stock: entry('stock', async (ctx) => {
+        rmSync(join(ctx.dir, 'meta.json'));
+        mkdirSync(join(ctx.dir, 'meta.json'));
+        return { counts: { stocks: 1 }, errors: [] };
+      }),
+      tech: entry('tech', async () => ({ counts: { digests: 1 }, errors: [] })),
+    };
+    const res = await runSources(['stock', 'tech'], registry, opts({ env: { GITHUB_OUTPUT: out } }));
+    expect(res.failedSources).toEqual(['stock']);
+    expect(res.outcomes[0]).toMatchObject({ source: 'stock', status: 'failed', counts: {} });
+    expect(res.exitCode).toBe(1);
+    expect(meta('tech').run.status).toBe('ok');
+    expect(readFileSync(out, 'utf-8')).toBe('failed_sources=stock\n');
+    expect(err).toHaveBeenCalled();
+  });
+
+  it('skips a source whose meta.json cannot be initialised and still runs the rest', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    writeFileSync(join(root, 'stock'), 'not a directory');
+    const out = join(root, 'github_output');
+    let ran = false;
+    const registry: SourceRegistry = {
+      stock: entry('stock', async () => {
+        ran = true;
+        return { counts: { stocks: 1 }, errors: [] };
+      }),
+      tech: entry('tech', async () => ({ counts: { digests: 1 }, errors: [] })),
+    };
+    const res = await runSources(['stock', 'tech'], registry, opts({ env: { GITHUB_OUTPUT: out } }));
+    expect(ran).toBe(false);
+    expect(res.failedSources).toEqual(['stock']);
+    expect(res.outcomes[0]?.errors[0]).toMatch(/failed to write meta\.json/);
+    expect(meta('tech').run.status).toBe('ok');
+    expect(readFileSync(out, 'utf-8')).toBe('failed_sources=stock\n');
+    expect(err).toHaveBeenCalled();
   });
 
   it('treats partial as success', async () => {

@@ -10,8 +10,8 @@ vi.mock('../../core/llm', async (importOriginal) => ({
 
 const CONFIG: LlmConfig = { provider: 'groq', model: 'm', apiKey: 'k' };
 const NOW = new Date('2026-10-24T09:00:00.000Z');
-const assess = (news: NewsArticle[], indicators: EconomicIndicator[], prev: RiskAssessment[]) =>
-  assessWith(news, indicators, prev, CONFIG, NOW);
+const assess = (news: NewsArticle[], indicators: EconomicIndicator[], prev: RiskAssessment[], opts?: { signal?: AbortSignal }) =>
+  assessWith(news, indicators, prev, CONFIG, NOW, opts);
 
 function risk(category: string, score: number, level: RiskAssessment['level'] = 'low'): RiskAssessment {
   return { category: category as RiskCategory, score, level, summaryJa: '', factorsJa: [], assessedAt: '' };
@@ -196,6 +196,13 @@ describe('assess', () => {
     expect(result?.score).toBe(71);
     expect(result?.level).toBe('high');
     expect(result?.assessedAt).toBe(NOW.toISOString());
+  });
+
+  it('caps the output size and forwards the abort signal', async () => {
+    respondWith([llmEntry('technology', 80)]);
+    const controller = new AbortController();
+    await assess([], [], [], { signal: controller.signal });
+    expect(generateMock.mock.calls[0]![2]).toMatchObject({ maxOutputTokens: 4096, signal: controller.signal });
   });
 
   it('uses the LLM score unchanged when no quantitative signal exists', async () => {
