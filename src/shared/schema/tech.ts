@@ -25,6 +25,8 @@ export const ArticleSchema = z.object({
   originalUrl: z.string(),
   publishedAt: z.string(),
   summaryJa: z.string(),
+  // 要約に失敗した回数。collector が上限で打ち切るために持つ。成功すると消える。
+  summaryAttempts: z.number().int().min(0).optional(),
 });
 
 export const EolItemSchema = z.object({

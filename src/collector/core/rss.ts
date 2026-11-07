@@ -12,6 +12,8 @@ export interface FeedItem {
   title: string;
   url: string;
   publishedAt: string;
+  /** Plain-text excerpt (HTML stripped, max SUMMARY_MAX_CHARS); empty when the feed has none. */
+  summary: string;
 }
 
 export interface CollectFeedsOptions<S extends FeedSource, T extends { id: string; publishedAt: string }> {
@@ -132,6 +134,24 @@ interface RawItem {
   title: string | undefined;
   link: string | undefined;
   date: string | undefined;
+  summary: string | undefined;
+}
+
+const SUMMARY_MAX_CHARS = 500;
+
+function toPlainText(html: string | undefined): string {
+  if (!html) return '';
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, SUMMARY_MAX_CHARS);
 }
 
 function extractItems(xml: string): RawItem[] {
@@ -142,17 +162,19 @@ function extractItems(xml: string): RawItem[] {
         title: i.title,
         link: i.link,
         date: i.pubDate ?? i.dc?.dates?.[0],
+        summary: i.description ?? i.content?.encoded,
       }));
     case 'rdf':
-      return (parsed.feed.items ?? []).map((i) => ({ title: i.title, link: i.link, date: i.dc?.dates?.[0] }));
+      return (parsed.feed.items ?? []).map((i) => ({ title: i.title, link: i.link, date: i.dc?.dates?.[0], summary: i.description }));
     case 'atom':
       return (parsed.feed.entries ?? []).map((e) => ({
         title: e.title?.value,
         link: (e.links?.find((l) => !l.rel || l.rel === 'alternate') ?? e.links?.[0])?.href,
         date: e.published ?? e.updated,
+        summary: e.summary?.value ?? e.content?.value,
       }));
     case 'json':
-      return (parsed.feed.items ?? []).map((i) => ({ title: i.title, link: i.url, date: i.date_published }));
+      return (parsed.feed.items ?? []).map((i) => ({ title: i.title, link: i.url, date: i.date_published, summary: i.summary ?? i.content_text }));
   }
 }
 
@@ -168,7 +190,7 @@ export async function fetchFeed(url: string, opts: FetchFeedOptions = {}): Promi
     const link = raw.link?.trim();
     // Rejects javascript: and similar schemes before they reach a rendered href.
     if (!title || !link || !/^https?:\/\//i.test(link)) continue;
-    items.push({ id: articleId(link, title), title, url: link, publishedAt: toIsoOrNow(raw.date) });
+    items.push({ id: articleId(link, title), title, url: link, publishedAt: toIsoOrNow(raw.date), summary: toPlainText(raw.summary) });
   }
   return items;
 }

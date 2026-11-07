@@ -112,6 +112,36 @@ describe('fetchFeed formats', () => {
   });
 });
 
+describe('fetchFeed summary', () => {
+  it('strips HTML from an RSS description, decodes entities and caps the length', async () => {
+    const long = 'x'.repeat(600);
+    server.use(
+      http.get('https://e.com/rss', () =>
+        xml(
+          rss(
+            `<item><title>A</title><link>https://e.com/a</link><description><![CDATA[<p>Tom &amp; <b>Jerry</b></p>]]></description></item>` +
+              `<item><title>B</title><link>https://e.com/b</link><description>${long}</description></item>` +
+              `<item><title>C</title><link>https://e.com/c</link></item>`,
+          ),
+        ),
+      ),
+    );
+    const items = await fetchFeed('https://e.com/rss');
+    expect(items.map((i) => i.summary)).toEqual(['Tom & Jerry', 'x'.repeat(500), '']);
+  });
+
+  it('reads an Atom summary', async () => {
+    server.use(
+      http.get('https://e.com/atom', () =>
+        xml(`<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><title>t</title><id>x</id><updated>2026-10-05T00:00:00Z</updated>
+<entry><title>E</title><id>1</id><updated>2026-10-05T00:00:00Z</updated><link href="https://e.com/e"/><summary>short text</summary></entry></feed>`),
+      ),
+    );
+    const [item] = await fetchFeed('https://e.com/atom');
+    expect(item?.summary).toBe('short text');
+  });
+});
+
 describe('fetchFeed item filtering', () => {
   it('skips items without a title or link and links that are not http(s)', async () => {
     server.use(

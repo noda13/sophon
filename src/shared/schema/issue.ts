@@ -52,6 +52,9 @@ export const IssueSchema = z.object({
   difficulty: z.union([DifficultySchema, z.literal('')]),
   ideaGeneratedAt: z.string().nullable(),
   createdAt: z.string(),
+  // 失敗した回数。上限に達した課題は以降の分類・アイデア生成の対象から外れる（collector/core/batch.ts）。
+  classifyAttempts: z.number().optional(),
+  ideaAttempts: z.number().optional(),
 });
 
 export const IdeaSchema = IssueSchema.extend({
