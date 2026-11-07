@@ -3,46 +3,38 @@ name: CI
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  root:
-    name: Root (collect script)
+  check:
+    name: Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
 
       - uses: pnpm/action-setup@v4
         with:
           version: 9.0.0
 
-      - name: Install dependencies
-        run: pnpm install --ignore-scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
 
-      - name: Type-check
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Type-check (root)
         run: pnpm exec tsc --noEmit
 
-  frontend:
-    name: Frontend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.0.0
-
-      - name: Install dependencies
-        run: pnpm install --ignore-scripts
-
-      - name: Type-check
+      - name: Type-check (frontend)
         run: pnpm --filter ./frontend type-check
 
-      - name: Build
+      - name: Build (frontend)
         run: pnpm --filter ./frontend build
