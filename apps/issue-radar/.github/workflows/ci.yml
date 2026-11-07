@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # Only superseded PR runs are cancelled; a master push run must always finish.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # --ignore-scripts skips the @prisma/client postinstall, so the client must be generated
+      # before type checking. Needs no DB connection.
+      - name: Generate Prisma client
+        run: pnpm --filter ./backend run prisma:generate
+
+      # backend has no lint script/config and no build script (runs via tsx, not compiled),
+      # so only type checking is run here.
+      - name: Type check (backend)
+        run: pnpm --filter ./backend exec tsc --noEmit
+
+      # no lint script/config exists in the repo yet, so lint is skipped here.
+      - name: Type check (frontend)
+        run: pnpm --filter ./frontend run type-check
+
+      - name: Build (frontend)
+        run: pnpm --filter ./frontend run build

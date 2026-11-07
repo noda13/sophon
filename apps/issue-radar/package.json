@@ -1,0 +1,17 @@
+{
+  "name": "issue-radar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "collect": "tsx scripts/collect-static.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "rss-parser": "^3.13.0",
+    "@google/generative-ai": "^0.24.0"
+  }
+}

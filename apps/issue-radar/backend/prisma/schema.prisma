@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Issue {
+  id                 Int       @id @default(autoincrement())
+  sourceId           String    @unique
+  source             String
+  sourceType         String
+  originalTitle      String
+  originalUrl        String
+  publishedAt        DateTime
+  rawContent         String    @default("")
+  summaryJa          String    @default("")
+  category           String    @default("")
+  severityScore      Int       @default(0)
+  urgencyScore       Int       @default(0)
+  appifiabilityScore Int       @default(0)
+  affectedDomain     String    @default("[]") // JSON array; stored as string (SQLite)
+  classifiedAt       DateTime?
+  proposedAppIdea    String    @default("")
+  mvpFeatures        String    @default("[]") // JSON array; stored as string (SQLite)
+  targetUsers        String    @default("")
+  difficulty         String    @default("")
+  ideaGeneratedAt    DateTime?
+  createdAt          DateTime  @default(now())
+
+  @@index([publishedAt])
+  @@index([category])
+  @@index([appifiabilityScore])
+  @@map("issues")
+}
+
+model CollectionLog {
+  id             Int       @id @default(autoincrement())
+  jobType        String
+  status         String
+  message        String?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  itemsProcessed Int       @default(0)
+  tokensUsed     Int       @default(0)
+
+  @@index([startedAt])
+  @@map("collection_logs")
+}

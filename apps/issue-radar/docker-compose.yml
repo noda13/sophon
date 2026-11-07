@@ -1,0 +1,27 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8902:8902"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:./prisma/dev.db
+      - PORT=8902
+      - TZ=Asia/Tokyo
+    env_file:
+      - .env
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3902:3902"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8902
