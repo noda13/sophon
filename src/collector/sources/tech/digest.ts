@@ -1,4 +1,6 @@
-import type { Article, Digest } from '../../../shared/schema/tech';
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { DIGEST_DATE_PATTERN, type Article, type Digest } from '../../../shared/schema/tech';
 import { generateStructured, type LlmConfig } from '../../core/llm';
 import {
   buildDigestPrompt,
@@ -52,4 +54,18 @@ export async function buildDigest(articles: readonly Article[], now: Date, confi
   });
   if (!draft) throw new Error('LLM returned no digest');
   return assembleDigest(draft, now);
+}
+
+// 索引は digest/ の実ファイルから作り直す。差分更新にすると、手で消した日や取りこぼした日が索引に残る。
+// extraDate は同じ実行で書き出す途中のダイジェストの日付で、まだディスクにない。
+export function listDigestDates(dir: string, extraDate?: string): string[] {
+  let names: string[] = [];
+  try {
+    names = readdirSync(join(dir, 'digest'));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+  }
+  const dates = new Set(names.filter((n) => n.endsWith('.json')).map((n) => n.slice(0, -'.json'.length)));
+  if (extraDate) dates.add(extraDate);
+  return [...dates].filter((d) => DIGEST_DATE_PATTERN.test(d)).sort().reverse();
 }

@@ -10,33 +10,154 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EconIndexRouteImport } from './routes/econ/index'
+import { Route as IssueIndexRouteImport } from './routes/issue/index'
+import { Route as StockIndexRouteImport } from './routes/stock/index'
+import { Route as StockCodeRouteImport } from './routes/stock/$code'
+import { Route as TechIndexRouteImport } from './routes/tech/index'
+import { Route as TechDigestRouteImport } from './routes/tech/digest'
+import { Route as IssueIdeasIndexRouteImport } from './routes/issue/ideas/index'
+import { Route as IssueIdeasIdRouteImport } from './routes/issue/ideas/$id'
+import { Route as IssueIssuesIdRouteImport } from './routes/issue/issues.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EconIndexRoute = EconIndexRouteImport.update({
+  id: '/econ/',
+  path: '/econ/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssueIndexRoute = IssueIndexRouteImport.update({
+  id: '/issue/',
+  path: '/issue/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StockIndexRoute = StockIndexRouteImport.update({
+  id: '/stock/',
+  path: '/stock/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StockCodeRoute = StockCodeRouteImport.update({
+  id: '/stock/$code',
+  path: '/stock/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TechIndexRoute = TechIndexRouteImport.update({
+  id: '/tech/',
+  path: '/tech/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TechDigestRoute = TechDigestRouteImport.update({
+  id: '/tech/digest',
+  path: '/tech/digest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssueIdeasIndexRoute = IssueIdeasIndexRouteImport.update({
+  id: '/issue/ideas/',
+  path: '/issue/ideas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssueIdeasIdRoute = IssueIdeasIdRouteImport.update({
+  id: '/issue/ideas/$id',
+  path: '/issue/ideas/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssueIssuesIdRoute = IssueIssuesIdRouteImport.update({
+  id: '/issue/issues/$id',
+  path: '/issue/issues/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/stock/$code': typeof StockCodeRoute
+  '/tech/digest': typeof TechDigestRoute
+  '/econ/': typeof EconIndexRoute
+  '/issue/': typeof IssueIndexRoute
+  '/stock/': typeof StockIndexRoute
+  '/tech/': typeof TechIndexRoute
+  '/issue/ideas/$id': typeof IssueIdeasIdRoute
+  '/issue/issues/$id': typeof IssueIssuesIdRoute
+  '/issue/ideas/': typeof IssueIdeasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/stock/$code': typeof StockCodeRoute
+  '/tech/digest': typeof TechDigestRoute
+  '/econ': typeof EconIndexRoute
+  '/issue': typeof IssueIndexRoute
+  '/stock': typeof StockIndexRoute
+  '/tech': typeof TechIndexRoute
+  '/issue/ideas/$id': typeof IssueIdeasIdRoute
+  '/issue/issues/$id': typeof IssueIssuesIdRoute
+  '/issue/ideas': typeof IssueIdeasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/stock/$code': typeof StockCodeRoute
+  '/tech/digest': typeof TechDigestRoute
+  '/econ/': typeof EconIndexRoute
+  '/issue/': typeof IssueIndexRoute
+  '/stock/': typeof StockIndexRoute
+  '/tech/': typeof TechIndexRoute
+  '/issue/ideas/$id': typeof IssueIdeasIdRoute
+  '/issue/issues/$id': typeof IssueIssuesIdRoute
+  '/issue/ideas/': typeof IssueIdeasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/stock/$code'
+    | '/tech/digest'
+    | '/econ/'
+    | '/issue/'
+    | '/stock/'
+    | '/tech/'
+    | '/issue/ideas/$id'
+    | '/issue/issues/$id'
+    | '/issue/ideas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/stock/$code'
+    | '/tech/digest'
+    | '/econ'
+    | '/issue'
+    | '/stock'
+    | '/tech'
+    | '/issue/ideas/$id'
+    | '/issue/issues/$id'
+    | '/issue/ideas'
+  id:
+    | '__root__'
+    | '/'
+    | '/stock/$code'
+    | '/tech/digest'
+    | '/econ/'
+    | '/issue/'
+    | '/stock/'
+    | '/tech/'
+    | '/issue/ideas/$id'
+    | '/issue/issues/$id'
+    | '/issue/ideas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  StockCodeRoute: typeof StockCodeRoute
+  TechDigestRoute: typeof TechDigestRoute
+  EconIndexRoute: typeof EconIndexRoute
+  IssueIndexRoute: typeof IssueIndexRoute
+  StockIndexRoute: typeof StockIndexRoute
+  TechIndexRoute: typeof TechIndexRoute
+  IssueIdeasIdRoute: typeof IssueIdeasIdRoute
+  IssueIssuesIdRoute: typeof IssueIssuesIdRoute
+  IssueIdeasIndexRoute: typeof IssueIdeasIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +169,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/econ/': {
+      id: '/econ/'
+      path: '/econ'
+      fullPath: '/econ/'
+      preLoaderRoute: typeof EconIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issue/': {
+      id: '/issue/'
+      path: '/issue'
+      fullPath: '/issue/'
+      preLoaderRoute: typeof IssueIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stock/': {
+      id: '/stock/'
+      path: '/stock'
+      fullPath: '/stock/'
+      preLoaderRoute: typeof StockIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stock/$code': {
+      id: '/stock/$code'
+      path: '/stock/$code'
+      fullPath: '/stock/$code'
+      preLoaderRoute: typeof StockCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tech/': {
+      id: '/tech/'
+      path: '/tech'
+      fullPath: '/tech/'
+      preLoaderRoute: typeof TechIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tech/digest': {
+      id: '/tech/digest'
+      path: '/tech/digest'
+      fullPath: '/tech/digest'
+      preLoaderRoute: typeof TechDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issue/ideas/': {
+      id: '/issue/ideas/'
+      path: '/issue/ideas'
+      fullPath: '/issue/ideas/'
+      preLoaderRoute: typeof IssueIdeasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issue/ideas/$id': {
+      id: '/issue/ideas/$id'
+      path: '/issue/ideas/$id'
+      fullPath: '/issue/ideas/$id'
+      preLoaderRoute: typeof IssueIdeasIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issue/issues/$id': {
+      id: '/issue/issues/$id'
+      path: '/issue/issues/$id'
+      fullPath: '/issue/issues/$id'
+      preLoaderRoute: typeof IssueIssuesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  StockCodeRoute: StockCodeRoute,
+  TechDigestRoute: TechDigestRoute,
+  EconIndexRoute: EconIndexRoute,
+  IssueIndexRoute: IssueIndexRoute,
+  StockIndexRoute: StockIndexRoute,
+  TechIndexRoute: TechIndexRoute,
+  IssueIdeasIdRoute: IssueIdeasIdRoute,
+  IssueIssuesIdRoute: IssueIssuesIdRoute,
+  IssueIdeasIndexRoute: IssueIdeasIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

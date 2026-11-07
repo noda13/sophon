@@ -56,9 +56,17 @@ export const DigestSchema = z.object({
   sections: z.array(DigestSectionSchema),
 });
 
+export const DIGEST_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+// 新しい順。digest/<date>.json の一覧を画面が持つための索引
+export const DigestIndexSchema = z.object({
+  dates: z.array(z.string().regex(DIGEST_DATE_PATTERN)),
+});
+
 export const ArticlesFileSchema = z.array(ArticleSchema);
 export const EolFileSchema = z.array(EolItemSchema);
 
 export type Article = z.infer<typeof ArticleSchema>;
 export type EolItem = z.infer<typeof EolItemSchema>;
 export type Digest = z.infer<typeof DigestSchema>;
+export type DigestIndex = z.infer<typeof DigestIndexSchema>;

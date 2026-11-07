@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { listLegacyFiles, readLegacyJson } from './legacy-data.testutil';
-import { ArticlesFileSchema, DigestSchema, EolFileSchema } from './tech';
+import { ArticlesFileSchema, DigestIndexSchema, DigestSchema, EolFileSchema } from './tech';
 
 describe('tech schema against legacy data', () => {
   it('parses articles.json', () => {
@@ -23,5 +23,10 @@ describe('tech schema against legacy data', () => {
 
   it('rejects an unknown category', () => {
     expect(ArticlesFileSchema.safeParse([{ id: '1', source: 's', category: 'x', importance: '中', originalTitle: '', originalUrl: '', publishedAt: '', summaryJa: '' }]).success).toBe(false);
+  });
+
+  it('accepts a digest index and rejects a malformed date', () => {
+    expect(DigestIndexSchema.safeParse({ dates: ['2026-11-07', '2026-11-06'] }).success).toBe(true);
+    expect(DigestIndexSchema.safeParse({ dates: ['2026/11/07'] }).success).toBe(false);
   });
 });

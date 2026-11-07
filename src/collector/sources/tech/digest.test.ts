@@ -1,6 +1,9 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Article } from '../../../shared/schema/tech';
-import { assembleDigest, rankByImportance, selectDigestCandidates } from './digest';
+import { assembleDigest, listDigestDates, rankByImportance, selectDigestCandidates } from './digest';
 
 const article = (id: string, over: Partial<Article> = {}): Article => ({
   id,
@@ -70,5 +73,31 @@ describe('assembleDigest', () => {
     expect(d.sections).toHaveLength(1);
     expect(d.sections[0]!.category).toBe('ai');
     expect(d.sections[0]!.highlights.map((x) => x.url)).toEqual([0, 1, 2, 3, 4].map((i) => `https://e.com/${i}`));
+  });
+});
+
+describe('listDigestDates', () => {
+  const withDir = (fn: (dir: string) => void) => {
+    const dir = mkdtempSync(join(tmpdir(), 'digest-dates-'));
+    try {
+      fn(dir);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+
+  it('is empty when digest/ does not exist', () => {
+    withDir((dir) => expect(listDigestDates(dir)).toEqual([]));
+  });
+
+  it('lists dated files newest first, merges the pending date and ignores other files', () => {
+    withDir((dir) => {
+      mkdirSync(join(dir, 'digest'));
+      for (const f of ['2026-11-05.json', '2026-11-06.json', 'index.json', 'notes.txt']) {
+        writeFileSync(join(dir, 'digest', f), '{}');
+      }
+      expect(listDigestDates(dir, '2026-11-07')).toEqual(['2026-11-07', '2026-11-06', '2026-11-05']);
+      expect(listDigestDates(dir, '2026-11-06')).toEqual(['2026-11-06', '2026-11-05']);
+    });
   });
 });

@@ -1,11 +1,11 @@
-import { ArticlesFileSchema, DigestSchema, EolFileSchema, type Article } from '../../../shared/schema/tech';
+import { ArticlesFileSchema, DigestIndexSchema, DigestSchema, EolFileSchema, type Article } from '../../../shared/schema/tech';
 import { processInBatches, DEFAULT_INTERVAL_MS, DEFAULT_MAX_ITEMS, MAX_SUMMARY_ATTEMPTS } from '../../core/batch';
 import { jsonFile, readJson, writeJson, writeJsonBatch, type JsonFile } from '../../core/io';
 import { detectProvider, generateStructured } from '../../core/llm';
 import { collectFeeds, type FetchFeedOptions } from '../../core/rss';
 import type { CollectorSource, RunContext, RunResult } from '../../core/source';
 import { applySummaries, capFreshPerFeed, MAX_ARTICLES, retainArticles, toArticle } from './articles';
-import { buildDigest } from './digest';
+import { buildDigest, listDigestDates } from './digest';
 import { collectEol, EOL_PRODUCTS, type EolProduct } from './eol';
 import { TECH_FEEDS, type TechFeed } from './feeds';
 import { buildSummaryPrompt, SUMMARY_SYSTEM, SummaryResponseSchema } from './prompts';
@@ -94,6 +94,7 @@ export async function runTech(ctx: RunContext, opts: TechRunOptions = {}): Promi
       if (digest) {
         files['digest-latest.json'] = jsonFile(DigestSchema, digest);
         files[`digest/${digest.date}.json`] = jsonFile(DigestSchema, digest);
+        files['digest/index.json'] = jsonFile(DigestIndexSchema, { dates: listDigestDates(dir, digest.date) });
         counts.digest = 1;
       } else {
         console.log('  No summarized articles for digest, skipping');

@@ -1,6 +1,5 @@
 import { Link, Outlet } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
-import { Disclaimer } from '../ui/Disclaimer';
 
 export interface NavItem {
   to: string;
@@ -42,12 +41,11 @@ export function AppLayout({ siteName, navItems, footerSlot }: AppLayoutProps) {
         <Outlet />
       </main>
 
-      <footer className="border-t border-border bg-surface-raised">
-        <div className="mx-auto max-w-7xl space-y-2 px-4 py-4">
-          {footerSlot}
-          <Disclaimer />
-        </div>
-      </footer>
+      {footerSlot && (
+        <footer className="border-t border-border bg-surface-raised">
+          <div className="mx-auto max-w-7xl space-y-2 px-4 py-4">{footerSlot}</div>
+        </footer>
+      )}
     </div>
   );
 }

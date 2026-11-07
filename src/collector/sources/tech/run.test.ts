@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { HttpResponse, http } from 'msw';
@@ -6,6 +6,7 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ArticlesFileSchema,
+  DigestIndexSchema,
   DigestSchema,
   EolFileSchema,
   type Article,
@@ -205,6 +206,28 @@ describe('runTech with an LLM key', () => {
     expect(latest).toMatchObject({ date: '2026-11-07', overviewJa: '今日の概要' });
     expect(latest.sections[0]!.highlights).toEqual([{ title: 'Alpha', summaryJa: '要約', url: 'https://e.com/alpha' }]);
     expect(readJson(dir, 'digest/2026-11-07.json', DigestSchema, null as never)).toEqual(latest);
+    expect(readJson(dir, 'digest/index.json', DigestIndexSchema, null as never)).toEqual({ dates: ['2026-11-07'] });
+  });
+
+  it('rebuilds the digest index from every dated digest on disk', async () => {
+    mkdirSync(join(dir, 'digest'));
+    for (const date of ['2026-11-04', '2026-11-06']) {
+      writeFileSync(join(dir, 'digest', `${date}.json`), JSON.stringify({ ...prevDigest, date }));
+    }
+    server.use(
+      http.post(GROQ_URL, async ({ request }) => {
+        const body = (await request.json()) as GroqBody;
+        return isDigestRequest(body) ? digestReply() : summarizeAll(body);
+      }),
+    );
+
+    await runTech(ctx(llmEnv), fast);
+
+    expect(readJson(dir, 'digest/index.json', DigestIndexSchema, null as never).dates).toEqual([
+      '2026-11-07',
+      '2026-11-06',
+      '2026-11-04',
+    ]);
   });
 
   it('counts a failed attempt on each article when the LLM call fails, and builds no digest', async () => {
