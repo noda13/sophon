@@ -1,0 +1,237 @@
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
+import { DEFAULT_MODELS, detectProvider, generateStructured, isLlmAvailable } from './llm.js';
+
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/*';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+const schema = z.object({ ok: z.boolean() });
+
+const geminiOk = (text = '{"ok":true}') =>
+  HttpResponse.json({
+    candidates: [{ content: { role: 'model', parts: [{ text }] }, finishReason: 'STOP', index: 0 }],
+    usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1, totalTokenCount: 2 },
+  });
+
+const groqOk = (content = '{"ok":true}') =>
+  HttpResponse.json({
+    id: 'chatcmpl-1',
+    object: 'chat.completion',
+    created: 0,
+    model: 'llama-3.3-70b-versatile',
+    choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
+    usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+  });
+
+const server = setupServer();
+beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+
+function clearLlmEnv() {
+  vi.stubEnv('LLM_PROVIDER', '');
+  vi.stubEnv('LLM_MODEL', '');
+  vi.stubEnv('GEMINI_API_KEY', '');
+  vi.stubEnv('GROQ_API_KEY', '');
+}
+
+beforeEach(() => {
+  clearLlmEnv();
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+});
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+});
+
+describe('detectProvider', () => {
+  it('returns null when no key is set', () => {
+    expect(detectProvider()).toBeNull();
+    expect(isLlmAvailable()).toBe(false);
+  });
+
+  it('treats empty-string keys as unset', () => {
+    expect(detectProvider({ GROQ_API_KEY: '', GEMINI_API_KEY: '' })).toBeNull();
+  });
+
+  it('detects gemini from GEMINI_API_KEY alone', () => {
+    expect(detectProvider({ GEMINI_API_KEY: 'g' })).toEqual({
+      provider: 'gemini',
+      model: DEFAULT_MODELS.gemini,
+      apiKey: 'g',
+    });
+  });
+
+  it('detects groq from GROQ_API_KEY alone', () => {
+    expect(detectProvider({ GROQ_API_KEY: 'q' })).toEqual({
+      provider: 'groq',
+      model: DEFAULT_MODELS.groq,
+      apiKey: 'q',
+    });
+  });
+
+  it('prefers groq over gemini when both keys are set and LLM_PROVIDER is unset', () => {
+    expect(detectProvider({ GROQ_API_KEY: 'q', GEMINI_API_KEY: 'g' })?.provider).toBe('groq');
+  });
+
+  it('honors LLM_PROVIDER when its key is present', () => {
+    expect(detectProvider({ LLM_PROVIDER: 'gemini', GROQ_API_KEY: 'q', GEMINI_API_KEY: 'g' })?.provider).toBe('gemini');
+  });
+
+  it('falls back to an available provider when LLM_PROVIDER names one without a key', () => {
+    expect(detectProvider({ LLM_PROVIDER: 'gemini', GROQ_API_KEY: 'q' })?.provider).toBe('groq');
+  });
+
+  it('ignores an unknown LLM_PROVIDER', () => {
+    expect(detectProvider({ LLM_PROVIDER: 'openai', GEMINI_API_KEY: 'g' })?.provider).toBe('gemini');
+  });
+
+  it('overrides the model with LLM_MODEL', () => {
+    expect(detectProvider({ GEMINI_API_KEY: 'g', LLM_MODEL: 'gemini-2.5-flash' })?.model).toBe('gemini-2.5-flash');
+  });
+
+  it('does not default to the retired gemini-2.0-flash', () => {
+    expect(Object.values(DEFAULT_MODELS)).not.toContain('gemini-2.0-flash');
+  });
+});
+
+describe('generateStructured', () => {
+  it('returns null without calling the network when no key is set', async () => {
+    const calls = vi.fn();
+    server.use(http.all('*', () => { calls(); return new HttpResponse(null, { status: 500 }); }));
+    await expect(generateStructured(schema, 'p')).resolves.toBeNull();
+    expect(calls).not.toHaveBeenCalled();
+  });
+
+  it('parses a gemini response and sends the key, model and system prompt', async () => {
+    vi.stubEnv('GEMINI_API_KEY', 'gem-key');
+    vi.stubEnv('LLM_MODEL', 'gemini-2.5-flash');
+    let seen: { url: string; key: string | null; body: unknown } | undefined;
+    server.use(http.post(GEMINI_URL, async ({ request }) => {
+      seen = { url: request.url, key: request.headers.get('x-goog-api-key'), body: await request.json() };
+      return geminiOk();
+    }));
+
+    await expect(generateStructured(schema, 'hello', { system: 'be terse' })).resolves.toEqual({ ok: true });
+    expect(seen?.url).toContain('/models/gemini-2.5-flash:generateContent');
+    expect(seen?.key).toBe('gem-key');
+    expect(JSON.stringify(seen?.body)).toContain('be terse');
+    expect(JSON.stringify(seen?.body)).toContain('hello');
+  });
+
+  it('parses a groq response and sends the bearer key', async () => {
+    vi.stubEnv('GROQ_API_KEY', 'groq-key');
+    let auth: string | null = null;
+    let model: unknown;
+    server.use(http.post(GROQ_URL, async ({ request }) => {
+      auth = request.headers.get('authorization');
+      model = ((await request.json()) as { model: unknown }).model;
+      return groqOk();
+    }));
+
+    await expect(generateStructured(schema, 'hello')).resolves.toEqual({ ok: true });
+    expect(auth).toBe('Bearer groq-key');
+    expect(model).toBe(DEFAULT_MODELS.groq);
+  });
+
+  it('throws when the response does not match the schema', async () => {
+    vi.stubEnv('GROQ_API_KEY', 'k');
+    server.use(http.post(GROQ_URL, () => groqOk('{"ok":"yes"}')));
+    await expect(generateStructured(schema, 'p')).rejects.toThrow();
+  });
+
+  describe('retry', () => {
+    beforeEach(() => vi.stubEnv('GROQ_API_KEY', 'k'));
+
+    it('waits for Retry-After on a 429 instead of the 2s exponential backoff', async () => {
+      let calls = 0;
+      server.use(http.post(GROQ_URL, () => {
+        calls++;
+        return calls === 1
+          ? new HttpResponse('rate limited', { status: 429, headers: { 'retry-after': '1' } })
+          : groqOk();
+      }));
+
+      const start = Date.now();
+      await expect(generateStructured(schema, 'p')).resolves.toEqual({ ok: true });
+      const elapsed = Date.now() - start;
+      expect(calls).toBe(2);
+      expect(elapsed).toBeGreaterThanOrEqual(950);
+      expect(elapsed).toBeLessThan(1900);
+    });
+
+    it('retries a 500 and succeeds on a later attempt', async () => {
+      let calls = 0;
+      server.use(http.post(GROQ_URL, () => {
+        calls++;
+        return calls < 3
+          ? new HttpResponse('boom', { status: 500, headers: { 'retry-after-ms': '10' } })
+          : groqOk();
+      }));
+      await expect(generateStructured(schema, 'p')).resolves.toEqual({ ok: true });
+      expect(calls).toBe(3);
+    });
+
+    it('gives up after maxAttempts (default 3) on persistent errors', async () => {
+      let calls = 0;
+      server.use(http.post(GROQ_URL, () => {
+        calls++;
+        return new HttpResponse('boom', { status: 500, headers: { 'retry-after-ms': '10' } });
+      }));
+      await expect(generateStructured(schema, 'p')).rejects.toThrow();
+      expect(calls).toBe(3);
+    });
+
+    it('honors a custom maxAttempts', async () => {
+      let calls = 0;
+      server.use(http.post(GROQ_URL, () => {
+        calls++;
+        return new HttpResponse('boom', { status: 500, headers: { 'retry-after-ms': '10' } });
+      }));
+      await expect(generateStructured(schema, 'p', { maxAttempts: 1 })).rejects.toThrow();
+      expect(calls).toBe(1);
+    });
+
+    it('does not retry a 400', async () => {
+      let calls = 0;
+      server.use(http.post(GROQ_URL, () => {
+        calls++;
+        return new HttpResponse('bad request', { status: 400 });
+      }));
+      await expect(generateStructured(schema, 'p')).rejects.toThrow();
+      expect(calls).toBe(1);
+    });
+
+    it('retries a gemini 429 with Retry-After as well', async () => {
+      vi.stubEnv('GROQ_API_KEY', '');
+      vi.stubEnv('GEMINI_API_KEY', 'g');
+      let calls = 0;
+      server.use(http.post(GEMINI_URL, () => {
+        calls++;
+        return calls === 1
+          ? HttpResponse.json({ error: { code: 429, message: 'quota', status: 'RESOURCE_EXHAUSTED' } }, { status: 429, headers: { 'retry-after': '1' } })
+          : geminiOk();
+      }));
+      await expect(generateStructured(schema, 'p')).resolves.toEqual({ ok: true });
+      expect(calls).toBe(2);
+    });
+
+    it('rejects an invalid maxAttempts', async () => {
+      await expect(generateStructured(schema, 'p', { maxAttempts: 0 })).rejects.toThrow(RangeError);
+    });
+  });
+
+  it('aborts when the request exceeds timeoutMs', async () => {
+    vi.stubEnv('GROQ_API_KEY', 'k');
+    let calls = 0;
+    server.use(http.post(GROQ_URL, async () => {
+      calls++;
+      await new Promise((r) => setTimeout(r, 2000));
+      return groqOk();
+    }));
+    await expect(generateStructured(schema, 'p', { timeoutMs: 100 })).rejects.toThrow();
+    expect(calls).toBe(1);
+  });
+});
