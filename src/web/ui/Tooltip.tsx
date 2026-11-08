@@ -11,7 +11,7 @@ export function Tooltip({ content, children }: TooltipProps) {
   return (
     <ArkTooltip.Root openDelay={200} closeDelay={100}>
       <ArkTooltip.Trigger asChild>
-        <span className="inline-flex">{children}</span>
+        <span className="inline-flex" tabIndex={0}>{children}</span>
       </ArkTooltip.Trigger>
       <Portal>
         <ArkTooltip.Positioner>

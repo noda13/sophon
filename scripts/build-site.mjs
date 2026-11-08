@@ -21,8 +21,11 @@ const destData = join(dist, 'data');
 rmSync(destData, { recursive: true, force: true });
 cpSync(dataDir, destData, {
   recursive: true,
-  // seen-ids.json は collector の重複判定用で、画面では読まない。
-  filter: (src) => !/(^|[\\/])\.git([\\/]|$)/.test(src) && !src.endsWith('seen-ids.json'),
+  // seen-ids.json は collector の重複判定用、stock/stocks.json は collector の全銘柄一覧で、画面はどちらも読まない。
+  filter: (src) =>
+    !/(^|[\\/])\.git([\\/]|$)/.test(src) &&
+    !src.endsWith('seen-ids.json') &&
+    !/(^|[\\/])stock[\\/]stocks\.json$/.test(src),
 });
 
 // Pages は未知のパスに 404.html を返すため、ディープリンクを SPA の入口へ流す。

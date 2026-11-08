@@ -4,25 +4,28 @@ import { safeHref } from './safeHref';
 describe('safeHref', () => {
   it.each([
     ['https://example.com/a?b=1', 'https://example.com/a?b=1'],
-    ['http://example.com', 'http://example.com'],
-    ['HTTPS://EXAMPLE.COM', 'HTTPS://EXAMPLE.COM'],
-    ['  https://example.com  ', 'https://example.com'],
-    ['javascript:alert(1)', '#'],
-    ['JaVaScRiPt:alert(1)', '#'],
-    ['  javascript:alert(1)', '#'],
-    ['data:text/html,<script>alert(1)</script>', '#'],
-    ['vbscript:msgbox(1)', '#'],
-    ['//evil.example.com', '#'],
-    ['/relative/path', '#'],
-    ['relative/path', '#'],
-    ['', '#'],
-    ['   ', '#'],
+    ['http://example.com', 'http://example.com/'],
+    ['HTTPS://EXAMPLE.COM', 'https://example.com/'],
+    ['  https://example.com  ', 'https://example.com/'],
+    ['javascript:alert(1)', null],
+    ['JaVaScRiPt:alert(1)', null],
+    ['  javascript:alert(1)', null],
+    ['data:text/html,<script>alert(1)</script>', null],
+    ['vbscript:msgbox(1)', null],
+    ['file:///etc/passwd', null],
+    ['http://', null],
+    ['https://', null],
+    ['//evil.example.com', null],
+    ['/relative/path', null],
+    ['relative/path', null],
+    ['', null],
+    ['   ', null],
   ])('%j -> %j', (input, expected) => {
     expect(safeHref(input)).toBe(expected);
   });
 
-  it('null と undefined は # を返す', () => {
-    expect(safeHref(null)).toBe('#');
-    expect(safeHref(undefined)).toBe('#');
+  it('null と undefined は null を返す', () => {
+    expect(safeHref(null)).toBeNull();
+    expect(safeHref(undefined)).toBeNull();
   });
 });

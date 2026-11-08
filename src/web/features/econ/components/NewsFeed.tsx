@@ -37,7 +37,7 @@ export function NewsFeed({ articles, hasAnyNews, isError = false }: Props) {
                   )}
                 </div>
                 <h3 className="mb-1 text-sm font-medium text-fg">
-                  {href === '#' ? (
+                  {href === null ? (
                     article.originalTitle
                   ) : (
                     <a href={href} target="_blank" rel="noopener noreferrer" className="hover:text-accent hover:underline">

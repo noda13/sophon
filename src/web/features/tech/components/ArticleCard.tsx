@@ -10,6 +10,7 @@ function formatPublishedAt(iso: string): string {
 }
 
 export function ArticleCard({ article }: { article: Article }) {
+  const href = safeHref(article.originalUrl);
   return (
     <article className="rounded-lg border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong">
       <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -22,14 +23,13 @@ export function ArticleCard({ article }: { article: Article }) {
         </time>
       </div>
       <h3 className="mb-1.5 text-sm font-semibold leading-snug text-fg">
-        <a
-          href={safeHref(article.originalUrl)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="transition-colors hover:text-accent"
-        >
-          {article.originalTitle}
-        </a>
+        {href === null ? (
+          article.originalTitle
+        ) : (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-accent">
+            {article.originalTitle}
+          </a>
+        )}
       </h3>
       <p className="mb-3 text-xs leading-relaxed text-fg-muted">{article.summaryJa}</p>
       <CategoryBadge category={article.category} />

@@ -52,7 +52,7 @@ describe('ArticlesPage', () => {
     expect(await screen.findByText('一部の収集に失敗しています')).toBeTruthy();
   });
 
-  it('http(s) 以外の記事 URL は # に落とす', async () => {
+  it('http(s) 以外の記事 URL はリンクにせずタイトルだけ出す', async () => {
     serveCommon();
     server.use(
       http.get('*/data/tech/articles.json', () =>
@@ -61,8 +61,8 @@ describe('ArticlesPage', () => {
     );
     renderArticles();
 
-    const link = await screen.findByRole('link', { name: 'bad link' });
-    expect(link.getAttribute('href')).toBe('#');
+    expect(await screen.findByText('bad link')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'bad link' })).toBeNull();
   });
 
   it('検索すると URL に反映され、0 件なら空表示になる', async () => {
@@ -110,6 +110,22 @@ describe('DigestPage', () => {
     expect(screen.getByRole('heading', { name: 'セキュリティ' })).toBeTruthy();
     await waitFor(() => expect((screen.getByRole('button', { name: /前の日/ }) as HTMLButtonElement).disabled).toBe(false));
     expect((screen.getByRole('button', { name: /次の日/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('http(s) 以外のハイライト URL はリンクにせずタイトルだけ出す', async () => {
+    serveCommon();
+    const bad: Digest = {
+      ...latest,
+      sections: [{ category: 'security', highlights: [{ title: 'bad highlight', summaryJa: '要約', url: 'javascript:alert(1)' }] }],
+    };
+    server.use(
+      http.get('*/data/tech/digest/index.json', () => HttpResponse.json({ dates: [bad.date] })),
+      http.get('*/data/tech/digest-latest.json', () => HttpResponse.json(bad)),
+    );
+    renderDigest();
+
+    expect(await screen.findByText('bad highlight')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'bad highlight' })).toBeNull();
   });
 
   it('索引にない日付は「ダイジェストがありません」を出す', async () => {

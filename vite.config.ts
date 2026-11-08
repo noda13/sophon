@@ -50,8 +50,20 @@ function isFile(path: string): boolean {
   }
 }
 
+const base = process.env.SITE_BASE ?? '/sophon/';
+
+// workbox は関数を toString で sw.js へ埋め込むため、クロージャ変数を参照できない。prefix をリテラルとして焼き込む
+type RouteMatchCallback = (options: { url: URL }) => boolean;
+
+function swDataMatcher(prefix: string): RouteMatchCallback {
+  return new Function(
+    '{ url }',
+    `return url.origin === self.location.origin && url.pathname.startsWith(${JSON.stringify(prefix)});`,
+  ) as RouteMatchCallback;
+}
+
 export default defineConfig({
-  base: process.env.SITE_BASE ?? '/sophon/',
+  base,
   plugins: [
     // react より前に置く必要がある（routeTree.gen.ts を先に生成するため）
     tanstackRouter({
@@ -65,15 +77,15 @@ export default defineConfig({
     serveLocalData(),
     VitePWA({
       registerType: 'autoUpdate',
-      base: process.env.SITE_BASE ?? '/sophon/',
+      base,
       includeAssets: ['icon.svg'],
       manifest: {
         name: 'sophon',
         short_name: 'sophon',
         description: '株・技術・課題・経済の情報をまとめて見るサイト',
         lang: 'ja',
-        scope: process.env.SITE_BASE ?? '/sophon/',
-        start_url: process.env.SITE_BASE ?? '/sophon/',
+        scope: base,
+        start_url: base,
         display: 'standalone',
         theme_color: '#0b0f14',
         background_color: '#0b0f14',
@@ -86,9 +98,14 @@ export default defineConfig({
         // data は毎日更新されるため、オンラインなら常に最新を取り、オフラインのときだけ前回分を返す
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => url.pathname.includes('/data/'),
+            urlPattern: swDataMatcher(`${base}data/`),
             handler: 'NetworkFirst',
-            options: { cacheName: 'sophon-data', networkTimeoutSeconds: 5 },
+            options: {
+              cacheName: 'sophon-data',
+              networkTimeoutSeconds: 5,
+              // 銘柄詳細だけで数千ファイルあるため、閲覧のたびに溜まらないよう上限と期限を設ける
+              expiration: { maxEntries: 200, maxAgeSeconds: 7 * 24 * 3600 },
+            },
           },
         ],
         // data の JSON を SPA の index.html にフォールバックさせない

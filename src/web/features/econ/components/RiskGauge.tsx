@@ -56,7 +56,7 @@ export function RiskGauge({ risk, sourceNews, impact }: Props) {
               const className = 'block truncate text-xs text-accent';
               return (
                 <li key={article.id}>
-                  {href === '#' ? (
+                  {href === null ? (
                     <span className={className} title={article.originalTitle}>
                       {truncate(article.originalTitle)}
                     </span>
