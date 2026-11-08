@@ -6,7 +6,7 @@ export interface TechFeed extends FeedSource {
   hint: TechCategory;
 }
 
-// anthropic（https://www.anthropic.com/rss.xml）は 404 を返すため外してある。openai は 403 になるが、将来の復旧に備えて残す。
+// anthropic（https://www.anthropic.com/rss.xml）は 404、openai（https://openai.com/news/rss/）は 403 を返すため外してある。
 export const TECH_FEEDS: readonly TechFeed[] = [
   { url: 'https://hnrss.org/frontpage', source: 'hackernews', hint: 'trend' },
   { url: 'https://zenn.dev/feed', source: 'zenn', hint: 'trend' },
@@ -14,7 +14,7 @@ export const TECH_FEEDS: readonly TechFeed[] = [
   { url: 'https://www.publickey1.jp/atom.xml', source: 'publickey', hint: 'trend' },
   { url: 'https://github.blog/engineering.atom', source: 'github-blog', hint: 'trend' },
   { url: 'https://gigazine.net/news/rss_2.0/', source: 'gigazine', hint: 'trend' },
-  { url: 'https://openai.com/news/rss/', source: 'openai', hint: 'ai' },
+  { url: 'https://www.techmeme.com/feed.xml', source: 'techmeme', hint: 'trend' },
   { url: 'https://blog.google/technology/ai/rss/', source: 'google-ai', hint: 'ai' },
   { url: 'https://huggingface.co/blog/feed.xml', source: 'huggingface', hint: 'ai' },
   { url: 'https://export.arxiv.org/rss/cs.AI', source: 'arxiv-ai', hint: 'ai' },
