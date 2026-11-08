@@ -12,8 +12,12 @@ describe('TECH_FEEDS', () => {
     for (const c of TECH_CATEGORIES) expect(TECH_FEEDS.some((f) => f.hint === c)).toBe(true);
   });
 
-  it('no longer lists the feed that returns 404', () => {
+  it('does not list the feeds that return 404 or 403', () => {
     expect(TECH_FEEDS.some((f) => f.source === 'anthropic')).toBe(false);
-    expect(TECH_FEEDS.some((f) => f.source === 'openai')).toBe(true);
+    expect(TECH_FEEDS.some((f) => f.source === 'openai')).toBe(false);
+  });
+
+  it('lists techmeme', () => {
+    expect(TECH_FEEDS.find((f) => f.source === 'techmeme')?.url).toBe('https://www.techmeme.com/feed.xml');
   });
 });
