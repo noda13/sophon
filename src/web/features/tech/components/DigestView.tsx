@@ -18,21 +18,23 @@ export function DigestView({ digest }: { digest: Digest }) {
       {digest.sections.map((section) => (
         <Card key={section.category} title={categoryLabel(section.category)}>
           <ul className="space-y-3">
-            {section.highlights.map((h, i) => (
-              <li key={`${h.url}-${i}`} className="border-t border-border pt-3 first:border-t-0 first:pt-0">
-                <h3 className="mb-1 text-sm font-semibold leading-snug text-fg">
-                  <a
-                    href={safeHref(h.url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="transition-colors hover:text-accent"
-                  >
-                    {h.title}
-                  </a>
-                </h3>
-                <p className="text-xs leading-relaxed text-fg-muted">{h.summaryJa}</p>
-              </li>
-            ))}
+            {section.highlights.map((h, i) => {
+              const href = safeHref(h.url);
+              return (
+                <li key={`${h.url}-${i}`} className="border-t border-border pt-3 first:border-t-0 first:pt-0">
+                  <h3 className="mb-1 text-sm font-semibold leading-snug text-fg">
+                    {href === null ? (
+                      h.title
+                    ) : (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-accent">
+                        {h.title}
+                      </a>
+                    )}
+                  </h3>
+                  <p className="text-xs leading-relaxed text-fg-muted">{h.summaryJa}</p>
+                </li>
+              );
+            })}
           </ul>
         </Card>
       ))}

@@ -30,7 +30,7 @@ export function IssueOverview({ issue, headingLevel: Heading }: IssueOverviewPro
 
       <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-fg-muted">
         <span>公開: {formatRelativeDate(issue.publishedAt)}</span>
-        {href !== '#' && (
+        {href !== null && (
           <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
             元記事を見る →
           </a>
