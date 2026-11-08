@@ -30,7 +30,13 @@ const eolProducts = [
   { id: 'nodejs', label: 'Node.js' },
   { id: 'go', label: 'Go' },
 ];
-const fast = { feeds, eolProducts, fetchOptions: { minRetryDelayMs: 1, retries: 0 }, batchIntervalMs: 0 };
+const fast = {
+  feeds,
+  eolProducts,
+  fetchOptions: { minRetryDelayMs: 1, retries: 0 },
+  eolOptions: { minRetryDelayMs: 1, retries: 0 },
+  batchIntervalMs: 0,
+};
 
 const rss = (items: Array<[string, string, string]>) =>
   `<?xml version="1.0"?><rss version="2.0"><channel><title>t</title><link>https://e.com</link><description>d</description>${items
@@ -125,6 +131,21 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
+const useManyArticles = (count: number) =>
+  server.use(
+    http.get('https://feeds.test/a.xml', () =>
+      xml(
+        rss(
+          Array.from({ length: count }, (_, i): [string, string, string] => [
+            `Item ${i}`,
+            `https://e.com/item-${i}`,
+            new Date(Date.UTC(2026, 10, 6, 23 - i)).toUTCString(),
+          ]),
+        ),
+      ),
+    ),
+  );
+
 const readArticles = () => readJson(dir, 'articles.json', ArticlesFileSchema, []);
 const readLatestDigest = () => readJson(dir, 'digest-latest.json', DigestSchema, null as never);
 
@@ -148,7 +169,7 @@ describe('runTech without an LLM key', () => {
       summarized: 0,
       digest: 0,
     });
-    expect(result.errors).toEqual(['RSS failed: feed-gone', 'EOL failed: Go', LLM_DISABLED_ERROR]);
+    expect(result.errors).toEqual(['RSS failed: feed-gone (HTTP 404)', 'EOL failed: Go (HTTP 503)', LLM_DISABLED_ERROR]);
     expect(result.forceFailed).toBe(true);
 
     const articles = readArticles();
@@ -201,7 +222,7 @@ describe('runTech with an LLM key', () => {
     expect(result.counts).toMatchObject({ summarized: 3, summaryFailed: 0, digest: 1, llmSkipped: 0 });
     expect(result.forceFailed).toBe(false);
     expect(result.errors).not.toContain(LLM_DISABLED_ERROR);
-    expect(result.errors).toEqual(['RSS failed: feed-gone', 'EOL failed: Go']);
+    expect(result.errors).toEqual(['RSS failed: feed-gone (HTTP 404)', 'EOL failed: Go (HTTP 503)']);
     const articles = readArticles();
     expect(articles.every((a) => a.summaryJa.startsWith('要約') && a.category === 'ai')).toBe(true);
     expect(articles.some((a) => 'summaryAttempts' in a)).toBe(false);
@@ -234,15 +255,82 @@ describe('runTech with an LLM key', () => {
     ]);
   });
 
-  it('counts a failed attempt on each article when the LLM call fails, and builds no digest', async () => {
+  it('keeps summaryAttempts unchanged and builds no digest when every LLM call fails', async () => {
     server.use(http.post(GROQ_URL, () => groqError()));
 
     const result = await runTech(ctx(llmEnv), fast);
 
     expect(result.counts).toMatchObject({ summarized: 0, summaryFailed: 3, digest: 0 });
     expect(result.errors.some((e) => e.startsWith('summarize batch 1 failed'))).toBe(true);
-    expect(readArticles().map((a) => a.summaryAttempts)).toEqual([1, 1, 1]);
+    expect(readArticles().some((a) => 'summaryAttempts' in a)).toBe(false);
     expect(readdirSync(dir)).not.toContain('digest-latest.json');
+  });
+
+  it('counts a failed attempt only for the batch that failed when another batch succeeds', async () => {
+    useManyArticles(12);
+    let summaryCalls = 0;
+    server.use(
+      http.post(GROQ_URL, async ({ request }) => {
+        const body = (await request.json()) as GroqBody;
+        if (isDigestRequest(body)) return digestReply();
+        return summaryCalls++ === 0 ? groqError() : summarizeAll(body);
+      }),
+    );
+
+    const result = await runTech(ctx(llmEnv), fast);
+
+    expect(result.counts).toMatchObject({ summarized: 3, summaryFailed: 10 });
+    const articles = readArticles();
+    expect(articles.filter((a) => a.summaryJa === '')).toHaveLength(10);
+    expect(articles.filter((a) => a.summaryJa === '').every((a) => a.summaryAttempts === 1)).toBe(true);
+  });
+
+  it('adopts the valid entries when one entry violates an enum', async () => {
+    useManyArticles(9);
+    server.use(
+      http.post(GROQ_URL, async ({ request }) => {
+        const body = (await request.json()) as GroqBody;
+        if (isDigestRequest(body)) return digestReply();
+        const n = userText(body).split('\n').length;
+        return groqReply({
+          results: Array.from({ length: n }, (_, index) => ({
+            index,
+            summaryJa: `要約${index}`,
+            category: index === 3 ? 'bogus' : 'ai',
+            importance: '中',
+          })),
+        });
+      }),
+    );
+
+    const result = await runTech(ctx(llmEnv), fast);
+
+    expect(result.counts).toMatchObject({ summarized: 9, summaryFailed: 1 });
+    const articles = readArticles();
+    expect(articles.filter((a) => a.summaryJa !== '')).toHaveLength(9);
+    const [rejected] = articles.filter((a) => a.summaryJa === '');
+    expect(rejected).toMatchObject({ summaryAttempts: 1 });
+    expect(result.errors).toContain('summarize: dropped 1 invalid entries');
+  });
+
+  it('keeps the summaries of finished batches on disk when the run is aborted mid-LLM', async () => {
+    useManyArticles(25);
+    const controller = new AbortController();
+    let summaryCalls = 0;
+    server.use(
+      http.post(GROQ_URL, async ({ request }) => {
+        const body = (await request.json()) as GroqBody;
+        if (++summaryCalls === 2) controller.abort();
+        return summarizeAll(body);
+      }),
+    );
+
+    await expect(runTech({ ...ctx(llmEnv), signal: controller.signal }, fast)).rejects.toThrow();
+
+    const articles = readArticles();
+    expect(articles).toHaveLength(26);
+    expect(articles.filter((a) => a.summaryJa !== '').length).toBeGreaterThanOrEqual(10);
+    expect(readdirSync(dir)).not.toContain('eol.json');
   });
 
   it('stops retrying an article after three failed attempts', async () => {

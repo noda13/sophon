@@ -2,7 +2,13 @@ import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EconomicIndicator } from '../../../shared/schema/econ';
-import { ASSETS, collectIndicators as collect, unavailableIndicators } from './indicators';
+import {
+  ASSETS,
+  collectIndicators as collect,
+  unavailableIndicators,
+  type CollectIndicatorsOptions,
+  type IndicatorFailure,
+} from './indicators';
 
 const NOW = '2026-10-24T03:00:00.000Z';
 const OLD = '2026-10-20T03:00:00.000Z';
@@ -12,7 +18,8 @@ beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-const collectIndicators = (prev: EconomicIndicator[]) => collect(prev, new Date(NOW));
+const collectIndicators = (prev: EconomicIndicator[], opts: CollectIndicatorsOptions = {}) =>
+  collect(prev, new Date(NOW), { minRetryDelayMs: 1, retries: 0, ...opts });
 
 type Behavior =
   | { price?: unknown; closes?: Array<number | null> | null; noIndicators?: boolean }
@@ -245,6 +252,107 @@ describe('collectIndicators', () => {
     const result = await collectIndicators(prev);
     expect(result).toHaveLength(ASSETS.length);
     expect(result.every(i => i.stale === true && i.recordedAt === OLD)).toBe(true);
+  });
+});
+
+describe('collectIndicators retries, failure reasons and cancellation', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const YAHOO = 'https://query1.finance.yahoo.com/v8/finance/chart/:symbol';
+  const okBody = () => HttpResponse.json(payload({ price: 100, closes: [90, 100] }));
+
+  function countBySymbol(handler: (symbol: string, attempt: number) => Response | Promise<Response>) {
+    const attempts = new Map<string, number>();
+    server.use(
+      http.get(YAHOO, ({ request }) => {
+        const symbol = decodeURIComponent(new URL(request.url).pathname.split('/').pop() ?? '');
+        const attempt = (attempts.get(symbol) ?? 0) + 1;
+        attempts.set(symbol, attempt);
+        return handler(symbol, attempt);
+      }),
+    );
+    return attempts;
+  }
+
+  it('retries a 429 and uses the later successful response', async () => {
+    const attempts = countBySymbol((symbol, attempt) =>
+      symbol === '^VIX' && attempt === 1 ? new HttpResponse('', { status: 429 }) : okBody(),
+    );
+    const failures: IndicatorFailure[] = [];
+    const result = await collectIndicators([], { failures, retries: 2 });
+    expect(find(result, 'VIX')).toMatchObject({ value: 100, source: 'yahoo' });
+    expect(find(result, 'VIX')?.stale).toBeUndefined();
+    expect(attempts.get('^VIX')).toBe(2);
+    expect(failures).toEqual([]);
+  });
+
+  it('gives up on a persistent 5xx after the retries and reports the status', async () => {
+    const attempts = countBySymbol((symbol) => (symbol === '^DJI' ? new HttpResponse('', { status: 503 }) : okBody()));
+    const failures: IndicatorFailure[] = [];
+    const result = await collectIndicators([cached('DJIA')], { failures, retries: 2 });
+    expect(attempts.get('^DJI')).toBe(3);
+    expect(find(result, 'DJIA')?.stale).toBe(true);
+    expect(failures).toEqual([{ code: 'DJIA', reason: 'HTTP 503' }]);
+  });
+
+  it('does not retry a non-retryable status such as 404', async () => {
+    const attempts = countBySymbol((symbol) => (symbol === '^GSPC' ? new HttpResponse('', { status: 404 }) : okBody()));
+    const failures: IndicatorFailure[] = [];
+    await collectIndicators([], { failures, retries: 2 });
+    expect(attempts.get('^GSPC')).toBe(1);
+    expect(failures).toEqual([{ code: 'SPX', reason: 'HTTP 404' }]);
+  });
+
+  it('does not retry a non-JSON body and names it as the reason', async () => {
+    const attempts = countBySymbol((symbol) => (symbol === '^VIX' ? new HttpResponse('<html>', { status: 200 }) : okBody()));
+    const failures: IndicatorFailure[] = [];
+    await collectIndicators([], { failures, retries: 2 });
+    expect(attempts.get('^VIX')).toBe(1);
+    expect(failures).toEqual([{ code: 'VIX', reason: 'invalid JSON' }]);
+  });
+
+  it('records a short reason for each kind of failure', async () => {
+    countBySymbol((symbol) => {
+      if (symbol === '^DJI') return HttpResponse.error();
+      if (symbol === '^GSPC') return HttpResponse.json({ chart: { result: [{ meta: {} }] } });
+      if (symbol === '^VIX') return new HttpResponse('', { status: 429 });
+      return okBody();
+    });
+    const failures: IndicatorFailure[] = [];
+    await collectIndicators([], { failures, retries: 0 });
+    expect([...failures].sort((a, b) => a.code.localeCompare(b.code))).toEqual([
+      { code: 'DJIA', reason: 'network error' },
+      { code: 'SPX', reason: 'no price in response' },
+      { code: 'VIX', reason: 'HTTP 429' },
+    ]);
+  });
+
+  it('never has more than 3 requests in flight', async () => {
+    let inFlight = 0;
+    let peak = 0;
+    countBySymbol(async () => {
+      inFlight++;
+      peak = Math.max(peak, inFlight);
+      await new Promise((r) => setTimeout(r, 15));
+      inFlight--;
+      return okBody();
+    });
+    const result = await collectIndicators([]);
+    expect(result).toHaveLength(ASSETS.length);
+    expect(peak).toBe(3);
+  });
+
+  it('rejects without requesting anything when the signal is already aborted', async () => {
+    const attempts = countBySymbol(() => okBody());
+    const controller = new AbortController();
+    controller.abort(new Error('run timed out'));
+    await expect(collectIndicators([], { signal: controller.signal })).rejects.toThrow('run timed out');
+    expect(attempts.size).toBe(0);
   });
 });
 

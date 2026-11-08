@@ -17,6 +17,19 @@ export const ClassifyResponseSchema = z.object({
 });
 export type ClassifyResponse = z.infer<typeof ClassifyResponseSchema>;
 
+// モデルには上の緩い形だけを要求し、1 件ずつこの schema で検証して不正な項目だけ捨てる。
+// バッチ全体を落とすと同じ入力を再試行しても同じ揺れで失敗し続ける。
+export const ClassifyEntrySchema = z.object({
+  index: z.number().int().min(0),
+  summaryJa: z.string().trim().min(1),
+  category: z.string(),
+  severityScore: z.number().finite(),
+  urgencyScore: z.number().finite(),
+  appifiabilityScore: z.number().finite(),
+  affectedDomain: z.array(z.string()),
+});
+export type ClassifyEntry = z.infer<typeof ClassifyEntrySchema>;
+
 export const IdeaResponseSchema = z.object({
   proposedAppIdea: z.string(),
   mvpFeatures: z.array(z.string()),

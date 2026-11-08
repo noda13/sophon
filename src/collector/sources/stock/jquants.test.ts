@@ -1,7 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { createJQuantsClient, fetchMarketData, JQuantsHttpError } from './jquants';
+import {
+  createJQuantsClient,
+  fetchMarketData,
+  JQuantsHttpError,
+  JQuantsRateLimitBudgetError,
+  MAX_RETRY_AFTER_MS,
+  parseRetryAfter,
+} from './jquants';
 
 const BASE = 'https://jquants.test/v2';
 
@@ -232,5 +239,193 @@ describe('fetchMarketData', () => {
   it('throws when the master list is empty', async () => {
     server.use(http.get(`${BASE}/equities/master`, () => HttpResponse.json({ data: [] })));
     await expect(fetchMarketData(client(), { now })).rejects.toThrow(/0 stocks/);
+  });
+});
+
+describe('parseRetryAfter', () => {
+  const now = Date.parse('2026-06-01T00:00:00Z');
+
+  it('reads delta-seconds', () => {
+    expect(parseRetryAfter('7', now)).toBe(7000);
+    expect(parseRetryAfter('0', now)).toBe(0);
+    expect(parseRetryAfter(' 1.5 ', now)).toBe(1500);
+  });
+
+  it('reads an HTTP-date as the distance from now and clamps past dates to 0', () => {
+    expect(parseRetryAfter('Mon, 01 Jun 2026 00:00:30 GMT', now)).toBe(30_000);
+    expect(parseRetryAfter('Sun, 31 May 2026 23:00:00 GMT', now)).toBe(0);
+  });
+
+  it('ignores missing, negative and unparsable values', () => {
+    expect(parseRetryAfter(null, now)).toBeUndefined();
+    expect(parseRetryAfter('', now)).toBeUndefined();
+    expect(parseRetryAfter('-5', now)).toBeUndefined();
+    expect(parseRetryAfter('soon', now)).toBeUndefined();
+  });
+});
+
+describe('429 backoff', () => {
+  const recordingSleep = () => {
+    const waits: number[] = [];
+    return { waits, sleep: async (ms: number) => void waits.push(ms) };
+  };
+  const always429 = (headers: Record<string, string> = {}) =>
+    server.use(http.get(`${BASE}/equities/master`, () => new HttpResponse('slow down', { status: 429, headers })));
+
+  it('waits the Retry-After seconds', async () => {
+    const { waits, sleep } = recordingSleep();
+    always429({ 'retry-after': '7' });
+    await expect(client({ sleep }).listStocks()).rejects.toThrow(/HTTP 429/);
+    expect(waits).toEqual([7000, 7000, 7000]);
+  });
+
+  it('waits until the Retry-After HTTP-date', async () => {
+    const { waits, sleep } = recordingSleep();
+    always429({ 'retry-after': new Date(Date.now() + 30_000).toUTCString() });
+    await expect(client({ sleep }).listStocks()).rejects.toThrow(/HTTP 429/);
+    expect(waits).toHaveLength(3);
+    for (const w of waits) expect(w).toBeGreaterThan(25_000);
+    for (const w of waits) expect(w).toBeLessThanOrEqual(30_000);
+  });
+
+  it('caps an oversized Retry-After', async () => {
+    const { waits, sleep } = recordingSleep();
+    always429({ 'retry-after': '86400' });
+    await expect(client({ sleep, maxRateLimitWaitMs: Infinity }).listStocks()).rejects.toThrow(/HTTP 429/);
+    expect(waits).toEqual([MAX_RETRY_AFTER_MS, MAX_RETRY_AFTER_MS, MAX_RETRY_AFTER_MS]);
+  });
+
+  it('stops once the cumulative 429 wait would exceed the budget', async () => {
+    const { waits, sleep } = recordingSleep();
+    let calls = 0;
+    server.use(
+      http.get(`${BASE}/equities/master`, () => {
+        calls++;
+        return new HttpResponse('slow down', { status: 429, headers: { 'retry-after': '40' } });
+      }),
+    );
+    const c = client({ sleep, maxRateLimitWaitMs: 100_000 });
+
+    const error = await c.listStocks().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(JQuantsRateLimitBudgetError);
+    expect(waits).toEqual([40_000, 40_000]);
+    expect(calls).toBe(3);
+
+    // The budget is shared by the whole client, so later requests fail on the first 429 without sleeping.
+    await expect(c.listStocks()).rejects.toBeInstanceOf(JQuantsRateLimitBudgetError);
+    expect(waits).toEqual([40_000, 40_000]);
+    expect(calls).toBe(4);
+  });
+});
+
+describe('abort signal', () => {
+  it('does not send a request when already aborted', async () => {
+    let calls = 0;
+    server.use(http.get(`${BASE}/equities/master`, () => (calls++, HttpResponse.json({ data: [] }))));
+    const controller = new AbortController();
+    controller.abort(new Error('stop'));
+
+    await expect(client({ signal: controller.signal }).listStocks()).rejects.toThrow('stop');
+    expect(calls).toBe(0);
+  });
+
+  it('interrupts the throttle sleep', async () => {
+    server.use(http.get(`${BASE}/equities/master`, () => HttpResponse.json({ data: [] })));
+    const controller = new AbortController();
+    const c = client({ signal: controller.signal, requestIntervalMs: 60_000 });
+    await c.listStocks();
+
+    const pending = c.listStocks();
+    setTimeout(() => controller.abort(new Error('stop')), 20);
+
+    await expect(pending).rejects.toThrow('stop');
+  });
+
+  it('does not retry a 5xx after the signal aborts mid-request', async () => {
+    let calls = 0;
+    const controller = new AbortController();
+    server.use(
+      http.get(`${BASE}/equities/master`, () => {
+        calls++;
+        controller.abort(new Error('stop'));
+        return new HttpResponse('', { status: 503 });
+      }),
+    );
+
+    await expect(client({ signal: controller.signal }).listStocks()).rejects.toThrow('stop');
+    expect(calls).toBe(1);
+  });
+
+  it('interrupts the retry wait', async () => {
+    server.use(http.get(`${BASE}/equities/master`, () => new HttpResponse('', { status: 503 })));
+    const controller = new AbortController();
+    const c = client({ signal: controller.signal, serverErrorDelaysMs: [60_000] });
+    const pending = c.listStocks();
+    setTimeout(() => controller.abort(new Error('stop')), 20);
+
+    await expect(pending).rejects.toThrow('stop');
+  });
+});
+
+describe('fetchMarketData circuit breaker', () => {
+  const now = new Date('2026-06-01T00:00:00Z');
+  const setup = (summary: (n: number) => Response | undefined) => {
+    let n = 0;
+    const dates: string[] = [];
+    server.use(
+      http.get(`${BASE}/equities/master`, () => HttpResponse.json({ data: [{ Code: '72030', CoName: 'Toyota' }] })),
+      http.get(`${BASE}/equities/bars/daily`, () => HttpResponse.json({ data: [{ Code: '72030', Date: '2026-03-09', C: 100 }] })),
+      http.get(`${BASE}/fins/summary`, ({ request }) => {
+        dates.push(new URL(request.url).searchParams.get('date') ?? '');
+        return summary(++n) ?? HttpResponse.json({ data: [] });
+      }),
+    );
+    return { dates, count: () => n };
+  };
+  const fail = () => new HttpResponse('nope', { status: 400 });
+
+  it('stops after 3 consecutive failed days and records it in errors', async () => {
+    // history 200 days means ~143 weekdays, so 3 failures are well under 10% and only the skipped tail breaks the ratio.
+    const { count } = setup(() => fail());
+    await expect(fetchMarketData(client(), { now, historyDays: 200 })).rejects.toThrow(/failed for 3 of \d+ days \(\d+ more skipped\)/);
+    expect(count()).toBe(3);
+  });
+
+  it('keeps the data and appends the stop notice when the breaker trips at the very end', async () => {
+    const weekdays = 43;
+    const { count } = setup((n) => (n > weekdays - 3 ? fail() : undefined));
+    const data = await fetchMarketData(client(), { now, historyDays: 60 });
+    expect(count()).toBe(weekdays);
+    expect(data.errors).toHaveLength(3 + 1);
+    expect(data.errors.at(-1)).toMatch(/stopped after .* 3 consecutive days failed; 0 remaining days were skipped/);
+  });
+
+  it('resets the consecutive count after a success', async () => {
+    const { count } = setup((n) => (n % 3 === 0 ? undefined : fail()));
+    await expect(fetchMarketData(client(), { now, historyDays: 60 })).rejects.toThrow(/statements failed/);
+    expect(count()).toBeGreaterThan(40);
+  });
+
+  it('stops immediately when the 429 wait budget is spent', async () => {
+    const { count } = setup(() => new HttpResponse('slow down', { status: 429, headers: { 'retry-after': '1' } }));
+    const sleep = async () => undefined;
+    await expect(fetchMarketData(client({ sleep, maxRateLimitWaitMs: 1500 }), { now, historyDays: 200 })).rejects.toThrow(
+      /skipped/,
+    );
+    // 1st attempt + 1 wait (1s) + 2nd attempt, then the next 429 would exceed 1.5s.
+    expect(count()).toBe(2);
+  });
+
+  it('propagates an abort instead of counting it as a failed day', async () => {
+    const controller = new AbortController();
+    const { count } = setup((n) => {
+      if (n === 2) controller.abort(new Error('stop'));
+      return undefined;
+    });
+    await expect(
+      fetchMarketData(client({ signal: controller.signal }), { now, historyDays: 60, signal: controller.signal }),
+    ).rejects.toThrow('stop');
+    expect(count()).toBe(2);
   });
 });

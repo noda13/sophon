@@ -1,17 +1,35 @@
 import { z } from 'zod';
 import { ImportanceSchema, TechCategorySchema, type Article } from '../../../shared/schema/tech';
 
+// LLM には緩い形だけを渡し、1 件ずつ SummaryEntrySchema で検証する。enum 違反の 1 件でバッチ全体を捨てないため。
 export const SummaryResponseSchema = z.object({
   results: z.array(
     z.object({
-      index: z.number().int().min(0),
+      index: z.number(),
       summaryJa: z.string(),
-      category: TechCategorySchema,
-      importance: ImportanceSchema,
+      category: z.string(),
+      importance: z.string(),
     }),
   ),
 });
-export type SummaryResponse = z.infer<typeof SummaryResponseSchema>;
+
+const SummaryEntrySchema = z.object({
+  index: z.number().int().min(0),
+  summaryJa: z.string().trim().min(1),
+  category: TechCategorySchema,
+  importance: ImportanceSchema,
+});
+export type SummaryResponse = { results: z.infer<typeof SummaryEntrySchema>[] };
+
+export function validateSummaries(response: z.infer<typeof SummaryResponseSchema>): { accepted: SummaryResponse; dropped: number } {
+  const results: SummaryResponse['results'] = [];
+  for (const entry of response.results) {
+    const parsed = SummaryEntrySchema.safeParse(entry);
+    if (parsed.success) results.push(parsed.data);
+    else console.warn('[tech] Dropping invalid summary entry:', parsed.error.issues);
+  }
+  return { accepted: { results }, dropped: response.results.length - results.length };
+}
 
 // url と title は LLM に書かせず、index で候補記事から引く。LLM 出力が公開 JSON の URL に届かないようにするため。
 export const DigestDraftSchema = z.object({
@@ -61,6 +79,10 @@ export function buildSummaryPrompt(batch: readonly Pick<Article, 'source' | 'cat
     )
     .join('\n');
 }
+
+// 要約は 10 件で 2,000 token 前後、ダイジェストは highlights 最大 5 件 x 4 セクション。暴走時に上限なく生成させないための余裕付きの値。
+export const SUMMARY_MAX_OUTPUT_TOKENS = 4096;
+export const DIGEST_MAX_OUTPUT_TOKENS = 2048;
 
 export const DIGEST_MAX_HIGHLIGHTS = 5;
 

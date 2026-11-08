@@ -88,11 +88,37 @@ describe('processInBatches', () => {
       expect(result).toEqual({ attempted: 4, failed: 2, batches: 1 });
     });
 
-    it('counts an attempt for every item of a batch that threw', async () => {
+    it('counts an attempt for every item of a batch that threw while another batch succeeded', async () => {
       const { sleep } = setup();
       const list = items(3);
-      await processInBatches(list, async () => { throw new Error('x'); }, { ...opts(sleep), onBatchError: () => {} });
-      expect(list.map((i) => i.summaryAttempts)).toEqual([1, 1, 1]);
+      await processInBatches(list, async (_b, i) => {
+        if (i === 0) throw new Error('x');
+        for (const item of _b) item.summary = 'ok';
+      }, { ...opts(sleep), batchSize: 2, onBatchError: () => {} });
+      expect(list.map((i) => i.summaryAttempts)).toEqual([1, 1, undefined]);
+    });
+
+    it('restores attempts when every batch threw (provider outage)', async () => {
+      const { sleep } = setup();
+      const list: Item[] = [{ id: 0 }, { id: 1, summaryAttempts: 1 }, { id: 2 }];
+      const result = await processInBatches(list, async () => { throw new Error('quota'); }, { ...opts(sleep), batchSize: 2, onBatchError: () => {} });
+      expect(list.map((i) => i.summaryAttempts)).toEqual([undefined, 1, undefined]);
+      expect('summaryAttempts' in list[0]!).toBe(false);
+      expect(result).toEqual({ attempted: 3, failed: 3, batches: 2 });
+    });
+
+    it('still counts attempts when only some batches threw', async () => {
+      const { sleep } = setup();
+      const list = items(4);
+      await processInBatches(list, async (_b, i) => { if (i === 0) throw new Error('x'); }, { ...opts(sleep), batchSize: 2, onBatchError: () => {} });
+      expect(list.map((i) => i.summaryAttempts)).toEqual([1, 1, 1, 1]);
+    });
+
+    it('keeps attempts for items left undone without a throw', async () => {
+      const { sleep } = setup();
+      const list = items(2);
+      await processInBatches(list, async () => {}, opts(sleep));
+      expect(list.map((i) => i.summaryAttempts)).toEqual([1, 1]);
     });
 
     it('skips items that reached the attempt limit and already-done items', async () => {
@@ -127,6 +153,35 @@ describe('processInBatches', () => {
       const handler = vi.fn(async () => {});
       await processInBatches(list, handler, { ...opts(sleep), maxAttempts: 1 });
       expect(handler).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('signal', () => {
+    it('stops before the next batch once aborted and rejects with the reason', async () => {
+      const { sleep } = setup();
+      const controller = new AbortController();
+      const seen: number[] = [];
+      await expect(processInBatches(items(25), async (_b, i) => {
+        seen.push(i);
+        if (i === 0) controller.abort(new Error('budget'));
+      }, { sleep, signal: controller.signal })).rejects.toThrow('budget');
+      expect(seen).toEqual([0]);
+    });
+
+    it('rejects without running any batch when already aborted', async () => {
+      const handler = vi.fn(async () => {});
+      await expect(processInBatches(items(3), handler, { signal: AbortSignal.abort() })).rejects.toThrow();
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('interrupts the default inter-batch sleep', async () => {
+      const controller = new AbortController();
+      const promise = processInBatches(items(2), async () => { setTimeout(() => controller.abort(), 10); }, {
+        batchSize: 1,
+        intervalMs: 60_000,
+        signal: controller.signal,
+      });
+      await expect(promise).rejects.toThrow();
     });
   });
 });

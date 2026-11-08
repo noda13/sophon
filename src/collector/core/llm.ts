@@ -21,6 +21,10 @@ export interface GenerateOptions {
   /** リトライ待ちを含む 1 回の呼び出し全体の timeout。 */
   timeoutMs?: number;
   config?: LlmConfig;
+  /** timeoutMs と合成して渡す。abort されるとリトライも止まる。 */
+  signal?: AbortSignal;
+  /** 未指定ならプロバイダの既定に従う。 */
+  maxOutputTokens?: number;
 }
 
 export const DEFAULT_MODELS: Record<LlmProvider, string> = {
@@ -77,6 +81,7 @@ export async function generateStructured<T>(
     throw new RangeError(`maxAttempts must be a positive integer: ${maxAttempts}`);
   }
 
+  const timeout = AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   const { output } = await generateText({
     model: createModel(config),
     output: Output.object({ schema }),
@@ -84,7 +89,8 @@ export async function generateStructured<T>(
     prompt,
     temperature: opts.temperature ?? 0.3,
     maxRetries: maxAttempts - 1,
-    abortSignal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+    ...(opts.maxOutputTokens !== undefined && { maxOutputTokens: opts.maxOutputTokens }),
+    abortSignal: opts.signal ? AbortSignal.any([timeout, opts.signal]) : timeout,
   });
   return output;
 }

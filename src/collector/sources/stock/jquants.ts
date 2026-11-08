@@ -14,9 +14,12 @@ const CONSECUTIVE_OK_TO_SPEEDUP = 30;
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_RATE_LIMIT_DELAYS_MS = [10_000, 30_000, 60_000];
 const DEFAULT_SERVER_ERROR_DELAYS_MS = [2_000, 4_000, 8_000];
-const MAX_RETRY_AFTER_MS = 120_000;
+export const MAX_RETRY_AFTER_MS = 120_000;
+// Sustained 429s mean J-Quants is blocking this key; waiting longer only extends the block and burns the job's time budget.
+export const DEFAULT_MAX_RATE_LIMIT_WAIT_MS = 5 * 60 * 1000;
+export const MAX_CONSECUTIVE_FAILED_DAYS = 3;
 const MAX_PAGES = 500;
-// Individual weekdays may fail (e.g. a holiday the API rejects); a larger share means the data is unreliable.
+// Individual weekdays may fail (e.g. a holiday the API rejects); a larger share (skipped days included) means the data is unreliable.
 const MAX_FAILED_STATEMENT_DAY_RATIO = 0.1;
 
 export interface StockInfo {
@@ -68,7 +71,10 @@ export interface JQuantsOptions {
   timeoutMs?: number;
   rateLimitDelaysMs?: number[];
   serverErrorDelaysMs?: number[];
+  maxRateLimitWaitMs?: number;
+  signal?: AbortSignal;
   fetch?: typeof fetch;
+  sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
 }
 
 export class JQuantsHttpError extends Error {
@@ -80,6 +86,13 @@ export class JQuantsHttpError extends Error {
   ) {
     super(`[jquants] HTTP ${status} [${label}]: ${body.slice(0, 200)}`);
     this.name = 'JQuantsHttpError';
+  }
+}
+
+export class JQuantsRateLimitBudgetError extends Error {
+  constructor(waitedMs: number, cause: unknown) {
+    super(`[jquants] gave up after waiting ${Math.round(waitedMs / 1000)}s in total on HTTP 429`, { cause });
+    this.name = 'JQuantsRateLimitBudgetError';
   }
 }
 
@@ -109,14 +122,29 @@ function isRetryable(error: Error): boolean {
   return error instanceof TypeError || error.name === 'TimeoutError';
 }
 
-function parseRetryAfter(value: string | null): number | undefined {
-  if (!value) return undefined;
-  const seconds = Number(value);
-  return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : undefined;
+// Retry-After is either delta-seconds or an HTTP-date (RFC 9110 10.2.3).
+export function parseRetryAfter(value: string | null, nowMs: number = Date.now()): number | undefined {
+  const text = value?.trim();
+  if (!text) return undefined;
+  if (/^\d+(\.\d+)?$/.test(text)) return Number(text) * 1000;
+  if (!/[a-z]/i.test(text)) return undefined;
+  const at = Date.parse(text);
+  return Number.isNaN(at) ? undefined : Math.max(0, at - nowMs);
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(signal.reason);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal?.reason);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
 }
 
 function formatDate(d: Date): string {
@@ -176,20 +204,24 @@ export function createJQuantsClient(opts: JQuantsOptions): JQuantsClient {
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const rateLimitDelays = opts.rateLimitDelaysMs ?? DEFAULT_RATE_LIMIT_DELAYS_MS;
   const serverErrorDelays = opts.serverErrorDelaysMs ?? DEFAULT_SERVER_ERROR_DELAYS_MS;
+  const maxRateLimitWait = opts.maxRateLimitWaitMs ?? DEFAULT_MAX_RATE_LIMIT_WAIT_MS;
+  const signal = opts.signal;
   const doFetch = opts.fetch ?? fetch;
+  const wait = opts.sleep ?? sleep;
 
   let lastRequestAt = 0;
   let slowModeUntil = 0;
   let consecutiveOk = 0;
   let requestCount = 0;
+  let rateLimitWaitedMs = 0;
   let pacing: Promise<void> = Promise.resolve();
 
   const currentInterval = () => (Date.now() < slowModeUntil ? slowInterval : normalInterval);
 
   function throttle(): Promise<void> {
     const next = pacing.then(async () => {
-      const wait = currentInterval() - (Date.now() - lastRequestAt);
-      if (wait > 0) await sleep(wait);
+      const delay = currentInterval() - (Date.now() - lastRequestAt);
+      if (delay > 0) await wait(delay, signal);
       lastRequestAt = Date.now();
     });
     pacing = next.catch(() => undefined);
@@ -203,11 +235,13 @@ export function createJQuantsClient(opts: JQuantsOptions): JQuantsClient {
 
     return pRetry(
       async () => {
+        signal?.throwIfAborted();
         await throttle();
         requestCount++;
+        const timeout = AbortSignal.timeout(timeoutMs);
         const res = await doFetch(url, {
           headers: { 'x-api-key': opts.apiKey },
-          signal: AbortSignal.timeout(timeoutMs),
+          signal: signal ? AbortSignal.any([timeout, signal]) : timeout,
         });
         if (!res.ok) {
           const body = await res.text().catch(() => '');
@@ -219,24 +253,33 @@ export function createJQuantsClient(opts: JQuantsOptions): JQuantsClient {
       },
       {
         retries: Math.max(rateLimitDelays.length, serverErrorDelays.length),
+        signal,
         // p-retry's exponential backoff cannot express "10s/30s/60s for 429, 2s/4s/8s for 5xx",
         // so the wait happens in onFailedAttempt and p-retry only counts attempts.
         minTimeout: 0,
         shouldRetry: ({ error }) => isRetryable(error),
         onFailedAttempt: async ({ error, attemptNumber, retriesLeft }) => {
           const index = attemptNumber - 1;
-          let wait: number | undefined;
+          let delay: number | undefined;
           if (error instanceof JQuantsHttpError && error.status === 429) {
             consecutiveOk = 0;
             slowModeUntil = Date.now() + SLOW_DURATION_MS;
-            wait = error.retryAfterMs !== undefined
+            delay = error.retryAfterMs !== undefined
               ? Math.min(error.retryAfterMs, MAX_RETRY_AFTER_MS)
               : rateLimitDelays[index];
           } else if (isRetryable(error)) {
-            wait = serverErrorDelays[index];
+            delay = serverErrorDelays[index];
           }
           // p-retry calls this before deciding whether to retry; waiting before the final throw only delays the failure.
-          if (retriesLeft > 0 && isRetryable(error) && wait !== undefined && wait > 0) await sleep(wait);
+          if (retriesLeft > 0 && isRetryable(error) && delay !== undefined && delay > 0) {
+            if (error instanceof JQuantsHttpError && error.status === 429) {
+              if (rateLimitWaitedMs + delay > maxRateLimitWait) {
+                throw new JQuantsRateLimitBudgetError(rateLimitWaitedMs, error);
+              }
+              rateLimitWaitedMs += delay;
+            }
+            await wait(delay, signal);
+          }
         },
       },
     );
@@ -308,6 +351,7 @@ function asString(v: string | number | undefined): string | undefined {
 export interface FetchMarketDataOptions {
   now: Date;
   historyDays?: number;
+  signal?: AbortSignal;
   log?: (line: string) => void;
 }
 
@@ -338,20 +382,35 @@ export async function fetchMarketData(client: JQuantsClient, opts: FetchMarketDa
 
   const statements = new Map<string, StatementRaw[]>();
   let failedDays = 0;
-  for (const day of days) {
+  let consecutiveFailedDays = 0;
+  let skippedDays = 0;
+  for (const [index, day] of days.entries()) {
+    opts.signal?.throwIfAborted();
     try {
       for (const stmt of await client.fetchStatementsOn(day)) {
         const list = statements.get(stmt.code);
         if (list) list.push(stmt);
         else statements.set(stmt.code, [stmt]);
       }
+      consecutiveFailedDays = 0;
     } catch (e) {
+      if (opts.signal?.aborted) throw e;
       failedDays++;
+      consecutiveFailedDays++;
       errors.push(`statements for ${formatDate(day)}: ${e instanceof Error ? e.message : String(e)}`);
+      const budgetSpent = e instanceof JQuantsRateLimitBudgetError;
+      if (budgetSpent || consecutiveFailedDays >= MAX_CONSECUTIVE_FAILED_DAYS) {
+        skippedDays = days.length - index - 1;
+        const reason = budgetSpent ? 'the rate-limit wait budget was spent' : `${consecutiveFailedDays} consecutive days failed`;
+        errors.push(`statements: stopped after ${formatDate(day)} because ${reason}; ${skippedDays} remaining days were skipped`);
+        break;
+      }
     }
   }
-  if (failedDays > days.length * MAX_FAILED_STATEMENT_DAY_RATIO) {
-    throw new Error(`[jquants] statements failed for ${failedDays} of ${days.length} days: ${errors[0]}`);
+  if (failedDays + skippedDays > days.length * MAX_FAILED_STATEMENT_DAY_RATIO) {
+    throw new Error(
+      `[jquants] statements failed for ${failedDays} of ${days.length} days (${skippedDays} more skipped): ${errors[0]}`,
+    );
   }
   log(`statements: ${statements.size} codes over ${days.length} weekdays`);
 

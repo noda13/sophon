@@ -26,7 +26,11 @@ export interface CollectFeedsOptions<S extends FeedSource, T extends { id: strin
   seenIds?: readonly string[];
   /** Receives the `source` of every feed that failed, so the caller can report partial runs. */
   failedSources?: string[];
+  /** failedSources と同じ順で、失敗理由を短い形（`HTTP 429` など）で受け取る。run.errors に載せる用。 */
+  failures?: { source: string; reason: string }[];
   fetchOptions?: FetchFeedOptions;
+  /** 全 feed の取得に伝播する。 */
+  signal?: AbortSignal;
 }
 
 export interface FetchFeedOptions {
@@ -35,12 +39,22 @@ export interface FetchFeedOptions {
   retries?: number;
   minRetryDelayMs?: number;
   userAgent?: string;
+  /** timeoutMs と合成して fetch に渡す。abort されると再試行せず即中断する。 */
+  signal?: AbortSignal;
 }
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_RETRIES = 2;
 const DEFAULT_MIN_RETRY_DELAY_MS = 1_000;
 const MAX_RETRY_AFTER_MS = 10_000;
+export const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
+
+export class ResponseTooLargeError extends Error {
+  constructor(readonly url: string, readonly limitBytes: number) {
+    super(`Response from ${url} exceeds ${limitBytes} bytes`);
+    this.name = 'ResponseTooLargeError';
+  }
+}
 
 export class HttpStatusError extends Error {
   constructor(
@@ -96,15 +110,50 @@ function isRetryable(error: Error): boolean {
   return error instanceof TypeError || error.name === 'TimeoutError';
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal!.reason);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+// Content-Length は偽れるうえ chunked では無いので、ストリームを読みながら数えて上限で打ち切る。
+async function readTextCapped(res: Response, url: string): Promise<string> {
+  const declared = Number(res.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > MAX_RESPONSE_BYTES) {
+    await res.body?.cancel();
+    throw new ResponseTooLargeError(url, MAX_RESPONSE_BYTES);
+  }
+  if (!res.body) return '';
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_RESPONSE_BYTES) {
+      await reader.cancel();
+      throw new ResponseTooLargeError(url, MAX_RESPONSE_BYTES);
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
 }
 
 async function fetchText(url: string, opts: FetchFeedOptions): Promise<string> {
   return pRetry(
     async () => {
+      const timeout = AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
       const res = await fetch(url, {
-        signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+        signal: opts.signal ? AbortSignal.any([timeout, opts.signal]) : timeout,
         headers: {
           'User-Agent': opts.userAgent ?? 'Sophon/1.0',
           Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*;q=0.5',
@@ -114,16 +163,17 @@ async function fetchText(url: string, opts: FetchFeedOptions): Promise<string> {
         await res.body?.cancel();
         throw new HttpStatusError(res.status, url, parseRetryAfter(res.headers.get('retry-after')));
       }
-      return res.text();
+      return readTextCapped(res, url);
     },
     {
       retries: opts.retries ?? DEFAULT_RETRIES,
       minTimeout: opts.minRetryDelayMs ?? DEFAULT_MIN_RETRY_DELAY_MS,
+      signal: opts.signal,
       shouldRetry: ({ error }) => isRetryable(error),
-      // The server's own Retry-After is more accurate than the exponential backoff alone.
-      onFailedAttempt: async ({ error }) => {
+      // p-retry はこの後さらに retryDelay だけ待つので、不足分だけ足して合計が Retry-After と指数バックオフの大きい方になるようにする。
+      onFailedAttempt: async ({ error, retryDelay }) => {
         if (error instanceof HttpStatusError && error.retryAfterMs && isRetryable(error)) {
-          await sleep(Math.min(error.retryAfterMs, MAX_RETRY_AFTER_MS));
+          await sleep(Math.max(0, Math.min(error.retryAfterMs, MAX_RETRY_AFTER_MS) - retryDelay), opts.signal);
         }
       },
     },
@@ -195,13 +245,21 @@ export async function fetchFeed(url: string, opts: FetchFeedOptions = {}): Promi
   return items;
 }
 
+export function describeFailure(error: unknown): string {
+  if (error instanceof HttpStatusError) return `HTTP ${error.status}`;
+  if (error instanceof ResponseTooLargeError) return 'response too large';
+  if (error instanceof Error && error.name === 'TimeoutError') return 'timeout';
+  if (error instanceof Error && error.name === 'AbortError') return 'aborted';
+  return 'network error';
+}
+
 export async function collectFeeds<S extends FeedSource, T extends { id: string; publishedAt: string }>(
   opts: CollectFeedsOptions<S, T>,
 ): Promise<T[]> {
-  const { sources, existing, seenIds = [], failedSources, limit, toRecord } = opts;
+  const { sources, existing, seenIds = [], failedSources, failures, limit, toRecord } = opts;
   const ids = new Set([...existing.map((a) => a.id), ...seenIds]);
 
-  const results = await Promise.allSettled(sources.map((src) => fetchFeed(src.url, opts.fetchOptions)));
+  const results = await Promise.allSettled(sources.map((src) => fetchFeed(src.url, opts.signal ? { ...opts.fetchOptions, signal: opts.signal } : opts.fetchOptions)));
 
   const fresh: T[] = [];
   const reasons: string[] = [];
@@ -211,6 +269,7 @@ export async function collectFeeds<S extends FeedSource, T extends { id: string;
       const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
       reasons.push(reason);
       failedSources?.push(src.source);
+      failures?.push({ source: src.source, reason: describeFailure(result.reason) });
       console.error(`  RSS failed (${src.source}):`, reason);
       continue;
     }

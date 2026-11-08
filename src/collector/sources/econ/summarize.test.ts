@@ -12,7 +12,7 @@ vi.mock('../../core/llm', async (importOriginal) => ({
 const generateMock = vi.mocked(generateStructured);
 const CONFIG: LlmConfig = { provider: 'groq', model: 'm', apiKey: 'k' };
 const sleep = vi.fn(async () => {});
-const summarize = (articles: NewsArticle[]) => summarizeWith(articles, CONFIG, { sleep });
+const summarize = (articles: NewsArticle[], signal?: AbortSignal) => summarizeWith(articles, CONFIG, { sleep, signal });
 
 function article(id: number | string, over: Partial<NewsArticle> = {}): NewsArticle {
   return {
@@ -94,6 +94,23 @@ describe('summarize', () => {
     expect(generateMock).toHaveBeenCalledTimes(2);
     expect(news[0]?.summaryJa).toBe('');
     expect(news[10]?.summaryJa).toBe('summary 0');
+  });
+
+  it('caps the output size and forwards the abort signal to every call', async () => {
+    respondWith([]);
+    const controller = new AbortController();
+    await summarize([article(0)], controller.signal);
+    expect(generateMock.mock.calls[0]![2]).toMatchObject({ maxOutputTokens: 8192, signal: controller.signal });
+  });
+
+  it('stops before the next batch once the signal aborts', async () => {
+    const controller = new AbortController();
+    generateMock.mockImplementation(async (schema) => {
+      controller.abort(new Error('run timed out'));
+      return schema.parse({ results: [] });
+    });
+    await expect(summarize(Array.from({ length: 25 }, (_, i) => article(i)), controller.signal)).rejects.toThrow('run timed out');
+    expect(generateMock).toHaveBeenCalledTimes(1);
   });
 
   it('sends 10 articles per call and waits between batches', async () => {

@@ -16,7 +16,7 @@ import { assess, mergeRisks } from './assess';
 import { computeComposite } from './composite';
 import { checkEventCoverage, selectUpcomingEvents } from './events';
 import { ECON_FEEDS, MAX_NEWS, toNewsArticle } from './feeds';
-import { collectIndicators, unavailableIndicators } from './indicators';
+import { collectIndicators, unavailableIndicators, type IndicatorFailure } from './indicators';
 import { updateRiskHistory } from './risk-history';
 import { nextSeenIds, selectPublishedNews, summarize, type SummarizeResult } from './summarize';
 
@@ -24,7 +24,7 @@ const SeenIdsSchema = z.array(z.string());
 const CompositeFileSchema = CompositeRiskSchema.nullable();
 
 async function run(ctx: RunContext): Promise<RunResult> {
-  const { dir, now, env } = ctx;
+  const { dir, now, env, signal } = ctx;
   const errors: string[] = [];
 
   const coverageWarning = checkEventCoverage(now);
@@ -42,6 +42,7 @@ async function run(ctx: RunContext): Promise<RunResult> {
 
   console.log('--- News ---');
   const failedSources: string[] = [];
+  const failures: { source: string; reason: string }[] = [];
   const news = await collectFeeds({
     sources: ECON_FEEDS,
     existing: prevNews,
@@ -49,25 +50,32 @@ async function run(ctx: RunContext): Promise<RunResult> {
     limit: MAX_NEWS,
     seenIds,
     failedSources,
+    failures,
+    signal,
   });
-  if (failedSources.length > 0) errors.push(`RSS failed: ${failedSources.join(', ')}`);
+  for (const { source, reason } of failures) errors.push(`RSS failed: ${source} (${reason})`);
 
   console.log('--- Indicators ---');
-  const indicators = await collectIndicators(prevIndicators, now);
+  const indicatorFailures: IndicatorFailure[] = [];
+  const indicators = await collectIndicators(prevIndicators, now, { signal, failures: indicatorFailures });
   const unavailable = unavailableIndicators(indicators);
-  if (unavailable.length > 0) errors.push(`indicators unavailable or stale: ${unavailable.join(', ')}`);
+  if (unavailable.length > 0) {
+    const reasonOf = new Map(indicatorFailures.map((f) => [f.code, f.reason]));
+    const labels = unavailable.map((code) => (reasonOf.has(code) ? `${code} (${reasonOf.get(code)})` : code));
+    errors.push(`indicators unavailable or stale: ${labels.join(', ')}`);
+  }
 
   let freshRisks: RiskAssessment[] | null = null;
   let summaries: SummarizeResult = { attempted: 0, failed: 0 };
   const llm = detectProvider(env);
   if (llm) {
     console.log(`--- LLM (${llm.provider}): Summarize ---`);
-    summaries = await summarize(news, llm);
+    summaries = await summarize(news, llm, { signal });
     if (summaries.failed > 0) errors.push(`${summaries.failed} of ${summaries.attempted} summaries failed`);
 
     console.log(`--- LLM (${llm.provider}): Risk Assessment ---`);
     try {
-      freshRisks = await assess(news, indicators, prevRisks, llm, now);
+      freshRisks = await assess(news, indicators, prevRisks, llm, now, { signal });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       console.error('Assessment failed:', message);

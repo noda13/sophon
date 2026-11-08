@@ -1,4 +1,4 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EOL_NO_DATE_DAYS, type EolItem } from '../../../shared/schema/tech';
@@ -62,6 +62,11 @@ describe('collectEol', () => {
   beforeEach(() => vi.spyOn(console, 'warn').mockImplementation(() => {}));
   afterEach(() => vi.restoreAllMocks());
 
+  const fast = { minRetryDelayMs: 1, retries: 2 };
+  const go = [{ id: 'go', label: 'Go' }];
+  const goPrev: EolItem[] = [{ product: 'Go', cycle: '1.25', eol: '2027-02-01', daysLeft: 1 }];
+  const goCarried = [{ product: 'Go', cycle: '1.25', eol: '2027-02-01', daysLeft: 86 }];
+
   it('falls back to the cache only for the product that failed', async () => {
     server.use(
       http.get('https://endoflife.date/api/nodejs.json', () =>
@@ -69,21 +74,87 @@ describe('collectEol', () => {
       ),
       http.get('https://endoflife.date/api/go.json', () => new HttpResponse(null, { status: 500 })),
     );
-    const prev: EolItem[] = [{ product: 'Go', cycle: '1.25', eol: '2027-02-01', daysLeft: 1 }];
-    const result = await collectEol(prev, today, [
-      { id: 'nodejs', label: 'Node.js' },
-      { id: 'go', label: 'Go' },
-    ]);
+    const result = await collectEol(
+      goPrev,
+      today,
+      [
+        { id: 'nodejs', label: 'Node.js' },
+        { id: 'go', label: 'Go' },
+      ],
+      { ...fast, retries: 0 },
+    );
     expect(result.failedProducts).toEqual(['Go']);
+    expect(result.failureReasons).toEqual({ Go: 'HTTP 500' });
     expect(result.items).toEqual([
       { product: 'Node.js', cycle: '24', eol: '2028-04-30', latest: '24.1.0', daysLeft: 540 },
-      { product: 'Go', cycle: '1.25', eol: '2027-02-01', daysLeft: 86 },
+      ...goCarried,
     ]);
   });
 
   it('treats an unexpected response shape as a failure', async () => {
     server.use(http.get('https://endoflife.date/api/go.json', () => HttpResponse.json({ error: 'x' })));
-    const result = await collectEol([], today, [{ id: 'go', label: 'Go' }]);
-    expect(result).toEqual({ items: [], failedProducts: ['Go'] });
+    const result = await collectEol([], today, go, fast);
+    expect(result).toEqual({ items: [], failedProducts: ['Go'], failureReasons: { Go: 'unexpected response shape' } });
+  });
+
+  it('retries a 429 and uses the later success', async () => {
+    let calls = 0;
+    server.use(
+      http.get('https://endoflife.date/api/go.json', () =>
+        ++calls < 3 ? new HttpResponse(null, { status: 429 }) : HttpResponse.json([{ cycle: '1.26', eol: false }]),
+      ),
+    );
+    const result = await collectEol(goPrev, today, go, fast);
+    expect(calls).toBe(3);
+    expect(result.failedProducts).toEqual([]);
+    expect(result.items).toEqual([{ product: 'Go', cycle: '1.26', eol: false, daysLeft: EOL_NO_DATE_DAYS }]);
+  });
+
+  it('carries the cache forward with the status as the reason when 429 persists', async () => {
+    let calls = 0;
+    server.use(
+      http.get('https://endoflife.date/api/go.json', () => {
+        calls++;
+        return new HttpResponse(null, { status: 429 });
+      }),
+    );
+    const result = await collectEol(goPrev, today, go, fast);
+    expect(calls).toBe(3);
+    expect(result).toEqual({ items: goCarried, failedProducts: ['Go'], failureReasons: { Go: 'HTTP 429' } });
+  });
+
+  it('does not retry a 404', async () => {
+    let calls = 0;
+    server.use(
+      http.get('https://endoflife.date/api/go.json', () => {
+        calls++;
+        return new HttpResponse(null, { status: 404 });
+      }),
+    );
+    const result = await collectEol([], today, go, fast);
+    expect(calls).toBe(1);
+    expect(result.failureReasons).toEqual({ Go: 'HTTP 404' });
+  });
+
+  it('reports a timeout and carries the cache forward', async () => {
+    server.use(http.get('https://endoflife.date/api/go.json', () => delay('infinite')));
+    const result = await collectEol(goPrev, today, go, { ...fast, retries: 0, timeoutMs: 20 });
+    expect(result).toEqual({ items: goCarried, failedProducts: ['Go'], failureReasons: { Go: 'timeout' } });
+  });
+
+  it('stops without retrying when the caller aborts', async () => {
+    let calls = 0;
+    const controller = new AbortController();
+    server.use(
+      http.get('https://endoflife.date/api/go.json', async () => {
+        calls++;
+        controller.abort();
+        return delay('infinite');
+      }),
+    );
+    const result = await collectEol(goPrev, today, go, { ...fast, signal: controller.signal });
+    expect(calls).toBe(1);
+    expect(result.items).toEqual(goCarried);
+    expect(result.failureReasons).toEqual({ Go: 'aborted' });
   });
 });

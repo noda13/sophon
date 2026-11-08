@@ -17,6 +17,8 @@ export interface BatchOptions<T> {
   attemptsKey?: NumericKey<T>;
   maxAttempts?: number;
   onBatchError?: (error: unknown, batchIndex: number) => void;
+  /** 各バッチと待機の前に確認し、abort 済みなら abort 理由で reject する。 */
+  signal?: AbortSignal;
 }
 
 export interface BatchResult {
@@ -25,7 +27,19 @@ export interface BatchResult {
   batches: number;
 }
 
-const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal!.reason);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
 
 export async function processInBatches<T>(
   items: T[],
@@ -36,7 +50,7 @@ export async function processInBatches<T>(
   const intervalMs = opts.intervalMs ?? DEFAULT_INTERVAL_MS;
   const max = opts.max ?? DEFAULT_MAX_ITEMS;
   const maxAttempts = opts.maxAttempts ?? MAX_SUMMARY_ATTEMPTS;
-  const sleep = opts.sleep ?? defaultSleep;
+  const sleep = opts.sleep ?? ((ms: number) => abortableSleep(ms, opts.signal));
   if (!Number.isInteger(batchSize) || batchSize < 1) throw new RangeError(`batchSize must be a positive integer: ${batchSize}`);
 
   const attemptsOf = (item: T): number =>
@@ -47,8 +61,11 @@ export async function processInBatches<T>(
     .slice(0, max);
 
   const failedItems = new Set<T>();
+  const originalAttempts = new Map<T, number | undefined>();
   let batches = 0;
+  let threwBatches = 0;
   for (let i = 0; i < targets.length; i += batchSize) {
+    opts.signal?.throwIfAborted();
     const batch = targets.slice(i, i + batchSize);
     const batchIndex = batches++;
     let threw = false;
@@ -56,6 +73,7 @@ export async function processInBatches<T>(
       await handler(batch, batchIndex);
     } catch (error) {
       threw = true;
+      threwBatches++;
       if (opts.onBatchError) opts.onBatchError(error, batchIndex);
       else console.error(`  Batch ${batchIndex + 1} failed:`, error instanceof Error ? error.message : error);
     }
@@ -65,11 +83,26 @@ export async function processInBatches<T>(
       if (done) continue;
       failedItems.add(item);
       // 恒常的に失敗する項目が毎回の処理枠と出力 JSON を占有し続けないよう、試行回数で打ち切る。
-      if (opts.attemptsKey) (item as Record<PropertyKey, unknown>)[opts.attemptsKey] = attemptsOf(item) + 1;
+      if (opts.attemptsKey) {
+        originalAttempts.set(item, (item as Record<PropertyKey, unknown>)[opts.attemptsKey] as number | undefined);
+        (item as Record<PropertyKey, unknown>)[opts.attemptsKey] = attemptsOf(item) + 1;
+      }
     }
 
     // レート制限を避けるため、成否にかかわらず次のバッチの前に待つ。
-    if (i + batchSize < targets.length) await sleep(intervalMs);
+    if (i + batchSize < targets.length) {
+      opts.signal?.throwIfAborted();
+      await sleep(intervalMs);
+    }
+  }
+
+  // 全バッチが throw したのはプロバイダ全面障害（障害・クォータ切れ・キー失効）とみなす。項目の責任ではないので、障害の日数ぶん試行回数を消費して恒久的に諦めることがないよう戻す。
+  if (opts.attemptsKey && targets.length > 0 && threwBatches === batches) {
+    for (const [item, original] of originalAttempts) {
+      const record = item as Record<PropertyKey, unknown>;
+      if (original === undefined) delete record[opts.attemptsKey];
+      else record[opts.attemptsKey] = original;
+    }
   }
   return { attempted: targets.length, failed: failedItems.size, batches };
 }

@@ -37,7 +37,6 @@ export function beginRun(
   return {
     finish(counts, errors, forceFailed = false) {
       if (finished) throw new Error(`run for ${source} was already finished`);
-      finished = true;
       const meta: Meta = {
         source,
         generatedAt: now().toISOString(),
@@ -48,6 +47,9 @@ export function beginRun(
         },
       };
       writeJson(dir, META_FILE, MetaSchema, meta);
+      // Set only after the write succeeds so the caller can retry with a simpler payload
+      // when the first one is rejected (ENOSPC, schema violation).
+      finished = true;
       return meta;
     },
   };

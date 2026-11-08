@@ -234,4 +234,50 @@ describe('generateStructured', () => {
     await expect(generateStructured(schema, 'p', { timeoutMs: 100 })).rejects.toThrow();
     expect(calls).toBe(1);
   });
+
+  describe('signal and maxOutputTokens', () => {
+    it('forwards maxOutputTokens to the provider request', async () => {
+      vi.stubEnv('GROQ_API_KEY', 'k');
+      let body: Record<string, unknown> | undefined;
+      server.use(http.post(GROQ_URL, async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return groqOk();
+      }));
+      await generateStructured(schema, 'p', { maxOutputTokens: 321 });
+      expect(body?.max_tokens).toBe(321);
+    });
+
+    it('omits max_tokens when maxOutputTokens is not given', async () => {
+      vi.stubEnv('GROQ_API_KEY', 'k');
+      let body: Record<string, unknown> | undefined;
+      server.use(http.post(GROQ_URL, async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return groqOk();
+      }));
+      await generateStructured(schema, 'p');
+      expect(body).not.toHaveProperty('max_tokens');
+    });
+
+    it('aborts the in-flight request when the caller signal fires, without retrying', async () => {
+      vi.stubEnv('GROQ_API_KEY', 'k');
+      const controller = new AbortController();
+      let calls = 0;
+      server.use(http.post(GROQ_URL, async () => {
+        calls++;
+        await new Promise((r) => setTimeout(r, 2000));
+        return groqOk();
+      }));
+      setTimeout(() => controller.abort(new Error('stop')), 50);
+      await expect(generateStructured(schema, 'p', { signal: controller.signal })).rejects.toThrow();
+      expect(calls).toBe(1);
+    });
+
+    it('rejects immediately when the signal is already aborted', async () => {
+      vi.stubEnv('GROQ_API_KEY', 'k');
+      let calls = 0;
+      server.use(http.post(GROQ_URL, () => { calls++; return groqOk(); }));
+      await expect(generateStructured(schema, 'p', { signal: AbortSignal.abort() })).rejects.toThrow();
+      expect(calls).toBe(0);
+    });
+  });
 });
