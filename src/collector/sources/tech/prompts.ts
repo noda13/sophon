@@ -65,6 +65,9 @@ export const SUMMARY_SYSTEM = `あなたはITニュースのキュレーター�
   - 中: 注目すべきだが限定的な影響（マイナーリリース、技術動向記事、中程度の脆弱性など）
   - 低: ニッチまたは影響が小さいニュース
 
+応答形式: {"results":[{"index":0,"summaryJa":"...","category":"trend","importance":"中"}]}
+results は記事ごとの要素を直接並べた配列にする。items など別の階層を挟まない。
+
 ${UNTRUSTED_INPUT_NOTICE}`;
 
 export function buildSummaryPrompt(batch: readonly Pick<Article, 'source' | 'category' | 'originalTitle'>[]): string {

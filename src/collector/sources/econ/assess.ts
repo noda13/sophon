@@ -22,7 +22,10 @@ const SYSTEM = `あなたはグローバル経済リスクアナリストです�
 スコア基準: 0-20:低, 21-40:中程度, 41-60:やや高い, 61-80:高い, 81-100:危機的
 
 summary は日本語2-3文の概要、factors は寄与因子、changeReasonJa は前回比での変化理由を1文で書いてください。
-4カテゴリ全て含めてください。sourceNewsIdsはニュースリストの[id:xxx]から最大3件選んでください。`;
+4カテゴリ全て含めてください。sourceNewsIdsはニュースリストの[id:xxx]から最大3件選んでください。
+
+応答形式: {"assessments":[{"category":"technology","score":50,"summary":"...","factors":["..."],"changeReasonJa":"...","sourceNewsIds":["..."]}]}
+assessments はカテゴリごとの要素を直接並べた配列にする。items など別の階層を挟まない。`;
 
 // The model is only asked for this loose shape. Each entry is then validated on its own so one
 // out-of-range score drops that category (merged from the previous run) instead of failing all four.
