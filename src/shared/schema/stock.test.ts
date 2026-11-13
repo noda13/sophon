@@ -24,10 +24,12 @@ describe('stock schema against legacy data', () => {
     for (const id of STRATEGY_IDS) expect(files).toContain(`ranking-${id}.json`);
   });
 
-  it('parses one stock-<code>.json', () => {
-    const file = files.find((f) => f.startsWith('stock-'));
-    expect(file).toBeDefined();
-    const r = StockDetailSchema.safeParse(readLegacyJson('stock', file!));
-    expect(r.success).toBe(true);
+  it('parses every stock-<code>.json snapshot', () => {
+    const details = files.filter((f) => f.startsWith('stock-'));
+    expect(details.length).toBeGreaterThan(0);
+    for (const file of details) {
+      const r = StockDetailSchema.safeParse(readLegacyJson('stock', file));
+      expect(r.success, file).toBe(true);
+    }
   });
 });
