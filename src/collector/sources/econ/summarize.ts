@@ -21,7 +21,10 @@ const SYSTEM = `あなたはグローバル経済リスクアナリストです�
   - 10-29: 影響が限定的またはローカル（個別企業人事、地方ニュース、小規模イベント）
   - 0-9: 経済リスクと無関係
 - riskCategories: 関連するカテゴリの配列。選択肢: "currency_finance", "geopolitics_supply_chain", "technology", "social_policy"
-  relevanceScoreが30未満の記事は空配列[]にしてください。`;
+  relevanceScoreが30未満の記事は空配列[]にしてください。
+
+応答形式: {"results":[{"index":1,"summaryJa":"...","relevanceScore":50,"riskCategories":["technology"]}]}
+results は記事ごとの要素を直接並べた配列にする。items など別の階層を挟まない。`;
 
 // The model is only asked for this loose shape. Each entry is then validated on its own so one bad
 // entry is dropped instead of discarding the other nine summaries in the batch.

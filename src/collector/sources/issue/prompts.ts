@@ -52,7 +52,8 @@ export const CLASSIFY_SYSTEM = `あなたは社会課題アナリストです。
   0-49: 制度変更・物理介入が主でアプリ効果は限定的
 - affectedDomain: 影響領域キーワード配列（例: ["高齢者","介護","家族"]）
 
-応答形式: {"results":[{"index":0,"summaryJa":"...","category":"...","severityScore":70,"urgencyScore":60,"appifiabilityScore":50,"affectedDomain":["..."]}]}`;
+応答形式: {"results":[{"index":0,"summaryJa":"...","category":"...","severityScore":70,"urgencyScore":60,"appifiabilityScore":50,"affectedDomain":["..."]}]}
+results は記事ごとの要素を直接並べた配列にする。items など別の階層を挟まない。`;
 
 export const IDEA_SYSTEM = `あなたは社会課題を解決するアプリを考えるプロダクトデザイナーです。与えられた社会課題に対して、アプリ/ソフトウェアで解決するアイデアをJSON形式で提案してください。
 
