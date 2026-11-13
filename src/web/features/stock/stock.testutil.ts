@@ -12,7 +12,7 @@ function legacyResponse(file: string) {
   }
 }
 
-// 旧 apps の実データを、新しい data/stock/ の配置（stocks/<code>.json）で返す
+// 旧配信形式の JSON スナップショットを、新しい data/stock/ の配置（stocks/<code>.json）で返す
 export function useStockDataServer() {
   const server = setupServer(
     http.get('*/data/stock/stocks/:file', ({ params }) =>
