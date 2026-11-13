@@ -6,7 +6,13 @@ const URL_PATTERN = /https?:\/\/[^\s"'<>)\]]+/g;
 
 // errors は公開リポジトリの data ブランチと Pages にそのまま載る。Actions のログマスクは効かないので、
 // 書き出す前に秘密値と URL（RSSHUB_URL を含む feed URL など）を自前で落とす。
-export function sanitizeError(message: string, env: Record<string, string | undefined> = {}): string {
+//
+// maxLength は run.errors 用の既定 200 文字。診断ログのように長く残したい用途だけ上書きする。
+export function sanitizeError(
+  message: string,
+  env: Record<string, string | undefined> = {},
+  maxLength: number = MAX_ERROR_LENGTH,
+): string {
   const secrets = SECRET_ENV_KEYS.map((key) => env[key])
     .filter((v): v is string => typeof v === 'string' && v.length >= MIN_SECRET_LENGTH)
     .sort((a, b) => b.length - a.length);
@@ -15,5 +21,5 @@ export function sanitizeError(message: string, env: Record<string, string | unde
   let out = message.replace(URL_PATTERN, '<url>');
   for (const secret of secrets) out = out.split(secret).join('***');
   out = out.replace(/\s*[\r\n]+\s*/g, ' ').trim();
-  return out.length > MAX_ERROR_LENGTH ? `${out.slice(0, MAX_ERROR_LENGTH - 1)}…` : out;
+  return out.length > maxLength ? `${out.slice(0, maxLength - 1)}…` : out;
 }

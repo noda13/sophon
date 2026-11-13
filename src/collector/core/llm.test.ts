@@ -1,3 +1,4 @@
+import { APICallError } from 'ai';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -140,6 +141,65 @@ describe('generateStructured', () => {
     vi.stubEnv('GROQ_API_KEY', 'k');
     server.use(http.post(GROQ_URL, () => groqOk('{"ok":"yes"}')));
     await expect(generateStructured(schema, 'p')).rejects.toThrow();
+  });
+
+  describe('failure diagnostics', () => {
+    const KEY = 'gsk_test_secret_value_123';
+    const failedGeneration = '{"results":[{"index":0,"summaryJa":"x","category":"ai","importance":3}]}';
+    const errorBody = {
+      error: {
+        message: `Generated JSON does not match the expected schema. See 'failed_generation'. key=${KEY} docs https://console.groq.com/docs/errors`,
+        type: 'invalid_request_error',
+        code: 'json_validate_failed',
+        failed_generation: failedGeneration,
+      },
+    };
+    let errorSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      vi.stubEnv('GROQ_API_KEY', KEY);
+      errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      server.use(http.post(GROQ_URL, () => HttpResponse.json(errorBody, { status: 400 })));
+    });
+
+    const logged = () => errorSpy.mock.calls.flat().join('\n');
+
+    it('logs provider, model and the response body on failure', async () => {
+      await expect(generateStructured(schema, 'p')).rejects.toThrow();
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(logged()).toContain(`groq/${DEFAULT_MODELS.groq}`);
+      expect(logged()).toContain('status 400');
+      expect(logged()).toContain('json_validate_failed');
+      expect(logged()).toContain('failed_generation');
+      expect(logged()).toContain('summaryJa');
+    });
+
+    it('does not leak the api key or URLs into the log', async () => {
+      await expect(generateStructured(schema, 'p')).rejects.toThrow();
+      expect(logged()).not.toContain(KEY);
+      expect(logged()).not.toMatch(/https?:\/\//);
+      expect(logged()).toContain('<url>');
+    });
+
+    it('caps each logged part at 2000 characters', async () => {
+      server.use(http.post(GROQ_URL, () => new HttpResponse('a'.repeat(5000), { status: 400 })));
+      await expect(generateStructured(schema, 'p')).rejects.toThrow();
+      for (const part of errorSpy.mock.calls.flat()) expect(String(part).length).toBeLessThanOrEqual(2000);
+      expect(logged()).toContain('a'.repeat(1000));
+    });
+
+    it('rethrows the original provider error unchanged', async () => {
+      const error = await generateStructured(schema, 'p').catch((e: unknown) => e);
+      expect(APICallError.isInstance(error)).toBe(true);
+      expect((error as APICallError).statusCode).toBe(400);
+      expect((error as APICallError).responseBody).toContain('failed_generation');
+    });
+
+    it('does not log on success', async () => {
+      server.use(http.post(GROQ_URL, () => groqOk()));
+      await expect(generateStructured(schema, 'p')).resolves.toEqual({ ok: true });
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('retry', () => {

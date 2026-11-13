@@ -4,6 +4,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
 import { generateText, Output, type LanguageModel } from 'ai';
 import type { z } from 'zod';
+import { sanitizeError } from './sanitize.js';
 
 export type LlmProvider = 'gemini' | 'groq';
 
@@ -82,15 +83,57 @@ export async function generateStructured<T>(
   }
 
   const timeout = AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
-  const { output } = await generateText({
-    model: createModel(config),
-    output: Output.object({ schema }),
-    system: opts.system,
-    prompt,
-    temperature: opts.temperature ?? 0.3,
-    maxRetries: maxAttempts - 1,
-    ...(opts.maxOutputTokens !== undefined && { maxOutputTokens: opts.maxOutputTokens }),
-    abortSignal: opts.signal ? AbortSignal.any([timeout, opts.signal]) : timeout,
-  });
-  return output;
+  try {
+    const { output } = await generateText({
+      model: createModel(config),
+      output: Output.object({ schema }),
+      system: opts.system,
+      prompt,
+      temperature: opts.temperature ?? 0.3,
+      maxRetries: maxAttempts - 1,
+      ...(opts.maxOutputTokens !== undefined && { maxOutputTokens: opts.maxOutputTokens }),
+      abortSignal: opts.signal ? AbortSignal.any([timeout, opts.signal]) : timeout,
+    });
+    return output;
+  } catch (error) {
+    logLlmFailure(config, error);
+    throw error;
+  }
+}
+
+const DIAGNOSTIC_MAX_LENGTH = 2000;
+
+function field(value: unknown, key: string): unknown {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>)[key] : undefined;
+}
+
+// run.errors は 200 文字で切られ、provider が返した本文（Groq の failed_generation など）が残らない。
+// 原因の切り分けにはこの本文が要るので、Actions のログ側に長めに残す。ログは公開されるため sanitizeError を通す。
+function logLlmFailure(config: LlmConfig, error: unknown): void {
+  try {
+    // リトライが尽きると RetryError に包まれ、provider のエラーは lastError にある。
+    const inner = field(error, 'lastError') ?? error;
+    const body = field(inner, 'responseBody');
+    const text = field(inner, 'text');
+    const cause = field(inner, 'cause');
+    const detail =
+      typeof body === 'string' && body
+        ? `responseBody: ${body}`
+        : typeof text === 'string' && text
+          ? `generated text: ${text}`
+          : cause !== undefined
+            ? `cause: ${cause instanceof Error ? cause.message : String(cause)}`
+            : '';
+    const status = field(inner, 'statusCode');
+    const env = { ...process.env, [config.provider === 'groq' ? 'GROQ_API_KEY' : 'GEMINI_API_KEY']: config.apiKey };
+    // message と本文は別々に上限を掛ける。message が長くても本文が切り落とされないようにするため。
+    const clean = (value: string) => sanitizeError(value, env, DIAGNOSTIC_MAX_LENGTH);
+    console.error(
+      `[llm] ${config.provider}/${config.model} failed${typeof status === 'number' ? ` (status ${status})` : ''}`,
+      `message: ${clean(error instanceof Error ? error.message : String(error))}`,
+      ...(detail ? [clean(detail)] : []),
+    );
+  } catch {
+    // 診断ログの失敗で元のエラーを隠さない。
+  }
 }
