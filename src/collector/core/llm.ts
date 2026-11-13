@@ -29,7 +29,7 @@ export interface GenerateOptions {
 
 export const DEFAULT_MODELS: Record<LlmProvider, string> = {
   gemini: 'gemini-flash-latest',
-  groq: 'llama-3.3-70b-versatile',
+  groq: 'openai/gpt-oss-120b',
 };
 
 export const LLM_DISABLED_ERROR = 'LLM disabled: no API key';

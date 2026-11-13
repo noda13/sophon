@@ -20,7 +20,7 @@ const groqOk = (content = '{"ok":true}') =>
     id: 'chatcmpl-1',
     object: 'chat.completion',
     created: 0,
-    model: 'llama-3.3-70b-versatile',
+    model: 'openai/gpt-oss-120b',
     choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
     usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
   });
