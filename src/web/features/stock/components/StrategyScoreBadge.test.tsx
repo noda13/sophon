@@ -1,6 +1,16 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { StrategyScoreBadge } from './StrategyScoreBadge';
+
+// jsdom に ResizeObserver が無い。Tooltip を開くと @zag-js/popper が rAF 内で autoUpdate を張り、
+// テスト終了前に rAF が走ると ReferenceError が未処理のまま残って vitest が exit 1 になる
+beforeAll(() => {
+  globalThis.ResizeObserver ??= class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+});
 
 afterEach(cleanup);
 
