@@ -178,6 +178,6 @@ describe('useCategorySummary / useIssueFreshness', () => {
   it('旧形式の meta.json からも鮮度を出す', async () => {
     server.use(http.get('*/data/issue/meta.json', () => HttpResponse.json(readLegacyJson('issue', 'meta.json') as JsonBodyType)));
     const { result } = renderHook(() => useIssueFreshness(), { wrapper: wrapper() });
-    await waitFor(() => expect(result.current.generatedAt).not.toBeNull());
+    await waitFor(() => expect(result.current?.generatedAt).toBeTruthy());
   });
 });

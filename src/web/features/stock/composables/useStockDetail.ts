@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useFreshness } from '../../../composables/useFreshness';
+import { type FreshnessBadgeProps, toFreshnessBadgeProps } from '../../../ui/FreshnessBadge';
 import { toFinancialPoints } from '../logic/chart';
 import { labelScores } from '../logic/scores';
 import { stockQueryOptions } from './stockQueries';
@@ -27,20 +28,9 @@ export function useStockDetail(code: string) {
   };
 }
 
-export interface FreshnessBadgeProps {
-  generatedAt: string;
-  isStale: boolean;
-  health: 'ok' | 'partial' | 'failed';
-}
-
-// meta.json が読めない、または鮮度を判定できないときは null にして、バッジを出さない
+// 取得中・取得失敗のあいだは null にして、「確認できません」が一瞬出るのを避ける
 export function useStockFreshness(): FreshnessBadgeProps | null {
   const query = useQuery(stockQueryOptions.meta());
   const freshness = useFreshness(query.data);
-  if (!freshness.generatedAt || freshness.health === 'unknown') return null;
-  return {
-    generatedAt: freshness.generatedAt.toISOString(),
-    isStale: freshness.isStale,
-    health: freshness.health,
-  };
+  return query.data ? toFreshnessBadgeProps(freshness) : null;
 }

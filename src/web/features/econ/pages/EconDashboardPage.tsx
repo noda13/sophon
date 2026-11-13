@@ -1,7 +1,7 @@
 import { Suspense, lazy, useState } from 'react';
 import { Disclaimer } from '../../../ui/Disclaimer';
 import { ErrorBox } from '../../../ui/ErrorBox';
-import { FreshnessBadge } from '../../../ui/FreshnessBadge';
+import { FreshnessBadge, toFreshnessBadgeProps } from '../../../ui/FreshnessBadge';
 import { Loading } from '../../../ui/Loading';
 import { CompositeRiskBanner } from '../components/CompositeRiskBanner';
 import { EventCalendar } from '../components/EventCalendar';
@@ -40,13 +40,7 @@ export function EconDashboardPage() {
           <p className="text-xs text-fg-subtle">グローバル経済リスクモニター</p>
         </div>
         <div className="flex items-start gap-4">
-          {freshness.generatedAt && freshness.health !== 'unknown' && (
-            <FreshnessBadge
-              generatedAt={freshness.generatedAt.toISOString()}
-              isStale={freshness.isStale}
-              health={freshness.health}
-            />
-          )}
+          {dashboard.meta && <FreshnessBadge {...toFreshnessBadgeProps(freshness)} />}
           <button
             type="button"
             onClick={() => {

@@ -24,13 +24,7 @@ export function ArticlesPage({ route }: { route: ListSearchRoute<ArticlesSearch>
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <TechNav />
-        {freshness.generatedAt && (
-          <FreshnessBadge
-            generatedAt={freshness.generatedAt.toISOString()}
-            isStale={freshness.isStale}
-            health={freshness.health === 'unknown' ? 'ok' : freshness.health}
-          />
-        )}
+        {freshness && <FreshnessBadge {...freshness} />}
       </div>
 
       <div className="space-y-3">
