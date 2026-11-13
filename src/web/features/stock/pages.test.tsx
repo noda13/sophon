@@ -72,6 +72,53 @@ describe('/stock', () => {
     expect(screen.getByRole('button', { name: '絞り込みを解除' })).toBeTruthy();
   });
 
+  it('時価総額に解釈できない文字列を入れると、その欄にエラーを出し URL は直前の値のまま', async () => {
+    const router = renderAt('/stock?pageSize=200&minCap=100');
+    await screen.findByRole('heading', { name: /清原流ランキング/ });
+    const input = screen.getByLabelText('時価総額の下限（億円）');
+    expect(input.getAttribute('aria-invalid')).toBeNull();
+
+    fireEvent.change(input, { target: { value: 'abc' } });
+
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+    const message = screen.getByText('0 以上の数値を入力してください');
+    expect(input.getAttribute('aria-describedby')).toBe(message.id);
+    expect(screen.getByLabelText('時価総額の上限（億円）').getAttribute('aria-invalid')).toBeNull();
+    expect((input as HTMLInputElement).value).toBe('abc');
+    expect(router.state.location.search).toMatchObject({ minCap: 100 });
+
+    fireEvent.change(input, { target: { value: '1.' } });
+
+    expect(input.getAttribute('aria-invalid')).toBeNull();
+    expect(screen.queryByText('0 以上の数値を入力してください')).toBeNull();
+    expect((input as HTMLInputElement).value).toBe('1.');
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ minCap: 1 }));
+  });
+
+  it('時価総額の下限が上限を超えると両方の欄にエラーを出し、絞り込み自体は適用する', async () => {
+    const router = renderAt('/stock?pageSize=200');
+    await screen.findByRole('heading', { name: /清原流ランキング/ });
+    const min = screen.getByLabelText('時価総額の下限（億円）');
+    const max = screen.getByLabelText('時価総額の上限（億円）');
+
+    fireEvent.change(min, { target: { value: '200' } });
+    fireEvent.change(max, { target: { value: '100' } });
+
+    expect(min.getAttribute('aria-invalid')).toBe('true');
+    expect(max.getAttribute('aria-invalid')).toBe('true');
+    const message = screen.getByText('下限が上限を超えています');
+    expect(min.getAttribute('aria-describedby')).toBe(message.id);
+    expect(max.getAttribute('aria-describedby')).toBe(message.id);
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ minCap: 200, maxCap: 100 }));
+    expect(await screen.findByText('条件に合う銘柄がありません')).toBeTruthy();
+
+    fireEvent.change(min, { target: { value: '100' } });
+
+    expect(min.getAttribute('aria-invalid')).toBeNull();
+    expect(max.getAttribute('aria-invalid')).toBeNull();
+    expect(screen.queryByText('下限が上限を超えています')).toBeNull();
+  });
+
   it('除外セクターのチェックで該当銘柄が消える', async () => {
     renderAt('/stock?pageSize=200');
     await screen.findByRole('heading', { name: /清原流ランキング/ });

@@ -1,30 +1,21 @@
 import { useEffect, useId, useState } from 'react';
+import { parseCap, validateCapInputs } from '../logic/capInput';
 import { t } from '../logic/i18n';
 
 const FIELD =
   'rounded-md border border-border bg-surface-raised px-3 py-1.5 text-sm text-fg placeholder:text-fg-subtle hover:border-border-strong focus:border-accent focus:outline-none';
 
-function parseCap(text: string): number | undefined | null {
-  const trimmed = text.trim();
-  if (trimmed === '') return undefined;
-  const n = Number(trimmed);
-  return Number.isFinite(n) && n >= 0 ? n : null;
-}
-
 interface CapInputProps {
   label: string;
-  value: number | undefined;
-  onChange: (value: number | undefined) => void;
+  draft: string;
+  onDraftChange: (text: string) => void;
+  invalid: boolean;
+  describedBy: string | undefined;
+  message: { id: string; text: string } | null;
 }
 
-// 入力途中の「1.」のような文字列を URL の値で上書きしないよう、入力欄の文字列は自前で持つ
-function CapInput({ label, value, onChange }: CapInputProps) {
+function CapInput({ label, draft, onDraftChange, invalid, describedBy, message }: CapInputProps) {
   const id = useId();
-  const [draft, setDraft] = useState(value === undefined ? '' : String(value));
-
-  useEffect(() => {
-    setDraft((current) => (parseCap(current) === value ? current : value === undefined ? '' : String(value)));
-  }, [value]);
 
   return (
     <div>
@@ -36,15 +27,35 @@ function CapInput({ label, value, onChange }: CapInputProps) {
         type="text"
         inputMode="decimal"
         value={draft}
-        className={`${FIELD} w-40`}
-        onChange={(e) => {
-          setDraft(e.target.value);
-          const parsed = parseCap(e.target.value);
-          if (parsed !== null) onChange(parsed);
-        }}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
+        className={`${FIELD} w-40 ${invalid ? 'border-danger' : ''}`}
+        onChange={(e) => onDraftChange(e.target.value)}
       />
+      {message && (
+        <p id={message.id} className="mt-1 text-xs text-danger">
+          {message.text}
+        </p>
+      )}
     </div>
   );
+}
+
+// 入力途中の「1.」のような文字列を URL の値で上書きしないよう、入力欄の文字列は自前で持つ。
+// 解釈できない文字列は URL へ反映せず直前の値を保つので、検証はこの文字列に対して行う
+function useCapDraft(value: number | undefined, onChange: (value: number | undefined) => void) {
+  const [draft, setDraft] = useState(value === undefined ? '' : String(value));
+
+  useEffect(() => {
+    setDraft((current) => (parseCap(current) === value ? current : value === undefined ? '' : String(value)));
+  }, [value]);
+
+  const onDraftChange = (text: string) => {
+    setDraft(text);
+    const parsed = parseCap(text);
+    if (parsed !== null) onChange(parsed);
+  };
+  return [draft, onDraftChange] as const;
 }
 
 interface SectorExcludeProps {
@@ -99,6 +110,12 @@ interface RankingFiltersProps {
 
 export function RankingFilters(props: RankingFiltersProps) {
   const searchId = useId();
+  const [minDraft, onMinDraftChange] = useCapDraft(props.minCap, props.onMinCapChange);
+  const [maxDraft, onMaxDraftChange] = useCapDraft(props.maxCap, props.onMaxCapChange);
+  const validation = validateCapInputs(minDraft, maxDraft);
+  const minInvalidId = `${searchId}-min-invalid`;
+  const maxInvalidId = `${searchId}-max-invalid`;
+  const reversedId = `${searchId}-reversed`;
   return (
     <div className="flex flex-wrap items-end gap-3">
       <div>
@@ -113,8 +130,28 @@ export function RankingFilters(props: RankingFiltersProps) {
           onChange={(e) => props.onQueryChange(e.target.value)}
         />
       </div>
-      <CapInput label={t('minMarketCapLabel')} value={props.minCap} onChange={props.onMinCapChange} />
-      <CapInput label={t('maxMarketCapLabel')} value={props.maxCap} onChange={props.onMaxCapChange} />
+      <CapInput
+        label={t('minMarketCapLabel')}
+        draft={minDraft}
+        onDraftChange={onMinDraftChange}
+        invalid={validation.minInvalid || validation.reversed}
+        describedBy={validation.minInvalid ? minInvalidId : validation.reversed ? reversedId : undefined}
+        message={validation.minInvalid ? { id: minInvalidId, text: t('capInvalid') } : null}
+      />
+      <CapInput
+        label={t('maxMarketCapLabel')}
+        draft={maxDraft}
+        onDraftChange={onMaxDraftChange}
+        invalid={validation.maxInvalid || validation.reversed}
+        describedBy={validation.maxInvalid ? maxInvalidId : validation.reversed ? reversedId : undefined}
+        message={
+          validation.maxInvalid
+            ? { id: maxInvalidId, text: t('capInvalid') }
+            : validation.reversed
+              ? { id: reversedId, text: t('capReversed') }
+              : null
+        }
+      />
       <SectorExclude
         sectors={props.sectors}
         excluded={props.excludedSectors}
