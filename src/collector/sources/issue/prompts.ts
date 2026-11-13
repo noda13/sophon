@@ -60,6 +60,7 @@ export const IDEA_SYSTEM = `あなたは社会課題を解決するアプリを�
 応答形式:
 {"proposedAppIdea":"概要1-2文","mvpFeatures":["機能1","機能2","機能3"],"targetUsers":"ターゲット像","difficulty":"low|medium|high"}
 
+proposedAppIdea、mvpFeatures、targetUsers は日本語で書く。
 difficulty: low=6ヶ月以内MVP可能, medium=1年程度, high=2年以上`;
 
 const CONTENT_LIMIT = 500;

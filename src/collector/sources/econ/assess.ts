@@ -29,6 +29,7 @@ assessments はカテゴリごとの要素を直接並べた配列にする。it
 
 // The model is only asked for this loose shape. Each entry is then validated on its own so one
 // out-of-range score drops that category (merged from the previous run) instead of failing all four.
+// Groq's strict response_format rejects keys missing from `required`, so absent values are nullable, not optional.
 const ResponseSchema = z.object({
   assessments: z.array(
     z.object({
@@ -36,8 +37,8 @@ const ResponseSchema = z.object({
       score: z.number(),
       summary: z.string(),
       factors: z.array(z.string()),
-      changeReasonJa: z.string().optional(),
-      sourceNewsIds: z.array(z.string()).optional(),
+      changeReasonJa: z.string().nullable(),
+      sourceNewsIds: z.array(z.string()).nullable(),
     }),
   ),
 });
@@ -138,7 +139,11 @@ export async function assess(
   const seen = new Set<string>();
 
   for (const item of response.assessments) {
-    const result = AssessmentEntrySchema.safeParse(item);
+    const result = AssessmentEntrySchema.safeParse({
+      ...item,
+      changeReasonJa: item.changeReasonJa ?? undefined,
+      sourceNewsIds: item.sourceNewsIds ?? undefined,
+    });
     if (!result.success) {
       console.warn('[assess] Dropping invalid assessment entry:', result.error.issues);
       continue;
