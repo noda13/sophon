@@ -174,7 +174,7 @@ describe('assess', () => {
   }
 
   function llmEntry(category: string, score: number, extra: Record<string, unknown> = {}) {
-    return { category, score, summary: `${category} summary`, factors: ['f1'], ...extra };
+    return { category, score, summary: `${category} summary`, factors: ['f1'], changeReasonJa: null, sourceNewsIds: null, ...extra };
   }
 
   function respondWith(assessments: unknown[]) {
@@ -243,6 +243,22 @@ describe('assess', () => {
     const [tech, social] = await assess([news('a'), news('b'), news('c'), news('d')], [], []);
     expect(tech?.sourceNewsIds).toEqual(['a', 'b', 'c']);
     expect(social).not.toHaveProperty('sourceNewsIds');
+  });
+
+  it('omits changeReasonJa and sourceNewsIds from the result when the model returns null', async () => {
+    respondWith([llmEntry('technology', 50)]);
+    const [tech] = await assess([news('a')], [], []);
+    expect(tech).not.toHaveProperty('changeReasonJa');
+    expect(tech).not.toHaveProperty('sourceNewsIds');
+  });
+
+  it('lists every response property in required, as Groq strict response_format demands', async () => {
+    const { z } = await import('zod');
+    respondWith([llmEntry('technology', 50)]);
+    await assess([], [], []);
+    const schema = generateMock.mock.calls[0]?.[0] as import('zod').ZodType;
+    const item = (z.toJSONSchema(schema) as any).properties.assessments.items;
+    expect([...item.required].sort()).toEqual(Object.keys(item.properties).sort());
   });
 
   it('drops entries that fail validation and keeps the valid ones', async () => {

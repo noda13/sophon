@@ -111,6 +111,7 @@ const assessmentFor = (scores: Partial<Record<RiskCategory, number>>) => ({
     summary: `${category} の概要`,
     factors: ['因子'],
     changeReasonJa: '変化なし',
+    sourceNewsIds: null,
   })),
 });
 
