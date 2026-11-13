@@ -5,6 +5,8 @@ import pRetry from 'p-retry';
 export interface FeedSource {
   url: string;
   source: string;
+  /** この feed だけ応答サイズの上限を MAX_RESPONSE_BYTES から変える。 */
+  maxBytes?: number;
 }
 
 export interface FeedItem {
@@ -39,6 +41,8 @@ export interface FetchFeedOptions {
   retries?: number;
   minRetryDelayMs?: number;
   userAgent?: string;
+  /** 応答サイズの上限（byte）。未指定なら MAX_RESPONSE_BYTES。 */
+  maxBytes?: number;
   /** timeoutMs と合成して fetch に渡す。abort されると再試行せず即中断する。 */
   signal?: AbortSignal;
 }
@@ -125,11 +129,11 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 }
 
 // Content-Length は偽れるうえ chunked では無いので、ストリームを読みながら数えて上限で打ち切る。
-async function readTextCapped(res: Response, url: string): Promise<string> {
+async function readTextCapped(res: Response, url: string, maxBytes: number): Promise<string> {
   const declared = Number(res.headers.get('content-length'));
-  if (Number.isFinite(declared) && declared > MAX_RESPONSE_BYTES) {
+  if (Number.isFinite(declared) && declared > maxBytes) {
     await res.body?.cancel();
-    throw new ResponseTooLargeError(url, MAX_RESPONSE_BYTES);
+    throw new ResponseTooLargeError(url, maxBytes);
   }
   if (!res.body) return '';
   const reader = res.body.getReader();
@@ -139,9 +143,9 @@ async function readTextCapped(res: Response, url: string): Promise<string> {
     const { done, value } = await reader.read();
     if (done) break;
     total += value.byteLength;
-    if (total > MAX_RESPONSE_BYTES) {
+    if (total > maxBytes) {
       await reader.cancel();
-      throw new ResponseTooLargeError(url, MAX_RESPONSE_BYTES);
+      throw new ResponseTooLargeError(url, maxBytes);
     }
     chunks.push(value);
   }
@@ -163,7 +167,7 @@ async function fetchText(url: string, opts: FetchFeedOptions): Promise<string> {
         await res.body?.cancel();
         throw new HttpStatusError(res.status, url, parseRetryAfter(res.headers.get('retry-after')));
       }
-      return readTextCapped(res, url);
+      return readTextCapped(res, url, opts.maxBytes ?? MAX_RESPONSE_BYTES);
     },
     {
       retries: opts.retries ?? DEFAULT_RETRIES,
@@ -259,7 +263,14 @@ export async function collectFeeds<S extends FeedSource, T extends { id: string;
   const { sources, existing, seenIds = [], failedSources, failures, limit, toRecord } = opts;
   const ids = new Set([...existing.map((a) => a.id), ...seenIds]);
 
-  const results = await Promise.allSettled(sources.map((src) => fetchFeed(src.url, opts.signal ? { ...opts.fetchOptions, signal: opts.signal } : opts.fetchOptions)));
+  const results = await Promise.allSettled(
+    sources.map((src) => {
+      const fetchOptions: FetchFeedOptions = { ...opts.fetchOptions };
+      if (opts.signal) fetchOptions.signal = opts.signal;
+      if (src.maxBytes !== undefined) fetchOptions.maxBytes = src.maxBytes;
+      return fetchFeed(src.url, fetchOptions);
+    }),
+  );
 
   const fresh: T[] = [];
   const reasons: string[] = [];
