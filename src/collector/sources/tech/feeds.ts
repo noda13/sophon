@@ -19,7 +19,8 @@ export const TECH_FEEDS: readonly TechFeed[] = [
   { url: 'https://huggingface.co/blog/feed.xml', source: 'huggingface', hint: 'ai' },
   { url: 'https://export.arxiv.org/rss/cs.AI', source: 'arxiv-ai', hint: 'ai' },
   { url: 'https://www.jpcert.or.jp/rss/jpcert.rdf', source: 'jpcert', hint: 'security' },
-  { url: 'https://www.cisa.gov/cybersecurity-advisories/all.xml', source: 'cisa', hint: 'security' },
+  // feed が全履歴を含み、デコード後で約 5.6 MB と既定の 5 MiB を超えるため。
+  { url: 'https://www.cisa.gov/cybersecurity-advisories/all.xml', source: 'cisa', hint: 'security', maxBytes: 10 * 1024 * 1024 },
   { url: 'https://feeds.feedburner.com/TheHackersNews', source: 'the-hacker-news', hint: 'security' },
   { url: 'https://www.bleepingcomputer.com/feed/', source: 'bleepingcomputer', hint: 'security' },
   { url: 'https://nodejs.org/en/feed/blog.xml', source: 'nodejs', hint: 'release' },

@@ -299,6 +299,18 @@ describe('fetchFeed response size cap', () => {
     expect(calls).toBe(1);
   });
 
+  it('accepts a body over the default cap when maxBytes is raised', async () => {
+    const big = rss(rssItem('a', 'https://e.com/a') + `<!--${'x'.repeat(MAX_RESPONSE_BYTES)}-->`);
+    server.use(http.get('https://e.com/huge', () => xml(big)));
+    await expect(fetchFeed('https://e.com/huge', fast)).rejects.toBeInstanceOf(ResponseTooLargeError);
+    expect(await fetchFeed('https://e.com/huge', { ...fast, maxBytes: MAX_RESPONSE_BYTES * 2 })).toHaveLength(1);
+  });
+
+  it('rejects once the body passes a lowered maxBytes', async () => {
+    server.use(http.get('https://e.com/small', () => xml(rss(rssItem('a', 'https://e.com/a')))));
+    await expect(fetchFeed('https://e.com/small', { ...fast, maxBytes: 10 })).rejects.toMatchObject({ limitBytes: 10 });
+  });
+
   it('accepts a body just under the cap', async () => {
     server.use(http.get('https://e.com/ok', () => xml(rss(rssItem('a', 'https://e.com/a')))));
     expect(await fetchFeed('https://e.com/ok')).toHaveLength(1);
@@ -381,6 +393,21 @@ describe('collectFeeds', () => {
     const result = await run();
     expect(result).toHaveLength(1);
     expect(result[0]!.source).toBe('a');
+  });
+
+  it('applies a per-feed maxBytes only to that feed', async () => {
+    const big = () => feed(rssItem('big', 'https://e.com/big', '2026-10-02T00:00:00Z'), `<!--${'x'.repeat(MAX_RESPONSE_BYTES)}-->`);
+    server.use(http.get('https://a.test/rss', big), http.get('https://b.test/rss', big));
+    const failures: { source: string; reason: string }[] = [];
+    const result = await run({
+      sources: [
+        { url: 'https://a.test/rss', source: 'a', maxBytes: MAX_RESPONSE_BYTES * 2 },
+        { url: 'https://b.test/rss', source: 'b' },
+      ],
+      failures,
+    });
+    expect(result.map((r) => r.source)).toEqual(['a']);
+    expect(failures).toEqual([{ source: 'b', reason: 'response too large' }]);
   });
 
   it('skips articles already in the existing list or the seen-id set', async () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TECH_CATEGORIES } from '../../../shared/schema/tech';
+import { MAX_RESPONSE_BYTES } from '../../core/rss';
 import { TECH_FEEDS } from './feeds';
 
 describe('TECH_FEEDS', () => {
@@ -19,5 +20,9 @@ describe('TECH_FEEDS', () => {
 
   it('lists techmeme', () => {
     expect(TECH_FEEDS.find((f) => f.source === 'techmeme')?.url).toBe('https://www.techmeme.com/feed.xml');
+  });
+
+  it('raises the size cap for cisa above the global default', () => {
+    expect(TECH_FEEDS.find((f) => f.source === 'cisa')?.maxBytes).toBeGreaterThan(MAX_RESPONSE_BYTES);
   });
 });
