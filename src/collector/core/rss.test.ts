@@ -496,6 +496,12 @@ describe('validateExternalUrl', () => {
     'https://[::ffff:10.0.0.1]',
     'https://[::ffff:127.0.0.1]',
     'https://[::ffff:169.254.169.254]',
+    'https://[::a00:1]',
+    'https://[::7f00:1]',
+    'https://[64:ff9b::a00:1]',
+    'https://[64:ff9b::a9fe:a9fe]',
+    'https://[2002:a00:1::]',
+    'https://[2002:7f00:1::]',
     'https://metadata.google.internal',
     'https://foo.internal',
     'https://printer.local',
@@ -508,10 +514,33 @@ describe('validateExternalUrl', () => {
     expect(() => validateExternalUrl('https://172.32.0.1', 'X')).not.toThrow();
   });
 
-  it.each(['https://100.128.0.1', 'https://100.63.255.1', 'https://[::ffff:8.8.8.8]', 'http://[::1]:1200'])(
-    'accepts %s',
+  it.each([
+    'https://100.128.0.1',
+    'https://100.63.255.1',
+    'https://[::ffff:8.8.8.8]',
+    'https://[2001:db8::1]',
+    'https://[2606:4700::1111]',
+    'https://[64:ff9b::808:808]',
+    'https://[2002:808:808::]',
+    'http://localhost:1200',
+    'http://127.0.0.1:1200',
+    'http://[::1]:1200',
+    'http://localhost.:1200',
+  ])('accepts %s', (url) => {
+    expect(() => validateExternalUrl(url, 'X')).not.toThrow();
+  });
+
+  it.each([
+    'http://localhost:1200',
+    'http://127.0.0.1:1200',
+    'http://[::1]:1200',
+    'https://localhost',
+    'https://localhost.',
+    'https://localhost.:8443',
+  ])(
+    'rejects %s when allowLocal is false',
     (url) => {
-      expect(() => validateExternalUrl(url, 'X')).not.toThrow();
+      expect(() => validateExternalUrl(url, 'X', { allowLocal: false })).toThrow('private/internal address');
     },
   );
 });
@@ -560,6 +589,22 @@ describe('fetchFeed redirects', () => {
     await expect(fetchFeed('https://e.com/f', fast)).rejects.toThrow('private/internal address');
     expect(internalCalls).toBe(0);
   });
+
+  it.each(['http://localhost:1200/feed', 'https://127.0.0.1/feed'])(
+    'rejects a redirect to %s and never requests it',
+    async (target) => {
+      let localCalls = 0;
+      server.use(
+        http.get('https://e.com/f', () => redirect(target)),
+        http.get(target, () => {
+          localCalls++;
+          return okFeed();
+        }),
+      );
+      await expect(fetchFeed('https://e.com/f', fast)).rejects.toThrow('private/internal address');
+      expect(localCalls).toBe(0);
+    },
+  );
 
   it('follows up to 5 redirects', async () => {
     server.use(
