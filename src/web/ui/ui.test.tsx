@@ -102,6 +102,27 @@ describe('ui', () => {
     expect(screen.getByRole('alert').textContent).toContain('失敗');
   });
 
+  it('FreshnessBadge は generatedAt を持たない unknown で確認できない旨を warning で出し、日時は出さない', () => {
+    render(<FreshnessBadge generatedAt={null} isStale={false} health="unknown" />);
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toContain('確認できません');
+    expect(alert.className).toContain('text-warning');
+    expect(screen.queryByText(/更新$/)).toBeNull();
+  });
+
+  it('FreshnessBadge は日時なしの failed でも失敗の警告を danger で出す', () => {
+    render(<FreshnessBadge generatedAt={null} isStale={false} health="failed" />);
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toContain('失敗');
+    expect(alert.className).toContain('text-danger');
+    expect(screen.queryByText(/更新$/)).toBeNull();
+  });
+
+  it('FreshnessBadge は generatedAt があれば更新日時を出す', () => {
+    render(<FreshnessBadge generatedAt="2026-11-07T00:00:00Z" isStale={false} health="ok" />);
+    expect(screen.getByText(/更新$/)).toBeTruthy();
+  });
+
   it('Disclaimer は免責文を出す', () => {
     render(<Disclaimer />);
     expect(screen.getByText(INVESTMENT_DISCLAIMER)).toBeTruthy();

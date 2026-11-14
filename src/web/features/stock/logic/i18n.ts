@@ -24,6 +24,8 @@ const ja = {
   searchLabel: 'コード・銘柄名・業種で検索',
   minMarketCapLabel: '時価総額の下限（億円）',
   maxMarketCapLabel: '時価総額の上限（億円）',
+  capInvalid: '0 以上の数値を入力してください',
+  capReversed: '下限が上限を超えています',
   excludeSectorsLabel: '除外する業種',
   excludeSectorsNone: '除外なし',
   resetFilters: '絞り込みを解除',

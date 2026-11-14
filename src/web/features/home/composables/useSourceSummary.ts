@@ -2,13 +2,8 @@ import { useMemo } from 'react';
 import { AnyMetaSchema, type LegacyMeta, MetaSchema, type SourceId, legacyToMeta } from '../../../../shared/schema/meta';
 import { useFreshness } from '../../../composables/useFreshness';
 import { useSourceQuery } from '../../../composables/useSourceQuery';
+import { type FreshnessBadgeProps, toFreshnessBadgeProps } from '../../../ui/FreshnessBadge';
 import { type SummaryItem, summarizeCounts } from '../logic/summary';
-
-export interface FreshnessBadgeProps {
-  generatedAt: string;
-  isStale: boolean;
-  health: 'ok' | 'partial' | 'failed';
-}
 
 export interface SourceSummary {
   freshness: FreshnessBadgeProps | null;
@@ -27,14 +22,6 @@ export function useSourceSummary(source: SourceId): SourceSummary {
     const current = MetaSchema.safeParse(meta);
     const normalized = current.success ? current.data : legacyToMeta(source, meta as LegacyMeta);
     const items = normalized ? summarizeCounts(source, normalized.run.counts) : [];
-    if (!freshness.generatedAt || freshness.health === 'unknown') return { freshness: null, items };
-    return {
-      freshness: {
-        generatedAt: freshness.generatedAt.toISOString(),
-        isStale: freshness.isStale,
-        health: freshness.health,
-      },
-      items,
-    };
+    return { freshness: toFreshnessBadgeProps(freshness), items };
   }, [meta, source, freshness]);
 }

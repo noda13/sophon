@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useFreshness } from '../../../composables/useFreshness';
+import { type FreshnessBadgeProps, toFreshnessBadgeProps } from '../../../ui/FreshnessBadge';
 import { buildHeatmapCells } from '../logic/heatmap';
 import { categorySummaryQuery, issueMetaQuery } from './queries';
 
@@ -16,7 +17,9 @@ export function useCategorySummary() {
   };
 }
 
-export function useIssueFreshness() {
+// 取得中・取得失敗のあいだは null にして、「確認できません」が一瞬出るのを避ける
+export function useIssueFreshness(): FreshnessBadgeProps | null {
   const { data } = useQuery(issueMetaQuery);
-  return useFreshness(data);
+  const freshness = useFreshness(data);
+  return data ? toFreshnessBadgeProps(freshness) : null;
 }

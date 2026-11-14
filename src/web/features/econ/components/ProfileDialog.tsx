@@ -21,6 +21,8 @@ const SENSITIVITY_OPTIONS: { value: MonitoringSensitivity; label: string; subtit
 
 const ASSET_KEYS = Object.keys(ASSET_CLASS_LABELS) as (keyof AssetAllocation)[];
 
+const UNSAVED_CONFIRM_MESSAGE = '保存していない変更があります。閉じますか？';
+
 const choiceClass = (active: boolean) =>
   active ? 'bg-accent text-surface' : 'bg-surface-raised text-fg-muted hover:bg-surface-overlay hover:text-fg';
 
@@ -29,6 +31,12 @@ export function ProfileDialog({ open, onOpenChange, profile, onSave, onClear }: 
   const draft = useProfileDraft(profile);
   const diff = 100 - draft.total;
 
+  function handleOpenChange(next: boolean) {
+    if (!next && draft.isDirty && !window.confirm(UNSAVED_CONFIRM_MESSAGE)) return;
+    onOpenChange(next);
+  }
+
+  // 保存・クリアは同じ描画の isDirty がまだ古いので、確認を挟まない onOpenChange を直接呼ぶ
   function handleSave() {
     const next = draft.toProfile();
     if (!next) return;
@@ -45,7 +53,7 @@ export function ProfileDialog({ open, onOpenChange, profile, onSave, onClear }: 
   return (
     <Dialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       title="プロフィール設定"
       description="年齢・監視感度・資産配分から、あなた向けのリスクを算出します。入力はこのブラウザにだけ保存されます。"
     >
