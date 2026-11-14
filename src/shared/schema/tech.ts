@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-export const TECH_CATEGORIES = ['trend', 'ai', 'security', 'release'] as const;
+// 画面のタブがこの順で並ぶ。tech はセキュリティリスクの把握が目的なので security を先頭にする。
+export const TECH_CATEGORIES = ['security', 'trend', 'ai', 'release'] as const;
 export const TechCategorySchema = z.enum(TECH_CATEGORIES);
 export type TechCategory = z.infer<typeof TechCategorySchema>;
 

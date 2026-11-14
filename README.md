@@ -1,6 +1,6 @@
 # sophon
 
-株（stock）、技術（tech）、社会課題（issue）、経済（econ）の情報収集を、1 つの web アプリ、1 つの collector、1 つの型定義にまとめたリポジトリ。
+株（stock）、セキュリティ・技術（tech）、社会課題（issue）、経済（econ）の情報収集を、1 つの web アプリ、1 つの collector、1 つの型定義にまとめたリポジトリ。
 収集したデータは JSON として `data` ブランチに置き、web アプリは GitHub Pages から配信する。
 
 公開サイトは https://noda13.github.io/sophon/ 。

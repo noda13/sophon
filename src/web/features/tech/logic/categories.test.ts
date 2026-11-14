@@ -3,7 +3,7 @@ import { ALL_CATEGORIES, CATEGORY_TAB_ITEMS, categoryLabel, isCategoryFilter } f
 
 describe('categories', () => {
   it('先頭に「すべて」、続けて4カテゴリを並べる', () => {
-    expect(CATEGORY_TAB_ITEMS.map((i) => i.value)).toEqual([ALL_CATEGORIES, 'trend', 'ai', 'security', 'release']);
+    expect(CATEGORY_TAB_ITEMS.map((i) => i.value)).toEqual([ALL_CATEGORIES, 'security', 'trend', 'ai', 'release']);
     expect(CATEGORY_TAB_ITEMS[0]!.label).toBe('すべて');
   });
 

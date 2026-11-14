@@ -56,14 +56,14 @@ export const SUMMARY_SYSTEM = `あなたはITニュースのキュレーター�
 - index: 入力の index の値
 - summaryJa: 日本語で2-3文の簡潔な要約
 - category: 記事の内容に最も合致するカテゴリ（提示されたhintを参考にしつつ、最終判断はあなたが行う）。選択肢: "trend", "ai", "security", "release"
+  - security: 脆弱性、セキュリティインシデント、CVE、パッチ、セキュリティアドバイザリ、悪用の報告など。hint が release や trend でも、脆弱性・CVE・パッチ・アドバイザリ・悪用の報告を扱う記事は security にする（例: Node.js のセキュリティリリース）
   - trend: 開発・技術の最新動向、フレームワーク、プログラミング手法など
   - ai: AI・機械学習・LLMの動向、モデルリリース、研究成果など
-  - security: 脆弱性、セキュリティインシデント、CVE、セキュリティアドバイザリなど
-  - release: 製品・OSS・SaaSのリリース、バージョンアップ、新機能発表など
+  - release: 製品・OSS・SaaSのリリース、バージョンアップ、新機能発表など（セキュリティ修正が主題のものは security）
 - importance: 記事の重要度。選択肢: "高", "中", "低"
-  - 高: 業界全体に影響する重大なニュース（メジャーバージョンリリース、重大脆弱性、業界を変えるAIリリースなど）
-  - 中: 注目すべきだが限定的な影響（マイナーリリース、技術動向記事、中程度の脆弱性など）
-  - 低: ニッチまたは影響が小さいニュース
+  - 高: すでに悪用が確認されている脆弱性、ゼロデイ、CISA KEV 掲載、CVSS 9.0 以上、広く使われる製品の RCE や認証回避。security 以外では、業界全体に影響する重大なニュース（メジャーバージョンリリース、業界を変えるAIリリースなど）
+  - 中: 一般的な脆弱性修正のアドバイザリ、中程度の脆弱性、セキュリティインシデントの報道。security 以外では、注目すべきだが限定的な影響（マイナーリリース、技術動向記事など）
+  - 低: 注意喚起のみ、影響が限定的、ニッチまたは影響が小さいニュース
 
 応答形式: {"results":[{"index":0,"summaryJa":"...","category":"trend","importance":"中"}]}
 results は記事ごとの要素を直接並べた配列にする。items など別の階層を挟まない。
@@ -83,17 +83,18 @@ export function buildSummaryPrompt(batch: readonly Pick<Article, 'source' | 'cat
     .join('\n');
 }
 
-// 要約は 10 件で 2,000 token 前後、ダイジェストは highlights 最大 5 件 x 4 セクション。暴走時に上限なく生成させないための余裕付きの値。
+// 要約は 10 件で 2,000 token 前後。ダイジェストの出力は index と概要だけで、highlights は最大 8 + 5 x 3 件でも 700 token 前後なので 2048 で足りる。暴走時に上限なく生成させないための余裕付きの値。
 export const SUMMARY_MAX_OUTPUT_TOKENS = 4096;
 export const DIGEST_MAX_OUTPUT_TOKENS = 2048;
 
 export const DIGEST_MAX_HIGHLIGHTS = 5;
+export const DIGEST_MAX_SECURITY_HIGHLIGHTS = 8;
 
 export const DIGEST_SYSTEM = `あなたはITニュースのキュレーターです。本日の重要なIT関連ニュースを日本語でダイジェスト形式にまとめてください。
 
-- overviewJa: 1段落の概要
-- sections: カテゴリ（trend, ai, security, release）のうち該当するものだけを含める
-- 各セクションの highlights は最大${DIGEST_MAX_HIGHLIGHTS}件。取り上げる記事は入力の index だけで指定する（title や URL は書かない）
+- overviewJa: 1段落の概要。セキュリティ上の重要事項（悪用が確認された脆弱性、緊急の対応が要るもの、影響の広いもの）から書き始める。該当がなければ他の話題から書いてよい
+- sections: カテゴリ（security, trend, ai, release）のうち該当するものだけを含める。security セクションを最初に置く
+- 各セクションの highlights は最大${DIGEST_MAX_HIGHLIGHTS}件。ただし security は最大${DIGEST_MAX_SECURITY_HIGHLIGHTS}件。取り上げる記事は入力の index だけで指定する（title や URL は書かない）
 
 ${UNTRUSTED_INPUT_NOTICE}`;
 
