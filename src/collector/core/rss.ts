@@ -75,6 +75,40 @@ export function articleId(url: string, title: string): string {
   return createHash('sha256').update(`${url}:${title}`).digest('hex').slice(0, 16);
 }
 
+// 0/8, 10/8, 100.64/10 (CGNAT), 127/8, 169.254/16, 172.16/12, 192.168/16
+function isInternalIPv4(a: number, b: number): boolean {
+  return (
+    a === 0 ||
+    a === 10 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    a === 127 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168)
+  );
+}
+
+// URL normalizes every IPv4 notation (hex, octal, short forms) to dotted decimal and IPv4-mapped IPv6 to
+// the hex form (::ffff:a00:1), so only those two shapes need parsing here.
+function isInternalAddress(hostname: string): boolean {
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/.exec(hostname);
+  if (v4) return isInternalIPv4(Number(v4[1]), Number(v4[2]));
+
+  if (!hostname.includes(':')) return false;
+  if (hostname === '::') return true;
+  const mapped = /^::ffff:([0-9a-f]{1,4}):[0-9a-f]{1,4}$/.exec(hostname);
+  if (mapped) {
+    const high = parseInt(mapped[1]!, 16);
+    return isInternalIPv4(high >> 8, high & 0xff);
+  }
+  return /^f[cd][0-9a-f]{2}:/.test(hostname) || /^fe[89ab][0-9a-f]:/.test(hostname);
+}
+
+function isInternalHostname(hostname: string): boolean {
+  const name = hostname.replace(/\.$/, '');
+  return /\.(internal|local|localhost)$/.test(name);
+}
+
 // Blocks private ranges and plain http so a configurable base URL (RSSHub, LLM endpoint) cannot be
 // pointed at internal services. http://localhost stays allowed for local development.
 export function validateExternalUrl(url: string, label: string): void {
@@ -94,8 +128,7 @@ export function validateExternalUrl(url: string, label: string): void {
     throw new Error(`${label} must use https for non-local URLs (got: "${url}")`);
   }
 
-  const privatePatterns = [/^10\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^169\.254\./, /^f[cd][0-9a-f]{2}:/i, /^fe80:/i];
-  if (privatePatterns.some((p) => p.test(hostname))) {
+  if (isInternalAddress(hostname) || isInternalHostname(hostname)) {
     throw new Error(`${label} points to a private/internal address: "${hostname}"`);
   }
 }
@@ -152,22 +185,40 @@ async function readTextCapped(res: Response, url: string, maxBytes: number): Pro
   return new TextDecoder().decode(Buffer.concat(chunks));
 }
 
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+const MAX_REDIRECTS = 5;
+
+// 既定の redirect: 'follow' だと行き先を検証できず、公開 URL から内部アドレスへ飛ばされる (SSRF)。
 async function fetchText(url: string, opts: FetchFeedOptions): Promise<string> {
   return pRetry(
     async () => {
       const timeout = AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
-      const res = await fetch(url, {
-        signal: opts.signal ? AbortSignal.any([timeout, opts.signal]) : timeout,
-        headers: {
-          'User-Agent': opts.userAgent ?? 'Sophon/1.0',
-          Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*;q=0.5',
-        },
-      });
-      if (!res.ok) {
-        await res.body?.cancel();
-        throw new HttpStatusError(res.status, url, parseRetryAfter(res.headers.get('retry-after')));
+      const signal = opts.signal ? AbortSignal.any([timeout, opts.signal]) : timeout;
+      let current = url;
+      for (let hop = 0; ; hop++) {
+        const res = await fetch(current, {
+          redirect: 'manual',
+          signal,
+          headers: {
+            'User-Agent': opts.userAgent ?? 'Sophon/1.0',
+            Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*;q=0.5',
+          },
+        });
+        const location = res.headers.get('location');
+        if (REDIRECT_STATUSES.has(res.status) && location) {
+          await res.body?.cancel();
+          if (hop >= MAX_REDIRECTS) throw new Error(`Too many redirects (max ${MAX_REDIRECTS}) for ${url}`);
+          const next = new URL(location, current).href;
+          validateExternalUrl(next, 'redirect');
+          current = next;
+          continue;
+        }
+        if (!res.ok) {
+          await res.body?.cancel();
+          throw new HttpStatusError(res.status, current, parseRetryAfter(res.headers.get('retry-after')));
+        }
+        return readTextCapped(res, current, opts.maxBytes ?? MAX_RESPONSE_BYTES);
       }
-      return readTextCapped(res, url, opts.maxBytes ?? MAX_RESPONSE_BYTES);
     },
     {
       retries: opts.retries ?? DEFAULT_RETRIES,
