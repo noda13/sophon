@@ -6,7 +6,7 @@ export interface TechFeed extends FeedSource {
   hint: TechCategory;
 }
 
-// anthropic（https://www.anthropic.com/rss.xml）は 404、openai（https://openai.com/news/rss/）は 403 を返すため外してある。
+// anthropic（https://www.anthropic.com/rss.xml）は 404、openai（https://openai.com/news/rss/）は 403、github.com/advisories.atom は 406 を返すため外してある。
 export const TECH_FEEDS: readonly TechFeed[] = [
   { url: 'https://hnrss.org/frontpage', source: 'hackernews', hint: 'trend' },
   { url: 'https://zenn.dev/feed', source: 'zenn', hint: 'trend' },
@@ -23,6 +23,10 @@ export const TECH_FEEDS: readonly TechFeed[] = [
   { url: 'https://www.cisa.gov/cybersecurity-advisories/all.xml', source: 'cisa', hint: 'security', maxBytes: 10 * 1024 * 1024 },
   { url: 'https://feeds.feedburner.com/TheHackersNews', source: 'the-hacker-news', hint: 'security' },
   { url: 'https://www.bleepingcomputer.com/feed/', source: 'bleepingcomputer', hint: 'security' },
+  { url: 'https://jvndb.jvn.jp/ja/rss/jvndb_new.rdf', source: 'jvn', hint: 'security' },
+  { url: 'https://www.ipa.go.jp/security/alert-rss.rdf', source: 'ipa', hint: 'security' },
+  { url: 'https://googleprojectzero.blogspot.com/feeds/posts/default', source: 'project-zero', hint: 'security' },
+  { url: 'https://krebsonsecurity.com/feed/', source: 'krebs', hint: 'security' },
   { url: 'https://nodejs.org/en/feed/blog.xml', source: 'nodejs', hint: 'release' },
   { url: 'https://kubernetes.io/feed.xml', source: 'kubernetes', hint: 'release' },
   { url: 'https://aws.amazon.com/blogs/aws/feed/', source: 'aws', hint: 'release' },
