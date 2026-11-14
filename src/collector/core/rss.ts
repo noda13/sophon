@@ -88,30 +88,51 @@ function isInternalIPv4(a: number, b: number): boolean {
   );
 }
 
-// URL normalizes every IPv4 notation (hex, octal, short forms) to dotted decimal and IPv4-mapped IPv6 to
-// the hex form (::ffff:a00:1), so only those two shapes need parsing here.
+// URL は IPv6 を小文字の圧縮形に正規化し、埋め込みの dotted IPv4 も 16 進に直す。その形だけを受け付ける。
+function parseIPv6(address: string): number[] | null {
+  const halves = address.split('::');
+  if (halves.length > 2) return null;
+  const toGroups = (half: string): string[] => (half === '' ? [] : half.split(':'));
+  const head = toGroups(halves[0]!);
+  const tail = halves.length === 2 ? toGroups(halves[1]!) : [];
+  const groups = [...head, ...tail];
+  if (!groups.every((g) => /^[0-9a-f]{1,4}$/.test(g))) return null;
+  const missing = 8 - groups.length;
+  if (halves.length === 1 ? missing !== 0 : missing < 1) return null;
+  return [...head, ...Array<string>(halves.length === 2 ? missing : 0).fill('0'), ...tail].map((g) => parseInt(g, 16));
+}
+
 function isInternalAddress(hostname: string): boolean {
   const v4 = /^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/.exec(hostname);
   if (v4) return isInternalIPv4(Number(v4[1]), Number(v4[2]));
 
   if (!hostname.includes(':')) return false;
-  if (hostname === '::') return true;
-  const mapped = /^::ffff:([0-9a-f]{1,4}):[0-9a-f]{1,4}$/.exec(hostname);
-  if (mapped) {
-    const high = parseInt(mapped[1]!, 16);
-    return isInternalIPv4(high >> 8, high & 0xff);
+  const g = parseIPv6(hostname);
+  if (!g) return true;
+
+  const highZero = (n: number) => g.slice(0, n).every((x) => x === 0);
+  // IPv4 を含む形は、含まれる IPv4 が内部かどうかで決める。IPv4-mapped (::ffff:)、IPv4 互換 (::/96、:: と ::1 も a=0 で内部扱い)、NAT64 (64:ff9b::/96)。
+  if (highZero(5) && g[5] === 0xffff) return isInternalIPv4(g[6]! >> 8, g[6]! & 0xff);
+  if (highZero(6)) return isInternalIPv4(g[6]! >> 8, g[6]! & 0xff);
+  if (g[0] === 0x64 && g[1] === 0xff9b && g.slice(2, 6).every((x) => x === 0)) {
+    return isInternalIPv4(g[6]! >> 8, g[6]! & 0xff);
   }
-  return /^f[cd][0-9a-f]{2}:/.test(hostname) || /^fe[89ab][0-9a-f]:/.test(hostname);
+  // 6to4 (2002::/16) はビット 16〜47 に IPv4 を持つ。
+  if (g[0] === 0x2002) return isInternalIPv4(g[1]! >> 8, g[1]! & 0xff);
+  return (g[0]! & 0xfe00) === 0xfc00 || (g[0]! & 0xffc0) === 0xfe80;
 }
 
-function isInternalHostname(hostname: string): boolean {
-  const name = hostname.replace(/\.$/, '');
+function isInternalHostname(name: string): boolean {
   return /\.(internal|local|localhost)$/.test(name);
 }
 
 // Blocks private ranges and plain http so a configurable base URL (RSSHub, LLM endpoint) cannot be
-// pointed at internal services. http://localhost stays allowed for local development.
-export function validateExternalUrl(url: string, label: string): void {
+// pointed at internal services. http://localhost stays allowed for local development unless allowLocal is false
+// (redirect targets: a public feed must never send us to the local machine).
+// DNS rebinding (a public hostname resolving to an internal IP) is not handled on purpose: checking the resolved
+// address means replacing the lookup at connect time. Feed URLs are fixed, and the overridable RSSHUB_URL is a Secret.
+export function validateExternalUrl(url: string, label: string, opts: { allowLocal?: boolean } = {}): void {
+  const { allowLocal = true } = opts;
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -120,9 +141,13 @@ export function validateExternalUrl(url: string, label: string): void {
   }
 
   // URL.hostname keeps the brackets of IPv6 literals, which would defeat the prefix checks below.
-  const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
+  // A trailing dot is the root label (localhost. is localhost) and URL leaves it in place.
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, '').replace(/\.$/, '');
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
-  if (isLocalhost) return;
+  if (isLocalhost) {
+    if (allowLocal) return;
+    throw new Error(`${label} points to a private/internal address: "${hostname}"`);
+  }
 
   if (parsed.protocol !== 'https:') {
     throw new Error(`${label} must use https for non-local URLs (got: "${url}")`);
@@ -209,7 +234,7 @@ async function fetchText(url: string, opts: FetchFeedOptions): Promise<string> {
           await res.body?.cancel();
           if (hop >= MAX_REDIRECTS) throw new Error(`Too many redirects (max ${MAX_REDIRECTS}) for ${url}`);
           const next = new URL(location, current).href;
-          validateExternalUrl(next, 'redirect');
+          validateExternalUrl(next, 'redirect', { allowLocal: false });
           current = next;
           continue;
         }
