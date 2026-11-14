@@ -8,6 +8,8 @@ import { econHandlers } from '../composables/econ.testutil';
 import { PROFILE_PRESETS } from '../logic/profilePresets';
 import { EconDashboardPage } from './EconDashboardPage';
 
+// チャートとダイアログは動的 import で読み込む。コールドスタートの worker では recharts の解決に 1 秒（findBy の既定）を超えることがある。
+const LAZY_TIMEOUT_MS = 5000;
 const server = setupServer();
 beforeAll(() => {
   server.listen({ onUnhandledFrame: 'error' });
@@ -52,7 +54,7 @@ describe('EconDashboardPage', () => {
     expect(screen.getByRole('region', { name: '経済指標' })).toBeTruthy();
     expect(screen.getByRole('region', { name: '今後の注目イベント' })).toBeTruthy();
     expect(screen.getByRole('region', { name: '注目ニュース' })).toBeTruthy();
-    expect(await screen.findByRole('region', { name: 'リスク推移' })).toBeTruthy();
+    expect(await screen.findByRole('region', { name: 'リスク推移' }, { timeout: LAZY_TIMEOUT_MS })).toBeTruthy();
     expect(screen.getByText(/投資助言ではありません/)).toBeTruthy();
     expect(screen.getByText(/更新$/)).toBeTruthy();
     expect(screen.getByText('データが古い可能性があります')).toBeTruthy();
@@ -96,7 +98,7 @@ describe('EconDashboardPage', () => {
     await screen.findByRole('region', { name: '総合リスク指数' });
 
     fireEvent.click(screen.getByRole('button', { name: 'プロフィール設定' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('dialog', {}, { timeout: LAZY_TIMEOUT_MS });
     fireEvent.click(within(dialog).getByRole('button', { name: '保存' }));
 
     await waitFor(() => expect(window.localStorage.getItem('econoguard-profile')).not.toBeNull());
