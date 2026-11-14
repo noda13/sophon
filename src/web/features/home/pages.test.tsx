@@ -57,7 +57,7 @@ describe('/', () => {
     expect(within(stock).getByText('銘柄').nextSibling?.textContent).toBe('3800');
     expect(within(stock).getByText('ランキング').nextSibling?.textContent).toBe('3');
 
-    const tech = screen.getByRole('link', { name: /技術記事とダイジェスト/ });
+    const tech = screen.getByRole('link', { name: /脆弱性・セキュリティ情報とダイジェスト/ });
     expect(await within(tech).findByText('記事')).toBeTruthy();
     expect(within(tech).queryByText('新着')).toBeNull();
 

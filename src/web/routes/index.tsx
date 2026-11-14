@@ -3,7 +3,7 @@ import { SourceCard } from '../features/home/components/SourceCard';
 
 const SOURCES = [
   { source: 'stock', to: '/stock', description: '戦略別の銘柄ランキング' },
-  { source: 'tech', to: '/tech', description: '技術記事とダイジェスト、EOL' },
+  { source: 'tech', to: '/tech', description: '脆弱性・セキュリティ情報とダイジェスト、EOL' },
   { source: 'issue', to: '/issue', description: '課題とアイデアのダッシュボード' },
   { source: 'econ', to: '/econ', description: 'グローバル経済リスクモニター' },
 ] as const;

@@ -4,8 +4,16 @@ import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import type { Article } from '../../../shared/schema/tech';
 import { generateStructured, type LlmConfig } from '../../core/llm';
-import { assembleDigest, buildDigest, listDigestDates, rankByImportance, selectDigestCandidates } from './digest';
-import { DigestDraftSchema } from './prompts';
+import {
+  assembleDigest,
+  buildDigest,
+  DIGEST_MAX_CANDIDATES,
+  DIGEST_SECURITY_RESERVED,
+  listDigestDates,
+  rankByImportance,
+  selectDigestCandidates,
+} from './digest';
+import { DIGEST_SYSTEM, DigestDraftSchema } from './prompts';
 
 vi.mock('../../core/llm', () => ({ generateStructured: vi.fn() }));
 
@@ -45,6 +53,44 @@ describe('selectDigestCandidates', () => {
     ];
     expect(selectDigestCandidates(all, 3).map((a) => a.id)).toEqual(['h', 'm1', 'm2']);
     expect(selectDigestCandidates(all, 2).map((a) => a.id)).toEqual(['h', 'm1']);
+  });
+});
+
+describe('selectDigestCandidates security reservation', () => {
+  const many = (prefix: string, n: number, over: Partial<Article>) =>
+    Array.from({ length: n }, (_, i) =>
+      article(`${prefix}${i}`, { publishedAt: `2026-11-${String(28 - i).padStart(2, '0')}T00:00:00.000Z`, ...over }),
+    );
+  const securityCount = (list: Article[]) => list.filter((a) => a.category === 'security').length;
+
+  it('reserves at least DIGEST_SECURITY_RESERVED slots for security even when other articles rank higher', () => {
+    const all = [...many('t', 40, { importance: '高' }), ...many('s', 20, { category: 'security', importance: '中' })];
+    const picked = selectDigestCandidates(all);
+    expect(picked).toHaveLength(DIGEST_MAX_CANDIDATES);
+    expect(securityCount(picked)).toBe(DIGEST_SECURITY_RESERVED);
+  });
+
+  it('gives the leftover slots to other categories when security is short', () => {
+    const all = [...many('t', 40, { importance: '高' }), ...many('s', 5, { category: 'security', importance: '中' })];
+    const picked = selectDigestCandidates(all);
+    expect(picked).toHaveLength(DIGEST_MAX_CANDIDATES);
+    expect(securityCount(picked)).toBe(5);
+  });
+
+  it('keeps the previous behavior when there is no security article', () => {
+    const all = [...many('t', 20, { importance: '高' }), ...many('a', 20, { category: 'ai' })];
+    const picked = selectDigestCandidates(all);
+    expect(picked.map((a) => a.id)).toEqual(rankByImportance(all).slice(0, DIGEST_MAX_CANDIDATES).map((a) => a.id));
+  });
+
+  it('lets security take more than the reservation when it ranks higher', () => {
+    const all = [...many('s', 20, { category: 'security', importance: '高' }), ...many('t', 20, {})];
+    expect(securityCount(selectDigestCandidates(all))).toBe(20);
+  });
+
+  it('keeps importance then recency order inside the selection', () => {
+    const all = [...many('t', 3, {}), ...many('s', 2, { category: 'security', importance: '高' })];
+    expect(selectDigestCandidates(all).map((a) => a.id)).toEqual(['s0', 's1', 't0', 't1', 't2']);
   });
 });
 
@@ -93,6 +139,74 @@ describe('assembleDigest', () => {
       now,
     );
     expect(d.sections[0]!.highlights.map((x) => x.url)).toEqual([0, 1, 2, 3, 4].map((i) => `https://e.com/a${i}`));
+  });
+});
+
+describe('assembleDigest security priority', () => {
+  const now = new Date('2026-11-07T23:30:00.000Z');
+  const candidates = Array.from({ length: 20 }, (_, i) => article(`a${i}`));
+  const picks = (...indexes: number[]) => indexes.map((index) => ({ index }));
+  const range = (from: number, to: number) => Array.from({ length: to - from }, (_, i) => from + i);
+
+  it('puts security first and keeps the LLM order for the rest', () => {
+    const d = assembleDigest(
+      {
+        overviewJa: '概要',
+        sections: [
+          { category: 'release', highlights: picks(0) },
+          { category: 'ai', highlights: picks(1) },
+          { category: 'security', highlights: picks(2) },
+          { category: 'trend', highlights: picks(3) },
+        ],
+      },
+      candidates,
+      now,
+    );
+    expect(d.sections.map((s) => s.category)).toEqual(['security', 'release', 'ai', 'trend']);
+  });
+
+  it('caps security at eight highlights and other categories at five', () => {
+    const d = assembleDigest(
+      {
+        overviewJa: '概要',
+        sections: [
+          { category: 'ai', highlights: picks(...range(0, 7)) },
+          { category: 'security', highlights: picks(...range(7, 20)) },
+        ],
+      },
+      candidates,
+      now,
+    );
+    expect(d.sections.map((s) => [s.category, s.highlights.length])).toEqual([
+      ['security', 8],
+      ['ai', 5],
+    ]);
+  });
+
+  it('lets security claim an article that another section also lists', () => {
+    const d = assembleDigest(
+      {
+        overviewJa: '概要',
+        sections: [
+          { category: 'trend', highlights: picks(0, 1) },
+          { category: 'security', highlights: picks(0) },
+        ],
+      },
+      candidates,
+      now,
+    );
+    expect(d.sections.map((s) => [s.category, s.highlights.map((h) => h.title)])).toEqual([
+      ['security', ['a0']],
+      ['trend', ['a1']],
+    ]);
+  });
+});
+
+describe('DIGEST_SYSTEM', () => {
+  it('asks for the security section first and a security-led overview', () => {
+    expect(DIGEST_SYSTEM).toContain('security セクションを最初に置く');
+    expect(DIGEST_SYSTEM).toContain('セキュリティ上の重要事項');
+    expect(DIGEST_SYSTEM).toContain('security は最大8件');
   });
 });
 

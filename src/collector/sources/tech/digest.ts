@@ -6,12 +6,15 @@ import {
   buildDigestPrompt,
   DIGEST_MAX_HIGHLIGHTS,
   DIGEST_MAX_OUTPUT_TOKENS,
+  DIGEST_MAX_SECURITY_HIGHLIGHTS,
   DIGEST_SYSTEM,
   DigestDraftSchema,
   type DigestDraft,
 } from './prompts';
 
 export const DIGEST_MAX_CANDIDATES = 30;
+// security の記事が少ない日は余りを他のカテゴリに回す。多い日でも他のカテゴリが全滅しないよう、枠は下限として働く。
+export const DIGEST_SECURITY_RESERVED = 12;
 
 const IMPORTANCE_RANK: Record<Article['importance'], number> = { 高: 0, 中: 1, 低: 2 };
 
@@ -24,16 +27,27 @@ export function rankByImportance(articles: readonly Article[]): Article[] {
 }
 
 export function selectDigestCandidates(articles: readonly Article[], limit = DIGEST_MAX_CANDIDATES): Article[] {
-  return rankByImportance(articles.filter((a) => a.summaryJa.length > 0 && a.importance !== '低')).slice(0, limit);
+  const ranked = rankByImportance(articles.filter((a) => a.summaryJa.length > 0 && a.importance !== '低'));
+  const reserved = ranked.filter((a) => a.category === 'security').slice(0, Math.min(DIGEST_SECURITY_RESERVED, limit));
+  const reservedIds = new Set(reserved.map((a) => a.id));
+  const rest = ranked.filter((a) => !reservedIds.has(a.id)).slice(0, limit - reserved.length);
+  return rankByImportance([...reserved, ...rest]);
 }
+
+// security を先頭に寄せ、残りは入力の順を保つ。
+const securityFirst = <T extends { category: string }>(sections: readonly T[]): T[] => [
+  ...sections.filter((s) => s.category === 'security'),
+  ...sections.filter((s) => s.category !== 'security'),
+];
 
 const isHttpUrl = (url: string) => /^https?:\/\//i.test(url);
 
+// セクションは LLM の順序に頼らず security を先頭にする。used による重複除外も security が先に取るため。
 // LLM が返すのは候補の index だけで、url と title は候補から引く。index が範囲外のハイライトと、同じ記事の重複は捨てる。
 // 候補の URL も RSS 由来なので、画面側の safeHref とは別に scheme をここでも検証する（多層防御）。
 export function assembleDigest(draft: DigestDraft, candidates: readonly Article[], now: Date): Digest {
   const used = new Set<number>();
-  const sections = draft.sections
+  const sections = securityFirst(draft.sections)
     .map((section) => ({
       category: section.category,
       highlights: section.highlights
@@ -43,7 +57,7 @@ export function assembleDigest(draft: DigestDraft, candidates: readonly Article[
           used.add(index);
           return [{ title: article.originalTitle, summaryJa: article.summaryJa, url: article.originalUrl }];
         })
-        .slice(0, DIGEST_MAX_HIGHLIGHTS),
+        .slice(0, section.category === 'security' ? DIGEST_MAX_SECURITY_HIGHLIGHTS : DIGEST_MAX_HIGHLIGHTS),
     }))
     .filter((section) => section.highlights.length > 0);
   return {
