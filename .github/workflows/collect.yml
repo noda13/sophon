@@ -25,6 +25,9 @@ concurrency:
 
 jobs:
   collect:
+    # 手動実行ではブランチを選べる。main 以外のコードに API キーを渡さず、data も更新させない。
+    # collect が飛ばされれば、publish 以降も実行されない。
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 75
     permissions:
