@@ -1,0 +1,133 @@
+{
+  "profile": {
+    "code": "7013",
+    "name": "ＩＨＩ",
+    "sector33Name": "機械",
+    "sector33Code": "3600",
+    "sector17Code": "8",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-7013",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 2833812833544,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 17.60219659078712,
+        "pbr": 4.158010176417507
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-7013-2026-1Q",
+      "code": "7013",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-05T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 374548000000,
+      "operatingProfit": 73218000000,
+      "ordinaryProfit": null,
+      "profit": 53518000000,
+      "totalAssets": 2461256000000,
+      "equity": 723833000000,
+      "cashAndEquivalents": 117012000000,
+      "sharesOutstanding": 1060161674
+    },
+    {
+      "id": "static-7013-2026-FY",
+      "code": "7013",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-25T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 1643402000000,
+      "operatingProfit": 165534000000,
+      "ordinaryProfit": null,
+      "profit": 160992000000,
+      "totalAssets": 2428559000000,
+      "equity": 681531000000,
+      "cashAndEquivalents": 155084000000,
+      "sharesOutstanding": 1060161928
+    },
+    {
+      "id": "static-7013-2026-FY",
+      "code": "7013",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-08T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 1643402000000,
+      "operatingProfit": 165534000000,
+      "ordinaryProfit": null,
+      "profit": 160992000000,
+      "totalAssets": 2428559000000,
+      "equity": 681531000000,
+      "cashAndEquivalents": 155084000000,
+      "sharesOutstanding": 1060161928
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=73.2, PBR=4.16, PER=17.6 → 対象外"
+    },
+    "buffett": {
+      "score": 50,
+      "components": {
+        "roeScore": 50,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=23.6%, PBR=4.16 → 良好"
+    },
+    "lynch": {
+      "score": 14,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=17.6, 時価総額28338億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り5.68%, NCR=null, PBR=4.16 → 様子見"
+    },
+    "composite": {
+      "score": 19,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 50,
+        "lynch": 14,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:50, リンチ流:14, 配当・インカム流:25"
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "8848",
+    "name": "レオパレス２１",
+    "sector33Name": "不動産業",
+    "sector33Code": "8050",
+    "sector17Code": "17",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-8848",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 203648016574,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 13.637448374338712,
+        "pbr": 4.389628102817236
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8848-2026-1Q",
+      "code": "8848",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-07T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 115902000000,
+      "operatingProfit": 12123000000,
+      "ordinaryProfit": 12279000000,
+      "profit": 7034000000,
+      "totalAssets": 182754000000,
+      "equity": 53244000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 317743014
+    },
+    {
+      "id": "static-8848-2026-FY",
+      "code": "8848",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-15T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 444820000000,
+      "operatingProfit": 35966000000,
+      "ordinaryProfit": 34842000000,
+      "profit": 14933000000,
+      "totalAssets": 176574000000,
+      "equity": 46393000000,
+      "cashAndEquivalents": 55924000000,
+      "sharesOutstanding": 317703614
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 12,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 12,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=59.9, PBR=4.39, PER=13.6 → 対象外"
+    },
+    "buffett": {
+      "score": 60,
+      "components": {
+        "roeScore": 60,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=32.2%, PBR=4.39 → 良好"
+    },
+    "lynch": {
+      "score": 30,
+      "components": {
+        "perScore": 38,
+        "sizeBonus": 0,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=13.6, 時価総額2036億 → 様子見"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り7.33%, NCR=null, PBR=4.39 → 様子見"
+    },
+    "composite": {
+      "score": 25,
+      "components": {
+        "kiyohara": 0,
+        "graham": 12,
+        "buffett": 60,
+        "lynch": 30,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:12, バフェット流:60, リンチ流:30, 配当・インカム流:25"
+    }
+  }
+}

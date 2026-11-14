@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "1377",
+    "name": "サカタのタネ",
+    "sector33Name": "水産・農林業",
+    "sector33Code": "0050",
+    "sector17Code": "1",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-1377",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 191225029375,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 15.721863797993915,
+        "pbr": 1.0683977214316442
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-1377-2026-FY",
+      "code": "1377",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-07-13T00:00:00.000Z",
+      "periodEndDate": "2026-05-31T00:00:00.000Z",
+      "netSales": 104280000000,
+      "operatingProfit": 13122000000,
+      "ordinaryProfit": 14278000000,
+      "profit": 12163000000,
+      "totalAssets": 216778000000,
+      "equity": 178983000000,
+      "cashAndEquivalents": 22518000000,
+      "sharesOutstanding": 42259675
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 54,
+      "components": {
+        "grahamProductScore": 37,
+        "pbrScore": 12,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=16.8, PBR=1.07, PER=15.7 → 買い候補"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=6.8%, PBR=1.07 → 対象外"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=15.7, 時価総額1912億 → 対象外"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り6.36%, NCR=null, PBR=1.07 → 様子見"
+    },
+    "composite": {
+      "score": 24,
+      "components": {
+        "kiyohara": 0,
+        "graham": 54,
+        "buffett": 10,
+        "lynch": 22,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:54, バフェット流:10, リンチ流:22, 配当・インカム流:35"
+    }
+  }
+}

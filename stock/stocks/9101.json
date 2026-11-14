@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "9101",
+    "name": "日本郵船",
+    "sector33Name": "海運業",
+    "sector33Code": "5100",
+    "sector17Code": "12",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Large70",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-9101",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 2879395936812,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 13.598091791319952,
+        "pbr": 0.9160024319914793
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-9101-2026-1Q",
+      "code": "9101",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-05T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 727656000000,
+      "operatingProfit": 57708000000,
+      "ordinaryProfit": 71222000000,
+      "profit": 67109000000,
+      "totalAssets": 5396846000000,
+      "equity": 3181605000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 403555618
+    },
+    {
+      "id": "static-9101-2026-FY",
+      "code": "9101",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-11T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 2423689000000,
+      "operatingProfit": 138601000000,
+      "ordinaryProfit": 211135000000,
+      "profit": 211750000000,
+      "totalAssets": 5201670000000,
+      "equity": 3143437000000,
+      "cashAndEquivalents": 210815000000,
+      "sharesOutstanding": 405491612
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 79,
+      "components": {
+        "grahamProductScore": 47,
+        "pbrScore": 20,
+        "perScore": 12,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=12.5, PBR=0.92, PER=13.6 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=6.7%, PBR=0.92 → 対象外"
+    },
+    "lynch": {
+      "score": 38,
+      "components": {
+        "perScore": 38,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=13.6, 時価総額28794億 → 様子見"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り7.35%, NCR=null, PBR=0.92 → 様子見"
+    },
+    "composite": {
+      "score": 32,
+      "components": {
+        "kiyohara": 0,
+        "graham": 79,
+        "buffett": 10,
+        "lynch": 38,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:79, バフェット流:10, リンチ流:38, 配当・インカム流:35"
+    }
+  }
+}

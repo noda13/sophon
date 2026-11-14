@@ -1,0 +1,133 @@
+{
+  "profile": {
+    "code": "8766",
+    "name": "東京海上ホールディングス",
+    "sector33Name": "保険業",
+    "sector33Code": "7150",
+    "sector17Code": "16",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Core30",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-8766",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 13801433776704,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 25.978924954502077,
+        "pbr": 1.713959003715055
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8766-2026-1Q",
+      "code": "8766",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-12T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": null,
+      "operatingProfit": null,
+      "ordinaryProfit": null,
+      "profit": 264300000000,
+      "totalAssets": 33676978000000,
+      "equity": 8323145000000,
+      "cashAndEquivalents": 2790959000000,
+      "sharesOutstanding": 1899994045
+    },
+    {
+      "id": "static-8766-2026-FY",
+      "code": "8766",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-06-26T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": null,
+      "operatingProfit": null,
+      "ordinaryProfit": null,
+      "profit": 531255000000,
+      "totalAssets": 33002651000000,
+      "equity": 8052371000000,
+      "cashAndEquivalents": 2332406000000,
+      "sharesOutstanding": 1878512832
+    },
+    {
+      "id": "static-8766-2026-FY",
+      "code": "8766",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-20T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 8872277000000,
+      "operatingProfit": null,
+      "ordinaryProfit": 1348630000000,
+      "profit": 980428000000,
+      "totalAssets": 31961940000000,
+      "equity": 5457571000000,
+      "cashAndEquivalents": 2085069000000,
+      "sharesOutstanding": 1878512832
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 18,
+      "components": {
+        "grahamProductScore": 13,
+        "pbrScore": 5,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=44.5, PBR=1.71, PER=26.0 → 対象外"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=6.6%, PBR=1.71 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=26.0, 時価総額138014億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り3.85%, NCR=null, PBR=1.71 → 対象外"
+    },
+    "composite": {
+      "score": 11,
+      "components": {
+        "kiyohara": 0,
+        "graham": 18,
+        "buffett": 10,
+        "lynch": 8,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:18, バフェット流:10, リンチ流:8, 配当・インカム流:18"
+    }
+  }
+}

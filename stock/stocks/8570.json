@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "8570",
+    "name": "イオンフィナンシャルサービス",
+    "sector33Name": "その他金融業",
+    "sector33Code": "7200",
+    "sector17Code": "16",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-8570",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 370133308309.5,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 41.281876902687934,
+        "pbr": 0.5991635909502225
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8570-2026-1Q",
+      "code": "8570",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-09T00:00:00.000Z",
+      "periodEndDate": "2026-05-31T00:00:00.000Z",
+      "netSales": 153881000000,
+      "operatingProfit": 17486000000,
+      "ordinaryProfit": 17545000000,
+      "profit": 8966000000,
+      "totalAssets": 8349649000000,
+      "equity": 617750000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 215884111
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 44,
+      "components": {
+        "grahamProductScore": 24,
+        "pbrScore": 20,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=24.7, PBR=0.60, PER=41.3 → 様子見"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=1.5%, PBR=0.60 → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=41.3, 時価総額3701億 → 対象外"
+    },
+    "dividend": {
+      "score": 5,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り2.42%, NCR=null, PBR=0.60 → 対象外"
+    },
+    "composite": {
+      "score": 10,
+      "components": {
+        "kiyohara": 0,
+        "graham": 44,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 5
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:44, バフェット流:0, リンチ流:0, 配当・インカム流:5"
+    }
+  }
+}

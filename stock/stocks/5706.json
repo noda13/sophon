@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "5706",
+    "name": "三井金属",
+    "sector33Name": "非鉄金属",
+    "sector33Code": "3500",
+    "sector17Code": "7",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-5706",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 1613959095840,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 17.68470350350087,
+        "pbr": 3.834451773158157
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-5706-2026-1Q",
+      "code": "5706",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-07T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 201597000000,
+      "operatingProfit": 21027000000,
+      "ordinaryProfit": 23474000000,
+      "profit": 16824000000,
+      "totalAssets": 719268000000,
+      "equity": 430465000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 57208977
+    },
+    {
+      "id": "static-5706-2026-FY",
+      "code": "5706",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-13T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 758532000000,
+      "operatingProfit": 130912000000,
+      "ordinaryProfit": 136736000000,
+      "profit": 91263000000,
+      "totalAssets": 697481000000,
+      "equity": 420910000000,
+      "cashAndEquivalents": 58271000000,
+      "sharesOutstanding": 57212304
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=67.8, PBR=3.83, PER=17.7 → 対象外"
+    },
+    "buffett": {
+      "score": 50,
+      "components": {
+        "roeScore": 50,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=21.7%, PBR=3.83 → 良好"
+    },
+    "lynch": {
+      "score": 14,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=17.7, 時価総額16140億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り5.65%, NCR=null, PBR=3.83 → 様子見"
+    },
+    "composite": {
+      "score": 19,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 50,
+        "lynch": 14,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:50, リンチ流:14, 配当・インカム流:25"
+    }
+  }
+}

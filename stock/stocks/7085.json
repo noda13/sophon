@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "7085",
+    "name": "カーブスホールディングス",
+    "sector33Name": "サービス業",
+    "sector33Code": "9050",
+    "sector17Code": "10",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-7085",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 89329814240,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 23.390891395653313,
+        "pbr": 3.731248245269621
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-7085-2026-3Q",
+      "code": "7085",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-07-13T00:00:00.000Z",
+      "periodEndDate": "2026-05-31T00:00:00.000Z",
+      "netSales": 31570000000,
+      "operatingProfit": 6150000000,
+      "ordinaryProfit": 6006000000,
+      "profit": 3819000000,
+      "totalAssets": 41623000000,
+      "equity": 23941000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 92092592
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=87.3, PBR=3.73, PER=23.4 → 対象外"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 40,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=16.0%, PBR=3.73 → 様子見"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=23.4, 時価総額893億 → 対象外"
+    },
+    "dividend": {
+      "score": 8,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り4.28%, NCR=null, PBR=3.73 → 対象外"
+    },
+    "composite": {
+      "score": 10,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 40,
+        "lynch": 0,
+        "dividend": 8
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:40, リンチ流:0, 配当・インカム流:8"
+    }
+  }
+}

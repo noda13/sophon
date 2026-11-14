@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "9682",
+    "name": "ＤＴＳ",
+    "sector33Name": "情報･通信業",
+    "sector33Code": "5250",
+    "sector17Code": "10",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-9682",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 177823499148,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 15.271684914805908,
+        "pbr": 2.748813577591937
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-9682-2026-1Q",
+      "code": "9682",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-31T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 31020000000,
+      "operatingProfit": 3334000000,
+      "ordinaryProfit": 3468000000,
+      "profit": 2309000000,
+      "totalAssets": 80231000000,
+      "equity": 61064000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 156495061
+    },
+    {
+      "id": "static-9682-2026-FY",
+      "code": "9682",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-01T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 135213000000,
+      "operatingProfit": 16434000000,
+      "ordinaryProfit": 16940000000,
+      "profit": 11644000000,
+      "totalAssets": 85248000000,
+      "equity": 64691000000,
+      "cashAndEquivalents": 29381000000,
+      "sharesOutstanding": 159340053
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 19,
+      "components": {
+        "grahamProductScore": 14,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=42.0, PBR=2.75, PER=15.3 → 対象外"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 40,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=18.0%, PBR=2.75 → 様子見"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=15.3, 時価総額1778億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り6.55%, NCR=null, PBR=2.75 → 様子見"
+    },
+    "composite": {
+      "score": 21,
+      "components": {
+        "kiyohara": 0,
+        "graham": 19,
+        "buffett": 40,
+        "lynch": 22,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:19, バフェット流:40, リンチ流:22, 配当・インカム流:25"
+    }
+  }
+}

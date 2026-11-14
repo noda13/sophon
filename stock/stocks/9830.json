@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "9830",
+    "name": "トラスコ中山",
+    "sector33Name": "卸売業",
+    "sector33Code": "6050",
+    "sector17Code": "13",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-9830",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 155618090840,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 18.429428095689246,
+        "pbr": 0.8049766751500104
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-9830-2026-2Q",
+      "code": "9830",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2026-08-07T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 178204000000,
+      "operatingProfit": 12483000000,
+      "ordinaryProfit": 12217000000,
+      "profit": 8444000000,
+      "totalAssets": 339515000000,
+      "equity": 193320000000,
+      "cashAndEquivalents": 66873000000,
+      "sharesOutstanding": 65939869
+    },
+    {
+      "id": "static-9830-2026-1Q",
+      "code": "9830",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-04-30T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 86961000000,
+      "operatingProfit": 6000000000,
+      "ordinaryProfit": 5908000000,
+      "profit": 4105000000,
+      "totalAssets": 335453000000,
+      "equity": 188576000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 65940073
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 67,
+      "components": {
+        "grahamProductScore": 42,
+        "pbrScore": 20,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=14.8, PBR=0.80, PER=18.4 → 買い候補"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=4.4%, PBR=0.80 → 対象外"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=18.4, 時価総額1556億 → 対象外"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り5.43%, NCR=null, PBR=0.80 → 様子見"
+    },
+    "composite": {
+      "score": 25,
+      "components": {
+        "kiyohara": 0,
+        "graham": 67,
+        "buffett": 0,
+        "lynch": 22,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:67, バフェット流:0, リンチ流:22, 配当・インカム流:35"
+    }
+  }
+}

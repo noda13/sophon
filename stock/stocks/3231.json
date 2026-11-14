@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "3231",
+    "name": "野村不動産ホールディングス",
+    "sector33Name": "不動産業",
+    "sector33Code": "8050",
+    "sector17Code": "17",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-3231",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 793126377799.5,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 9.569575021712113,
+        "pbr": 0.9880375292277966
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-3231-2026-1Q",
+      "code": "3231",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-30T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 191064000000,
+      "operatingProfit": 25540000000,
+      "ordinaryProfit": 21648000000,
+      "profit": 14728000000,
+      "totalAssets": 2836892000000,
+      "equity": 802282000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 856397503
+    },
+    {
+      "id": "static-3231-2026-FY",
+      "code": "3231",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-04-24T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 942505000000,
+      "operatingProfit": 138242000000,
+      "ordinaryProfit": 124807000000,
+      "profit": 82880000000,
+      "totalAssets": 2811989000000,
+      "equity": 802729000000,
+      "cashAndEquivalents": 36842000000,
+      "sharesOutstanding": 854201807
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 90,
+      "components": {
+        "grahamProductScore": 50,
+        "pbrScore": 20,
+        "perScore": 20,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=9.5, PBR=0.99, PER=9.6 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=10.3%, PBR=0.99 → 様子見"
+    },
+    "lynch": {
+      "score": 50,
+      "components": {
+        "perScore": 50,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=9.6, 時価総額7931億 → 注目"
+    },
+    "dividend": {
+      "score": 50,
+      "components": {
+        "earningsYieldScore": 50,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り10.45%, NCR=null, PBR=0.99 → 良好"
+    },
+    "composite": {
+      "score": 43,
+      "components": {
+        "kiyohara": 0,
+        "graham": 90,
+        "buffett": 25,
+        "lynch": 50,
+        "dividend": 50
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:90, バフェット流:25, リンチ流:50, 配当・インカム流:50"
+    }
+  }
+}

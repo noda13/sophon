@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "6941",
+    "name": "山一電機",
+    "sector33Name": "電気機器",
+    "sector33Code": "3650",
+    "sector17Code": "9",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-6941",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 145071391200,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 15.989352055549432,
+        "pbr": 3.1060547081745384
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-6941-2026-1Q",
+      "code": "6941",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-05T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 19893000000,
+      "operatingProfit": 5953000000,
+      "ordinaryProfit": 6161000000,
+      "profit": 4326000000,
+      "totalAssets": 66308000000,
+      "equity": 49212000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 18456360
+    },
+    {
+      "id": "static-6941-2026-FY",
+      "code": "6941",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-13T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 52698000000,
+      "operatingProfit": 11556000000,
+      "ordinaryProfit": 12126000000,
+      "profit": 9073000000,
+      "totalAssets": 63253000000,
+      "equity": 46706000000,
+      "cashAndEquivalents": 17237000000,
+      "sharesOutstanding": 18456920
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=49.7, PBR=3.11, PER=16.0 → 対象外"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 40,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=19.4%, PBR=3.11 → 様子見"
+    },
+    "lynch": {
+      "score": 14,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=16.0, 時価総額1451億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り6.25%, NCR=null, PBR=3.11 → 様子見"
+    },
+    "composite": {
+      "score": 17,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 40,
+        "lynch": 14,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:40, リンチ流:14, 配当・インカム流:25"
+    }
+  }
+}

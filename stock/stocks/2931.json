@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "2931",
+    "name": "ユーグレナ",
+    "sector33Name": "食料品",
+    "sector33Code": "3050",
+    "sector17Code": "1",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-2931",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 50220303840,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 687.9493676712328,
+        "pbr": 1.5908107269789984
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-2931-2026-2Q",
+      "code": "2931",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2026-08-07T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 26507000000,
+      "operatingProfit": 1871000000,
+      "ordinaryProfit": 1709000000,
+      "profit": 73000000,
+      "totalAssets": 69272000000,
+      "equity": 31569000000,
+      "cashAndEquivalents": 13408000000,
+      "sharesOutstanding": 139500844
+    },
+    {
+      "id": "static-2931-2026-1Q",
+      "code": "2931",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-05-14T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 13197000000,
+      "operatingProfit": 837000000,
+      "ordinaryProfit": 782000000,
+      "profit": -32000000,
+      "totalAssets": 70658000000,
+      "equity": 30799000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 139252138
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 5,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=1094.4, PBR=1.59, PER=687.9 → 対象外"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=0.2%, PBR=1.59 → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=687.9, 時価総額502億 → 対象外"
+    },
+    "dividend": {
+      "score": 5,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り0.15%, NCR=null, PBR=1.59 → 対象外"
+    },
+    "composite": {
+      "score": 2,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 5
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:0, リンチ流:0, 配当・インカム流:5"
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "1414",
+    "name": "ショーボンドホールディングス",
+    "sector33Name": "建設業",
+    "sector33Code": "2050",
+    "sector17Code": "3",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-1414",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 252270061120,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 16.3397928052335,
+        "pbr": 2.3277299505425555
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-1414-2026-FY",
+      "code": "1414",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-08-10T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 89204000000,
+      "operatingProfit": 20831000000,
+      "ordinaryProfit": 21485000000,
+      "profit": 15439000000,
+      "totalAssets": 129858000000,
+      "equity": 108376000000,
+      "cashAndEquivalents": 37247000000,
+      "sharesOutstanding": 200532640
+    },
+    {
+      "id": "static-1414-2026-3Q",
+      "code": "1414",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-05-11T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 66753000000,
+      "operatingProfit": 16591000000,
+      "ordinaryProfit": 16968000000,
+      "profit": 11860000000,
+      "totalAssets": 124880000000,
+      "equity": 105446000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 201381040
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 21,
+      "components": {
+        "grahamProductScore": 16,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=38.0, PBR=2.33, PER=16.3 → 対象外"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=14.2%, PBR=2.33 → 様子見"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=16.3, 時価総額2523億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り6.12%, NCR=null, PBR=2.33 → 様子見"
+    },
+    "composite": {
+      "score": 19,
+      "components": {
+        "kiyohara": 0,
+        "graham": 21,
+        "buffett": 25,
+        "lynch": 22,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:21, バフェット流:25, リンチ流:22, 配当・インカム流:25"
+    }
+  }
+}

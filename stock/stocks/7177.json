@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "7177",
+    "name": "ＧＭＯフィナンシャルホールディングス",
+    "sector33Name": "証券･商品先物取引業",
+    "sector33Code": "7100",
+    "sector17Code": "16",
+    "marketSegment": "スタンダード",
+    "scaleCategory": "-",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-7177",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 132855956304,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 20.36418704843654,
+        "pbr": 2.34408942435203
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-7177-2026-2Q",
+      "code": "7177",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2026-08-05T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 29544000000,
+      "operatingProfit": 10350000000,
+      "ordinaryProfit": 10261000000,
+      "profit": 6524000000,
+      "totalAssets": 1315649000000,
+      "equity": 56677000000,
+      "cashAndEquivalents": 111949000000,
+      "sharesOutstanding": 117989304
+    },
+    {
+      "id": "static-7177-2026-1Q",
+      "code": "7177",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-04-30T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 16234000000,
+      "operatingProfit": 6462000000,
+      "ordinaryProfit": 6435000000,
+      "profit": 4205000000,
+      "totalAssets": 1349483000000,
+      "equity": 56128000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 117989304
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=47.7, PBR=2.34, PER=20.4 → 対象外"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=11.5%, PBR=2.34 → 様子見"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=20.4, 時価総額1329億 → 対象外"
+    },
+    "dividend": {
+      "score": 8,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り4.91%, NCR=null, PBR=2.34 → 対象外"
+    },
+    "composite": {
+      "score": 8,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 25,
+        "lynch": 8,
+        "dividend": 8
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:25, リンチ流:8, 配当・インカム流:8"
+    }
+  }
+}

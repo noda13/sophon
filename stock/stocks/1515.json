@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "1515",
+    "name": "日鉄鉱業",
+    "sector33Name": "鉱業",
+    "sector33Code": "1050",
+    "sector17Code": "2",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-1515",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 285222333375,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 20.325114613767546,
+        "pbr": 1.7015805405913305
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-1515-2026-1Q",
+      "code": "1515",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-06T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 57406000000,
+      "operatingProfit": 5088000000,
+      "ordinaryProfit": 4470000000,
+      "profit": 4782000000,
+      "totalAssets": 326951000000,
+      "equity": 168651000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 77477123
+    },
+    {
+      "id": "static-1515-2026-FY",
+      "code": "1515",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-13T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 209717000000,
+      "operatingProfit": 18826000000,
+      "ordinaryProfit": 20221000000,
+      "profit": 14033000000,
+      "totalAssets": 310412000000,
+      "equity": 167622000000,
+      "cashAndEquivalents": 43236000000,
+      "sharesOutstanding": 78682023
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 23,
+      "components": {
+        "grahamProductScore": 18,
+        "pbrScore": 5,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=34.6, PBR=1.70, PER=20.3 → 対象外"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=8.4%, PBR=1.70 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=20.3, 時価総額2852億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り4.92%, NCR=null, PBR=1.70 → 対象外"
+    },
+    "composite": {
+      "score": 12,
+      "components": {
+        "kiyohara": 0,
+        "graham": 23,
+        "buffett": 10,
+        "lynch": 8,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:23, バフェット流:10, リンチ流:8, 配当・インカム流:18"
+    }
+  }
+}

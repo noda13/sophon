@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "6227",
+    "name": "ＡＩメカテック",
+    "sector33Name": "機械",
+    "sector33Code": "3600",
+    "sector17Code": "8",
+    "marketSegment": "スタンダード",
+    "scaleCategory": "-",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-6227",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 111364932480,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 31.282284404494384,
+        "pbr": 7.685640612836439
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-6227-2026-FY",
+      "code": "6227",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-08-07T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 35244000000,
+      "operatingProfit": 5810000000,
+      "ordinaryProfit": 5636000000,
+      "profit": 3560000000,
+      "totalAssets": 30048000000,
+      "equity": 14490000000,
+      "cashAndEquivalents": 8572000000,
+      "sharesOutstanding": 18811644
+    },
+    {
+      "id": "static-6227-2026-3Q",
+      "code": "6227",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-05-15T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 24863000000,
+      "operatingProfit": 4228000000,
+      "ordinaryProfit": 4095000000,
+      "profit": 2820000000,
+      "totalAssets": 29488000000,
+      "equity": 13551000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 18811644
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=240.4, PBR=7.69, PER=31.3 → 対象外"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 50,
+        "qualityBonus": 0,
+        "valuationPenalty": -10
+      },
+      "reason": "ROE=24.6%, PBR=7.69 → 様子見"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=31.3, 時価総額1114億 → 対象外"
+    },
+    "dividend": {
+      "score": 8,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り3.20%, NCR=null, PBR=7.69 → 対象外"
+    },
+    "composite": {
+      "score": 10,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 40,
+        "lynch": 0,
+        "dividend": 8
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:40, リンチ流:0, 配当・インカム流:8"
+    }
+  }
+}

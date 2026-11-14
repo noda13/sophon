@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "2602",
+    "name": "日清オイリオグループ",
+    "sector33Name": "食料品",
+    "sector33Code": "3050",
+    "sector17Code": "1",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-2602",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 189070492923,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 7.881878144197098,
+        "pbr": 0.8516535419316769
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-2602-2026-1Q",
+      "code": "2602",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-07T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 152401000000,
+      "operatingProfit": 6426000000,
+      "ordinaryProfit": 5176000000,
+      "profit": 3439000000,
+      "totalAssets": 451971000000,
+      "equity": 223749000000,
+      "cashAndEquivalents": 18266000000,
+      "sharesOutstanding": 91502775
+    },
+    {
+      "id": "static-2602-2026-FY",
+      "code": "2602",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-12T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 554251000000,
+      "operatingProfit": 17027000000,
+      "ordinaryProfit": 16030000000,
+      "profit": 23988000000,
+      "totalAssets": 451185000000,
+      "equity": 222004000000,
+      "cashAndEquivalents": 24953000000,
+      "sharesOutstanding": 91470969
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 90,
+      "components": {
+        "grahamProductScore": 50,
+        "pbrScore": 20,
+        "perScore": 20,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=6.7, PBR=0.85, PER=7.9 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=10.8%, PBR=0.85 → 様子見"
+    },
+    "lynch": {
+      "score": 50,
+      "components": {
+        "perScore": 50,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=7.9, 時価総額1891億 → 注目"
+    },
+    "dividend": {
+      "score": 60,
+      "components": {
+        "earningsYieldScore": 60,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り12.69%, NCR=null, PBR=0.85 → 良好"
+    },
+    "composite": {
+      "score": 45,
+      "components": {
+        "kiyohara": 0,
+        "graham": 90,
+        "buffett": 25,
+        "lynch": 50,
+        "dividend": 60
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:90, バフェット流:25, リンチ流:50, 配当・インカム流:60"
+    }
+  }
+}

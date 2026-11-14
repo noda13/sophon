@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "8871",
+    "name": "ゴールドクレスト",
+    "sector33Name": "不動産業",
+    "sector33Code": "8050",
+    "sector17Code": "17",
+    "marketSegment": "スタンダード",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-8871",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 111669791520,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 19.049776786079835,
+        "pbr": 0.8212100978070627
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8871-2026-1Q",
+      "code": "8871",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-31T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 17143000000,
+      "operatingProfit": 8868000000,
+      "ordinaryProfit": 8494000000,
+      "profit": 5822000000,
+      "totalAssets": 324617000000,
+      "equity": 140155000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 33235057
+    },
+    {
+      "id": "static-8871-2026-FY",
+      "code": "8871",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-14T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 30445000000,
+      "operatingProfit": 8909000000,
+      "ordinaryProfit": 8559000000,
+      "profit": 5862000000,
+      "totalAssets": 323030000000,
+      "equity": 135982000000,
+      "cashAndEquivalents": 58418000000,
+      "sharesOutstanding": 33235057
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 65,
+      "components": {
+        "grahamProductScore": 40,
+        "pbrScore": 20,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=15.6, PBR=0.82, PER=19.0 → 買い候補"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=4.3%, PBR=0.82 → 対象外"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=19.0, 時価総額1117億 → 対象外"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り5.25%, NCR=null, PBR=0.82 → 様子見"
+    },
+    "composite": {
+      "score": 24,
+      "components": {
+        "kiyohara": 0,
+        "graham": 65,
+        "buffett": 0,
+        "lynch": 22,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:65, バフェット流:0, リンチ流:22, 配当・インカム流:35"
+    }
+  }
+}

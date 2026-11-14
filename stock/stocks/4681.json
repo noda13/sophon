@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "4681",
+    "name": "リゾートトラスト",
+    "sector33Name": "サービス業",
+    "sector33Code": "9050",
+    "sector17Code": "10",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-4681",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 393802505668.5,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 18.83141285713944,
+        "pbr": 2.362583500827919
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-4681-2026-1Q",
+      "code": "4681",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-12T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 61261000000,
+      "operatingProfit": 8116000000,
+      "ordinaryProfit": 8034000000,
+      "profit": 5467000000,
+      "totalAssets": 538178000000,
+      "equity": 169271000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 212369433
+    },
+    {
+      "id": "static-4681-2026-FY",
+      "code": "4681",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-15T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 263020000000,
+      "operatingProfit": 29161000000,
+      "ordinaryProfit": 29281000000,
+      "profit": 20912000000,
+      "totalAssets": 525309000000,
+      "equity": 166683000000,
+      "cashAndEquivalents": 32887000000,
+      "sharesOutstanding": 212349693
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 18,
+      "components": {
+        "grahamProductScore": 13,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=44.5, PBR=2.36, PER=18.8 → 対象外"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=12.5%, PBR=2.36 → 様子見"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=18.8, 時価総額3938億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り5.31%, NCR=null, PBR=2.36 → 様子見"
+    },
+    "composite": {
+      "score": 18,
+      "components": {
+        "kiyohara": 0,
+        "graham": 18,
+        "buffett": 25,
+        "lynch": 22,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:18, バフェット流:25, リンチ流:22, 配当・インカム流:25"
+    }
+  }
+}

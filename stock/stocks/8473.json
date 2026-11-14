@@ -1,0 +1,133 @@
+{
+  "profile": {
+    "code": "8473",
+    "name": "ＳＢＩホールディングス",
+    "sector33Name": "証券･商品先物取引業",
+    "sector33Code": "7100",
+    "sector17Code": "16",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-8473",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 2078701471968,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 4.861583929837199,
+        "pbr": 0.8613298007668138
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8473-2026-1Q",
+      "code": "8473",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-31T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 571013000000,
+      "operatingProfit": null,
+      "ordinaryProfit": null,
+      "profit": 148065000000,
+      "totalAssets": 39187133000000,
+      "equity": 2474137000000,
+      "cashAndEquivalents": 6142647000000,
+      "sharesOutstanding": 646403116
+    },
+    {
+      "id": "static-8473-2026-FY",
+      "code": "8473",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-07-02T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 1896607000000,
+      "operatingProfit": null,
+      "ordinaryProfit": null,
+      "profit": 427577000000,
+      "totalAssets": 38290797000000,
+      "equity": 2413363000000,
+      "cashAndEquivalents": 6400580000000,
+      "sharesOutstanding": 646362398
+    },
+    {
+      "id": "static-8473-2026-FY",
+      "code": "8473",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-01T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 1896607000000,
+      "operatingProfit": null,
+      "ordinaryProfit": null,
+      "profit": 427577000000,
+      "totalAssets": 38290797000000,
+      "equity": 2413363000000,
+      "cashAndEquivalents": 6400580000000,
+      "sharesOutstanding": 646362398
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 95,
+      "components": {
+        "grahamProductScore": 50,
+        "pbrScore": 20,
+        "perScore": 25,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=4.2, PBR=0.86, PER=4.9 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 40,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=17.7%, PBR=0.86 → 様子見"
+    },
+    "lynch": {
+      "score": 60,
+      "components": {
+        "perScore": 60,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=4.9, 時価総額20787億 → 注目"
+    },
+    "dividend": {
+      "score": 60,
+      "components": {
+        "earningsYieldScore": 60,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り20.57%, NCR=null, PBR=0.86 → 良好"
+    },
+    "composite": {
+      "score": 51,
+      "components": {
+        "kiyohara": 0,
+        "graham": 95,
+        "buffett": 40,
+        "lynch": 60,
+        "dividend": 60
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:95, バフェット流:40, リンチ流:60, 配当・インカム流:60"
+    }
+  }
+}

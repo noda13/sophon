@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "1762",
+    "name": "高松コンストラクショングループ",
+    "sector33Name": "建設業",
+    "sector33Code": "2050",
+    "sector17Code": "3",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 2",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-1762",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 139273868000,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 12.189206021354805,
+        "pbr": 0.9479184623551992
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-1762-2026-1Q",
+      "code": "1762",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-05T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 88449000000,
+      "operatingProfit": 5461000000,
+      "ordinaryProfit": 5320000000,
+      "profit": 3292000000,
+      "totalAssets": 294504000000,
+      "equity": 147323000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 34818467
+    },
+    {
+      "id": "static-1762-2026-FY",
+      "code": "1762",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-13T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 357675000000,
+      "operatingProfit": 17897000000,
+      "ordinaryProfit": 17512000000,
+      "profit": 11426000000,
+      "totalAssets": 314734000000,
+      "equity": 146926000000,
+      "cashAndEquivalents": 33920000000,
+      "sharesOutstanding": 34818467
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 81,
+      "components": {
+        "grahamProductScore": 49,
+        "pbrScore": 20,
+        "perScore": 12,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=11.6, PBR=0.95, PER=12.2 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=7.8%, PBR=0.95 → 対象外"
+    },
+    "lynch": {
+      "score": 38,
+      "components": {
+        "perScore": 38,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=12.2, 時価総額1393億 → 様子見"
+    },
+    "dividend": {
+      "score": 50,
+      "components": {
+        "earningsYieldScore": 50,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り8.20%, NCR=null, PBR=0.95 → 良好"
+    },
+    "composite": {
+      "score": 36,
+      "components": {
+        "kiyohara": 0,
+        "graham": 81,
+        "buffett": 10,
+        "lynch": 38,
+        "dividend": 50
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:81, バフェット流:10, リンチ流:38, 配当・インカム流:50"
+    }
+  }
+}

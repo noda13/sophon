@@ -1,0 +1,133 @@
+{
+  "profile": {
+    "code": "8628",
+    "name": "松井証券",
+    "sector33Name": "証券･商品先物取引業",
+    "sector33Code": "7100",
+    "sector17Code": "16",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-8628",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 285672625437,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 18.45430396879845,
+        "pbr": 3.469132153411782
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8628-2026-1Q",
+      "code": "8628",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-31T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 17299000000,
+      "operatingProfit": 8763000000,
+      "ordinaryProfit": 8856000000,
+      "profit": 5609000000,
+      "totalAssets": 1525023000000,
+      "equity": 81691000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 257622693
+    },
+    {
+      "id": "static-8628-2026-1Q",
+      "code": "8628",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-28T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 17299000000,
+      "operatingProfit": 8763000000,
+      "ordinaryProfit": 8856000000,
+      "profit": 5609000000,
+      "totalAssets": 1525023000000,
+      "equity": 81691000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 257622693
+    },
+    {
+      "id": "static-8628-2026-FY",
+      "code": "8628",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-04-27T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 52660000000,
+      "operatingProfit": 23462000000,
+      "ordinaryProfit": 23813000000,
+      "profit": 15480000000,
+      "totalAssets": 1354059000000,
+      "equity": 82347000000,
+      "cashAndEquivalents": 81748000000,
+      "sharesOutstanding": 257594793
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=64.0, PBR=3.47, PER=18.5 → 対象外"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 40,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=18.8%, PBR=3.47 → 様子見"
+    },
+    "lynch": {
+      "score": 14,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=18.5, 時価総額2857億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り5.42%, NCR=null, PBR=3.47 → 様子見"
+    },
+    "composite": {
+      "score": 17,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 40,
+        "lynch": 14,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:40, リンチ流:14, 配当・インカム流:25"
+    }
+  }
+}

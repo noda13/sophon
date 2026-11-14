@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "5108",
+    "name": "ブリヂストン",
+    "sector33Name": "ゴム製品",
+    "sector33Code": "3350",
+    "sector17Code": "6",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Large70",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-5108",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 5124208747111,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 24.84525077995103,
+        "pbr": 1.3348722328999256
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-5108-2026-2Q",
+      "code": "5108",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2026-08-07T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 2321667000000,
+      "operatingProfit": 280229000000,
+      "ordinaryProfit": null,
+      "profit": 206245000000,
+      "totalAssets": 5902954000000,
+      "equity": 3838726000000,
+      "cashAndEquivalents": 791733000000,
+      "sharesOutstanding": 1244646283
+    },
+    {
+      "id": "static-5108-2026-1Q",
+      "code": "5108",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-05-14T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 1113427000000,
+      "operatingProfit": 125802000000,
+      "ordinaryProfit": null,
+      "profit": 92112000000,
+      "totalAssets": 5645839000000,
+      "equity": 3736191000000,
+      "cashAndEquivalents": 642944000000,
+      "sharesOutstanding": 1262240735
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 31,
+      "components": {
+        "grahamProductScore": 19,
+        "pbrScore": 12,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=33.2, PBR=1.33, PER=24.8 → 様子見"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=5.4%, PBR=1.33 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=24.8, 時価総額51242億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り4.02%, NCR=null, PBR=1.33 → 対象外"
+    },
+    "composite": {
+      "score": 13,
+      "components": {
+        "kiyohara": 0,
+        "graham": 31,
+        "buffett": 10,
+        "lynch": 8,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:31, バフェット流:10, リンチ流:8, 配当・インカム流:18"
+    }
+  }
+}

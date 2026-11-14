@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "4203",
+    "name": "住友ベークライト",
+    "sector33Name": "化学",
+    "sector33Code": "3200",
+    "sector17Code": "4",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-4203",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 629151535827,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 22.45846847387021,
+        "pbr": 1.794264117734125
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-4203-2026-1Q",
+      "code": "4203",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-03T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 95211000000,
+      "operatingProfit": 14218000000,
+      "ordinaryProfit": null,
+      "profit": 10933000000,
+      "totalAssets": 503479000000,
+      "equity": 362796000000,
+      "cashAndEquivalents": 130290000000,
+      "sharesOutstanding": 87735417
+    },
+    {
+      "id": "static-4203-2026-FY",
+      "code": "4203",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-11T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 319867000000,
+      "operatingProfit": 35478000000,
+      "ordinaryProfit": null,
+      "profit": 28014000000,
+      "totalAssets": 484167000000,
+      "equity": 350646000000,
+      "cashAndEquivalents": 124752000000,
+      "sharesOutstanding": 87735537
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 20,
+      "components": {
+        "grahamProductScore": 15,
+        "pbrScore": 5,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=40.3, PBR=1.79, PER=22.5 → 対象外"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=8.0%, PBR=1.79 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=22.5, 時価総額6292億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り4.45%, NCR=null, PBR=1.79 → 対象外"
+    },
+    "composite": {
+      "score": 11,
+      "components": {
+        "kiyohara": 0,
+        "graham": 20,
+        "buffett": 10,
+        "lynch": 8,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:20, バフェット流:10, リンチ流:8, 配当・インカム流:18"
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "8439",
+    "name": "東京センチュリー",
+    "sector33Name": "その他金融業",
+    "sector33Code": "7200",
+    "sector17Code": "16",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-8439",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 1249764091362,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 11.228888771345655,
+        "pbr": 0.9977415580016813
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8439-2026-1Q",
+      "code": "8439",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-03T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 388407000000,
+      "operatingProfit": 46303000000,
+      "ordinaryProfit": 51057000000,
+      "profit": 35129000000,
+      "totalAssets": 7437496000000,
+      "equity": 1291832000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 488931466
+    },
+    {
+      "id": "static-8439-2026-FY",
+      "code": "8439",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-11T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 1457670000000,
+      "operatingProfit": 148306000000,
+      "ordinaryProfit": 163417000000,
+      "profit": 111299000000,
+      "totalAssets": 7214810000000,
+      "equity": 1252593000000,
+      "cashAndEquivalents": 219668000000,
+      "sharesOutstanding": 488761866
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 82,
+      "components": {
+        "grahamProductScore": 50,
+        "pbrScore": 20,
+        "perScore": 12,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=11.2, PBR=1.00, PER=11.2 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=8.9%, PBR=1.00 → 対象外"
+    },
+    "lynch": {
+      "score": 38,
+      "components": {
+        "perScore": 38,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=11.2, 時価総額12498億 → 様子見"
+    },
+    "dividend": {
+      "score": 50,
+      "components": {
+        "earningsYieldScore": 50,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り8.91%, NCR=null, PBR=1.00 → 良好"
+    },
+    "composite": {
+      "score": 36,
+      "components": {
+        "kiyohara": 0,
+        "graham": 82,
+        "buffett": 10,
+        "lynch": 38,
+        "dividend": 50
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:82, バフェット流:10, リンチ流:38, 配当・インカム流:50"
+    }
+  }
+}

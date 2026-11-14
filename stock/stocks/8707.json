@@ -1,0 +1,133 @@
+{
+  "profile": {
+    "code": "8707",
+    "name": "岩井コスモホールディングス",
+    "sector33Name": "証券･商品先物取引業",
+    "sector33Code": "7100",
+    "sector17Code": "16",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-8707",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 108048135000,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 10.346465096236713,
+        "pbr": 1.4543123359580052
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8707-2026-1Q",
+      "code": "8707",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-06T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 9496000000,
+      "operatingProfit": 4369000000,
+      "ordinaryProfit": 4687000000,
+      "profit": 3398000000,
+      "totalAssets": 232583000000,
+      "equity": 74425000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 23488725
+    },
+    {
+      "id": "static-8707-2026-1Q",
+      "code": "8707",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-24T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 9496000000,
+      "operatingProfit": 4369000000,
+      "ordinaryProfit": 4687000000,
+      "profit": 3398000000,
+      "totalAssets": 232583000000,
+      "equity": 74425000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 23488725
+    },
+    {
+      "id": "static-8707-2026-FY",
+      "code": "8707",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-04-24T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 32260000000,
+      "operatingProfit": 13007000000,
+      "ordinaryProfit": 13550000000,
+      "profit": 10443000000,
+      "totalAssets": 213027000000,
+      "equity": 74295000000,
+      "cashAndEquivalents": 5560000000,
+      "sharesOutstanding": 23488725
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 65,
+      "components": {
+        "grahamProductScore": 41,
+        "pbrScore": 12,
+        "perScore": 12,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=15.0, PBR=1.45, PER=10.3 → 買い候補"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=14.1%, PBR=1.45 → 様子見"
+    },
+    "lynch": {
+      "score": 38,
+      "components": {
+        "perScore": 38,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=10.3, 時価総額1080億 → 様子見"
+    },
+    "dividend": {
+      "score": 50,
+      "components": {
+        "earningsYieldScore": 50,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り9.67%, NCR=null, PBR=1.45 → 良好"
+    },
+    "composite": {
+      "score": 36,
+      "components": {
+        "kiyohara": 0,
+        "graham": 65,
+        "buffett": 25,
+        "lynch": 38,
+        "dividend": 50
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:65, バフェット流:25, リンチ流:38, 配当・インカム流:50"
+    }
+  }
+}

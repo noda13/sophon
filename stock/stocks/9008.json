@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "9008",
+    "name": "京王電鉄",
+    "sector33Name": "陸運業",
+    "sector33Code": "5050",
+    "sector17Code": "12",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-9008",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 454655183367,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 10.590863597265251,
+        "pbr": 1.0235209786585984
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-9008-2026-1Q",
+      "code": "9008",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-06T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 123161000000,
+      "operatingProfit": 16180000000,
+      "ordinaryProfit": 16162000000,
+      "profit": 11710000000,
+      "totalAssets": 1171666000000,
+      "equity": 455076000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 578883130
+    },
+    {
+      "id": "static-9008-2026-FY",
+      "code": "9008",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-13T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 496939000000,
+      "operatingProfit": 52322000000,
+      "ordinaryProfit": 51172000000,
+      "profit": 42929000000,
+      "totalAssets": 1199857000000,
+      "equity": 444207000000,
+      "cashAndEquivalents": 47711000000,
+      "sharesOutstanding": 578883605
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 74,
+      "components": {
+        "grahamProductScore": 50,
+        "pbrScore": 12,
+        "perScore": 12,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=10.8, PBR=1.02, PER=10.6 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=9.7%, PBR=1.02 → 対象外"
+    },
+    "lynch": {
+      "score": 38,
+      "components": {
+        "perScore": 38,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=10.6, 時価総額4547億 → 様子見"
+    },
+    "dividend": {
+      "score": 50,
+      "components": {
+        "earningsYieldScore": 50,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り9.44%, NCR=null, PBR=1.02 → 良好"
+    },
+    "composite": {
+      "score": 34,
+      "components": {
+        "kiyohara": 0,
+        "graham": 74,
+        "buffett": 10,
+        "lynch": 38,
+        "dividend": 50
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:74, バフェット流:10, リンチ流:38, 配当・インカム流:50"
+    }
+  }
+}

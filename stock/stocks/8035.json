@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "8035",
+    "name": "東京エレクトロン",
+    "sector33Name": "電気機器",
+    "sector33Code": "3650",
+    "sector17Code": "9",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Core30",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-8035",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 24693789778680,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 42.98653987730958,
+        "pbr": 11.929390094802116
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8035-2026-1Q",
+      "code": "8035",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-30T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 732388000000,
+      "operatingProfit": 211407000000,
+      "ordinaryProfit": 215626000000,
+      "profit": 164341000000,
+      "totalAssets": 2955405000000,
+      "equity": 2142901000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 454651196
+    },
+    {
+      "id": "static-8035-2026-FY",
+      "code": "8035",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-04-30T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 2443533000000,
+      "operatingProfit": 624936000000,
+      "ordinaryProfit": 630338000000,
+      "profit": 574454000000,
+      "totalAssets": 2860997000000,
+      "equity": 2069996000000,
+      "cashAndEquivalents": 505414000000,
+      "sharesOutstanding": 454849692
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=512.8, PBR=11.93, PER=43.0 → 対象外"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 50,
+        "qualityBonus": 0,
+        "valuationPenalty": -10
+      },
+      "reason": "ROE=27.8%, PBR=11.93 → 様子見"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": -8
+      },
+      "reason": "PER=43.0, 時価総額246938億 → 対象外"
+    },
+    "dividend": {
+      "score": 0,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り2.33%, NCR=null, PBR=11.93 → 対象外"
+    },
+    "composite": {
+      "score": 8,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 40,
+        "lynch": 0,
+        "dividend": 0
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:40, リンチ流:0, 配当・インカム流:0"
+    }
+  }
+}

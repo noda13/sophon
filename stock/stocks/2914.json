@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "2914",
+    "name": "日本たばこ産業",
+    "sector33Name": "食料品",
+    "sector33Code": "3050",
+    "sector17Code": "1",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Core30",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-2914",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 12392569517820,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 28.697863084276413,
+        "pbr": 2.801815380296402
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-2914-2026-2Q",
+      "code": "2914",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2026-07-30T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 1986070000000,
+      "operatingProfit": 644940000000,
+      "ordinaryProfit": null,
+      "profit": 431829000000,
+      "totalAssets": 8669953000000,
+      "equity": 4423050000000,
+      "cashAndEquivalents": 827909000000,
+      "sharesOutstanding": 1775439759
+    },
+    {
+      "id": "static-2914-2026-1Q",
+      "code": "2914",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-05-08T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 923963000000,
+      "operatingProfit": 304554000000,
+      "ordinaryProfit": null,
+      "profit": 197041000000,
+      "totalAssets": 8351210000000,
+      "equity": 4114889000000,
+      "cashAndEquivalents": 694622000000,
+      "sharesOutstanding": 1775241665
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 0,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=80.4, PBR=2.80, PER=28.7 → 対象外"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=9.8%, PBR=2.80 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=28.7, 時価総額123926億 → 対象外"
+    },
+    "dividend": {
+      "score": 8,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り3.48%, NCR=null, PBR=2.80 → 対象外"
+    },
+    "composite": {
+      "score": 5,
+      "components": {
+        "kiyohara": 0,
+        "graham": 0,
+        "buffett": 10,
+        "lynch": 8,
+        "dividend": 8
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:0, バフェット流:10, リンチ流:8, 配当・インカム流:8"
+    }
+  }
+}

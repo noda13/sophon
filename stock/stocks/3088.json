@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "3088",
+    "name": "マツキヨココカラ＆カンパニー",
+    "sector33Name": "小売業",
+    "sector33Code": "6100",
+    "sector17Code": "14",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-3088",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 1023663374475,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 18.353115577936748,
+        "pbr": 1.8801753959033962
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-3088-2026-1Q",
+      "code": "3088",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-10T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 289348000000,
+      "operatingProfit": 21487000000,
+      "ordinaryProfit": 22822000000,
+      "profit": 14865000000,
+      "totalAssets": 736953000000,
+      "equity": 537838000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 393311795
+    },
+    {
+      "id": "static-3088-2026-FY",
+      "code": "3088",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-13T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 1117440000000,
+      "operatingProfit": 84935000000,
+      "ordinaryProfit": 89855000000,
+      "profit": 55776000000,
+      "totalAssets": 755831000000,
+      "equity": 544451000000,
+      "cashAndEquivalents": 119670000000,
+      "sharesOutstanding": 397925510
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 28,
+      "components": {
+        "grahamProductScore": 18,
+        "pbrScore": 5,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=34.5, PBR=1.88, PER=18.4 → 対象外"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=10.2%, PBR=1.88 → 様子見"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=18.4, 時価総額10237億 → 対象外"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り5.45%, NCR=null, PBR=1.88 → 様子見"
+    },
+    "composite": {
+      "score": 22,
+      "components": {
+        "kiyohara": 0,
+        "graham": 28,
+        "buffett": 25,
+        "lynch": 22,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:28, バフェット流:25, リンチ流:22, 配当・インカム流:35"
+    }
+  }
+}

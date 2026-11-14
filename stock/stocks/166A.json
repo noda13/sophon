@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "166A",
+    "name": "タスキホールディングス",
+    "sector33Name": "不動産業",
+    "sector33Code": "8050",
+    "sector17Code": "17",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 2",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-166A",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 70916725812,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 21.169171884179104,
+        "pbr": 2.07985235686424
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-166A-2026-3Q",
+      "code": "166A",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-08-04T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 60021000000,
+      "operatingProfit": 7569000000,
+      "ordinaryProfit": 6169000000,
+      "profit": 3350000000,
+      "totalAssets": 114922000000,
+      "equity": 34097000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 61720388
+    },
+    {
+      "id": "static-166A-2026-2Q",
+      "code": "166A",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2026-05-12T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 43090000000,
+      "operatingProfit": 4808000000,
+      "ordinaryProfit": 3902000000,
+      "profit": 2165000000,
+      "totalAssets": 106303000000,
+      "equity": 33305000000,
+      "cashAndEquivalents": 21245046000,
+      "sharesOutstanding": 61720624
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 13,
+      "components": {
+        "grahamProductScore": 13,
+        "pbrScore": 0,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=44.0, PBR=2.08, PER=21.2 → 対象外"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=9.8%, PBR=2.08 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=21.2, 時価総額709億 → 対象外"
+    },
+    "dividend": {
+      "score": 8,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り4.72%, NCR=null, PBR=2.08 → 対象外"
+    },
+    "composite": {
+      "score": 8,
+      "components": {
+        "kiyohara": 0,
+        "graham": 13,
+        "buffett": 10,
+        "lynch": 8,
+        "dividend": 8
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:13, バフェット流:10, リンチ流:8, 配当・インカム流:8"
+    }
+  }
+}

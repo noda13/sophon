@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "8421",
+    "name": "信金中央金庫",
+    "sector33Name": "その他",
+    "sector33Code": "9999",
+    "sector17Code": "99",
+    "marketSegment": "スタンダード",
+    "scaleCategory": "-",
+    "updatedAt": "2026-11-13T21:23:22.993Z",
+    "snapshots": [
+      {
+        "id": "static-8421",
+        "snapshotAt": "2026-11-13T21:23:22.993Z",
+        "marketCap": 1671978624000,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 38.87779900479003,
+        "pbr": 1.0209197334339613
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8421-2026-1Q",
+      "code": "8421",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-29T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 193081000000,
+      "operatingProfit": null,
+      "ordinaryProfit": 18535000000,
+      "profit": 13514000000,
+      "totalAssets": 46968052000000,
+      "equity": 1697322000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 8708222
+    },
+    {
+      "id": "static-8421-2026-FY",
+      "code": "8421",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-20T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 662624000000,
+      "operatingProfit": null,
+      "ordinaryProfit": 56156000000,
+      "profit": 43006000000,
+      "totalAssets": 46866489000000,
+      "equity": 1637718000000,
+      "cashAndEquivalents": 12227841000000,
+      "sharesOutstanding": 8708222
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 28,
+      "components": {
+        "grahamProductScore": 16,
+        "pbrScore": 12,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=39.7, PBR=1.02, PER=38.9 → 対象外"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=2.6%, PBR=1.02 → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=38.9, 時価総額16720億 → 対象外"
+    },
+    "dividend": {
+      "score": 5,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り2.57%, NCR=null, PBR=1.02 → 対象外"
+    },
+    "composite": {
+      "score": 7,
+      "components": {
+        "kiyohara": 0,
+        "graham": 28,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 5
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:28, バフェット流:0, リンチ流:0, 配当・インカム流:5"
+    }
+  }
+}
