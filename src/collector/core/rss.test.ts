@@ -488,11 +488,98 @@ describe('validateExternalUrl', () => {
     'https://[fc00::1]',
     'https://[fd12::1]',
     'https://[fe80::1]',
+    'https://127.0.0.2',
+    'https://0.0.0.0',
+    'https://100.64.0.1',
+    'https://100.127.255.1',
+    'https://[::]',
+    'https://[::ffff:10.0.0.1]',
+    'https://[::ffff:127.0.0.1]',
+    'https://[::ffff:169.254.169.254]',
+    'https://metadata.google.internal',
+    'https://foo.internal',
+    'https://printer.local',
+    'https://app.localhost',
   ])('rejects the private address %s', (url) => {
     expect(() => validateExternalUrl(url, 'X')).toThrow('private/internal address');
   });
 
   it('does not treat 172.32.x as private', () => {
     expect(() => validateExternalUrl('https://172.32.0.1', 'X')).not.toThrow();
+  });
+
+  it.each(['https://100.128.0.1', 'https://100.63.255.1', 'https://[::ffff:8.8.8.8]', 'http://[::1]:1200'])(
+    'accepts %s',
+    (url) => {
+      expect(() => validateExternalUrl(url, 'X')).not.toThrow();
+    },
+  );
+});
+
+describe('fetchFeed redirects', () => {
+  const redirect = (location: string, status = 302) => new HttpResponse(null, { status, headers: { Location: location } });
+  const okFeed = () => xml(rss(rssItem('a', 'https://e.com/a')));
+
+  it('follows an https to https redirect', async () => {
+    server.use(
+      http.get('https://old.test/feed', () => redirect('https://new.test/feed', 301)),
+      http.get('https://new.test/feed', okFeed),
+    );
+    expect(await fetchFeed('https://old.test/feed', fast)).toHaveLength(1);
+  });
+
+  it('resolves a relative Location against the current URL', async () => {
+    server.use(
+      http.get('https://e.com/old', () => redirect('/feed.xml', 308)),
+      http.get('https://e.com/feed.xml', okFeed),
+    );
+    expect(await fetchFeed('https://e.com/old', fast)).toHaveLength(1);
+  });
+
+  it('rejects a redirect to plain http without retrying', async () => {
+    let calls = 0;
+    server.use(
+      http.get('https://e.com/f', () => {
+        calls++;
+        return redirect('http://e.com/f');
+      }),
+    );
+    await expect(fetchFeed('https://e.com/f', fast)).rejects.toThrow('must use https');
+    expect(calls).toBe(1);
+  });
+
+  it('rejects a redirect to an internal address and never requests it', async () => {
+    let internalCalls = 0;
+    server.use(
+      http.get('https://e.com/f', () => redirect('https://169.254.169.254/latest/meta-data')),
+      http.get('https://169.254.169.254/latest/meta-data', () => {
+        internalCalls++;
+        return okFeed();
+      }),
+    );
+    await expect(fetchFeed('https://e.com/f', fast)).rejects.toThrow('private/internal address');
+    expect(internalCalls).toBe(0);
+  });
+
+  it('follows up to 5 redirects', async () => {
+    server.use(
+      http.get('https://e.com/r/:n', ({ params }) => {
+        const n = Number(params.n);
+        return n < 5 ? redirect(`/r/${n + 1}`) : okFeed();
+      }),
+    );
+    expect(await fetchFeed('https://e.com/r/0', fast)).toHaveLength(1);
+  });
+
+  it('fails without retrying after more than 5 redirects', async () => {
+    let calls = 0;
+    server.use(
+      http.get('https://e.com/r/:n', ({ params }) => {
+        calls++;
+        return redirect(`/r/${Number(params.n) + 1}`);
+      }),
+    );
+    await expect(fetchFeed('https://e.com/r/0', fast)).rejects.toThrow('Too many redirects');
+    expect(calls).toBe(6);
   });
 });
