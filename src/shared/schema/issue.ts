@@ -31,6 +31,7 @@ export const SourceTypeSchema = z.enum(['twitter', 'news_jp', 'news_global', 'go
 export const DifficultySchema = z.enum(['low', 'medium', 'high']);
 
 // category と difficulty は未分類・未生成の間は空文字で書き出される。
+// アイデア関連の 5 項目は、これらが無い旧データ（data ブランチに残っている）を読み込み時に既定値で補う。
 export const IssueSchema = z.object({
   id: z.string(),
   source: z.string(),
@@ -46,11 +47,11 @@ export const IssueSchema = z.object({
   appifiabilityScore: z.number(),
   affectedDomain: z.array(z.string()),
   classifiedAt: z.string().nullable(),
-  proposedAppIdea: z.string(),
-  mvpFeatures: z.array(z.string()),
-  targetUsers: z.string(),
-  difficulty: z.union([DifficultySchema, z.literal('')]),
-  ideaGeneratedAt: z.string().nullable(),
+  proposedAppIdea: z.string().default(''),
+  mvpFeatures: z.array(z.string()).default([]),
+  targetUsers: z.string().default(''),
+  difficulty: z.union([DifficultySchema, z.literal('')]).default(''),
+  ideaGeneratedAt: z.string().nullable().default(null),
   createdAt: z.string(),
   // 失敗した回数。上限に達した課題は以降の分類・アイデア生成の対象から外れる（collector/core/batch.ts）。
   classifyAttempts: z.number().optional(),
