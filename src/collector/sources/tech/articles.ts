@@ -5,6 +5,7 @@ import type { SummaryResponse } from './prompts';
 
 export const MAX_ARTICLES = 200;
 export const MAX_FRESH_PER_FEED = 30;
+export const MIN_PER_SOURCE = 5;
 
 export function toArticle(item: FeedItem, feed: TechFeed): Article {
   return {
@@ -33,17 +34,14 @@ export function capFreshPerFeed(fresh: readonly Article[], cap = MAX_FRESH_PER_F
 
 // 要約済みを優先して残し、未要約には最低でも 1 回の要約上限と同じ数だけ枠を空ける。
 // 新着の未要約を先頭にするのは、溜まった古い未要約に押し出されて要約の機会を失わないため。
-export function retainArticles(
-  all: readonly Article[],
+function fillSlots(
+  pool: readonly Article[],
   freshIds: ReadonlySet<string>,
-  opts: { max?: number; unsummarizedSlots: number; maxAttempts: number },
+  max: number,
+  opts: { unsummarizedSlots: number; maxAttempts: number },
 ): Article[] {
-  const max = opts.max ?? MAX_ARTICLES;
-  const sorted = [...all].sort(byNewest);
-  if (sorted.length <= max) return sorted;
-
-  const summarized = sorted.filter((a) => a.summaryJa.length > 0);
-  const pending = sorted.filter((a) => a.summaryJa.length === 0);
+  const summarized = pool.filter((a) => a.summaryJa.length > 0);
+  const pending = pool.filter((a) => a.summaryJa.length === 0);
   const gaveUp = (a: Article) => (a.summaryAttempts ?? 0) >= opts.maxAttempts;
   const unsummarized = [
     ...pending.filter((a) => freshIds.has(a.id)),
@@ -52,7 +50,36 @@ export function retainArticles(
   ];
   // 要約済みが少ないうちは、空いた枠を未要約で埋める。
   const slots = Math.min(unsummarized.length, Math.max(opts.unsummarizedSlots, max - summarized.length));
-  return [...summarized.slice(0, max - slots), ...unsummarized.slice(0, slots)].sort(byNewest);
+  return [...summarized.slice(0, max - slots), ...unsummarized.slice(0, slots)];
+}
+
+// 投稿頻度の高い feed だけで枠が埋まり、低頻度の feed（セキュリティ情報など）が窓から消えないよう、
+// source ごとに新しい順の先頭 perSourceFloor 件を先に確保する。確保分の未要約は未要約枠に数えない。
+export function retainArticles(
+  all: readonly Article[],
+  freshIds: ReadonlySet<string>,
+  opts: { max?: number; perSourceFloor?: number; unsummarizedSlots: number; maxAttempts: number },
+): Article[] {
+  const max = opts.max ?? MAX_ARTICLES;
+  const floor = opts.perSourceFloor ?? MIN_PER_SOURCE;
+  const sorted = [...all].sort(byNewest);
+  if (sorted.length <= max) return sorted;
+
+  const taken = new Map<string, number>();
+  const reserved: Article[] = [];
+  const rest: Article[] = [];
+  for (const a of sorted) {
+    const n = taken.get(a.source) ?? 0;
+    if (n < floor) {
+      taken.set(a.source, n + 1);
+      reserved.push(a);
+    } else {
+      rest.push(a);
+    }
+  }
+  if (reserved.length >= max) return reserved.slice(0, max);
+
+  return [...reserved, ...fillSlots(rest, freshIds, max - reserved.length, opts)].sort(byNewest);
 }
 
 /** 範囲外の index と重複した index は捨て、反映した件数を返す。 */

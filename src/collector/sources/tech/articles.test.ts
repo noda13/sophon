@@ -48,7 +48,7 @@ describe('capFreshPerFeed', () => {
 });
 
 describe('retainArticles', () => {
-  const opts = { unsummarizedSlots: 2, maxAttempts: 3 };
+  const opts = { unsummarizedSlots: 2, maxAttempts: 3, perSourceFloor: 0 };
 
   it('only sorts newest first when under the limit', () => {
     const all = [article('old', { publishedAt: '2026-10-01T00:00:00.000Z' }), article('new')];
@@ -67,6 +67,68 @@ describe('retainArticles', () => {
     ];
     const kept = retainArticles(all, new Set(['fresh']), { ...opts, max: 4 }).map((a) => a.id);
     expect(kept).toEqual(['s1', 's2', 'oldPending', 'fresh']);
+  });
+});
+
+describe('retainArticles per-source floor', () => {
+  const opts = { unsummarizedSlots: 2, maxAttempts: 3 };
+  const at = (minutes: number) => new Date(Date.UTC(2026, 10, 10) + minutes * 60_000).toISOString();
+
+  const busyAndQuiet = () => [
+    ...Array.from({ length: 60 }, (_, i) =>
+      article(`busy${i}`, { source: 'busy', summaryJa: 'x', publishedAt: at(1000 + i) }),
+    ),
+    ...['jvn', 'ipa', 'cisa'].flatMap((source) =>
+      [0, 1, 2].map((i) => article(`${source}${i}`, { source, summaryJa: 'x', publishedAt: at(i) })),
+    ),
+  ];
+
+  it('keeps older low-frequency sources up to the floor when over the limit', () => {
+    const kept = retainArticles(busyAndQuiet(), new Set(), { ...opts, max: 20, perSourceFloor: 5 });
+    expect(kept).toHaveLength(20);
+    for (const source of ['jvn', 'ipa', 'cisa']) {
+      expect(kept.filter((a) => a.source === source)).toHaveLength(3);
+    }
+    expect(kept.filter((a) => a.source === 'busy')).toHaveLength(11);
+  });
+
+  it('cuts purely by recency when the floor is 0', () => {
+    const kept = retainArticles(busyAndQuiet(), new Set(), { ...opts, max: 20, perSourceFloor: 0 });
+    expect(kept.every((a) => a.source === 'busy')).toBe(true);
+  });
+
+  it('uses MIN_PER_SOURCE by default', () => {
+    const kept = retainArticles(busyAndQuiet(), new Set(), { ...opts, max: 20 });
+    expect(kept.filter((a) => a.source === 'jvn')).toHaveLength(3);
+  });
+
+  it('does not count reserved unsummarized articles against the unsummarized slots', () => {
+    const all = [
+      article('q1', { source: 'quiet', publishedAt: at(1) }),
+      article('q2', { source: 'quiet', publishedAt: at(2) }),
+      ...Array.from({ length: 6 }, (_, i) =>
+        article(`b${i}`, { source: 'busy', summaryJa: 'x', publishedAt: at(100 + i) }),
+      ),
+      ...Array.from({ length: 3 }, (_, i) =>
+        article(`p${i}`, { source: 'busy', publishedAt: at(50 + i) }),
+      ),
+    ];
+    const kept = retainArticles(all, new Set(), { max: 6, perSourceFloor: 2, unsummarizedSlots: 0, maxAttempts: 3 });
+    // reserved: b5, b4 (busy), q2, q1 (quiet); pool slots 2 go to summarized b3, b2, not to pending p*.
+    expect(kept.map((a) => a.id).sort()).toEqual(['b2', 'b3', 'b4', 'b5', 'q1', 'q2']);
+  });
+
+  it('truncates the reserved set to max, newest first, when sources exceed it', () => {
+    const all = Array.from({ length: 10 }, (_, i) => article(`a${i}`, { source: `s${i}`, publishedAt: at(i) }));
+    const kept = retainArticles(all, new Set(), { ...opts, max: 4, perSourceFloor: 5 });
+    expect(kept.map((a) => a.id)).toEqual(['a9', 'a8', 'a7', 'a6']);
+  });
+
+  it('returns at most max articles sorted newest first', () => {
+    const kept = retainArticles(busyAndQuiet(), new Set(), { ...opts, max: 20, perSourceFloor: 5 });
+    expect(kept.length).toBeLessThanOrEqual(20);
+    const times = kept.map((a) => new Date(a.publishedAt).getTime());
+    expect(times).toEqual([...times].sort((x, y) => y - x));
   });
 });
 
