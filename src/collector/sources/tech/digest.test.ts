@@ -88,6 +88,28 @@ describe('selectDigestCandidates security reservation', () => {
     expect(securityCount(selectDigestCandidates(all))).toBe(20);
   });
 
+  it('keeps a low-frequency source in the reservation even when 高 articles from one source exceed it', () => {
+    const all = [
+      ...many('s', DIGEST_SECURITY_RESERVED + 3, { category: 'security', importance: '高', source: 'busy' }),
+      article('rare', { category: 'security', importance: '中', source: 'rare' }),
+      ...many('t', 40, { importance: '高' }),
+    ];
+    const picked = selectDigestCandidates(all);
+    expect(picked.map((a) => a.id)).toContain('rare');
+    expect(securityCount(picked)).toBeGreaterThanOrEqual(DIGEST_SECURITY_RESERVED);
+  });
+
+  it('does not leave reserved slots empty when one source has several 高 articles', () => {
+    const all = [
+      ...many('a', 5, { category: 'security', importance: '高', source: 'a' }),
+      ...many('b', 2, { category: 'security', importance: '中', source: 'b' }),
+      ...many('t', 40, { importance: '高' }),
+    ];
+    const picked = selectDigestCandidates(all);
+    expect(securityCount(picked)).toBe(7);
+    expect(picked.map((a) => a.id)).toEqual(expect.arrayContaining(['a0', 'a1', 'a4', 'b0', 'b1']));
+  });
+
   it('keeps importance then recency order inside the selection', () => {
     const all = [...many('t', 3, {}), ...many('s', 2, { category: 'security', importance: '高' })];
     expect(selectDigestCandidates(all).map((a) => a.id)).toEqual(['s0', 's1', 't0', 't1', 't2']);

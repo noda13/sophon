@@ -14,6 +14,7 @@ import {
 
 export const DIGEST_MAX_CANDIDATES = 30;
 // security の記事が少ない日は余りを他のカテゴリに回す。多い日でも他のカテゴリが全滅しないよう、枠は下限として働く。
+// 枠の中は各 source の先頭 1 件を先に取る。importance 順だけだと、高頻度の feed の `高` が枠を埋めて低頻度の feed が落ちる。
 export const DIGEST_SECURITY_RESERVED = 12;
 
 const IMPORTANCE_RANK: Record<Article['importance'], number> = { 高: 0, 中: 1, 低: 2 };
@@ -28,7 +29,19 @@ export function rankByImportance(articles: readonly Article[]): Article[] {
 
 export function selectDigestCandidates(articles: readonly Article[], limit = DIGEST_MAX_CANDIDATES): Article[] {
   const ranked = rankByImportance(articles.filter((a) => a.summaryJa.length > 0 && a.importance !== '低'));
-  const reserved = ranked.filter((a) => a.category === 'security').slice(0, Math.min(DIGEST_SECURITY_RESERVED, limit));
+  const security = ranked.filter((a) => a.category === 'security');
+  const slots = Math.min(DIGEST_SECURITY_RESERVED, limit);
+  const seenSources = new Set<string>();
+  const heads = security
+    .filter((a) => {
+      if (seenSources.has(a.source)) return false;
+      seenSources.add(a.source);
+      return true;
+    })
+    .slice(0, slots);
+  const headIds = new Set(heads.map((a) => a.id));
+  const fill = security.filter((a) => !headIds.has(a.id)).slice(0, slots - heads.length);
+  const reserved = [...heads, ...fill];
   const reservedIds = new Set(reserved.map((a) => a.id));
   const rest = ranked.filter((a) => !reservedIds.has(a.id)).slice(0, limit - reserved.length);
   return rankByImportance([...reserved, ...rest]);
