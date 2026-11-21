@@ -29,7 +29,9 @@ jobs:
     # collect が飛ばされれば、publish 以降も実行されない。
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    # source=all の最悪値は stock 40 分 + 他 3 つ × 15 分 = 85 分。
+    # collector の timeout が先に効いて meta.json に failed が残るよう、それより長くする。
+    timeout-minutes: 90
     permissions:
       contents: read
     outputs:
@@ -57,13 +59,7 @@ jobs:
               ;;
           esac
           if [ "$sources" = all ]; then sources="stock tech issue econ"; fi
-          # stock は J-Quants のレート制限に合わせて 1 リクエストずつ進めるため、他より長く取る。
-          case " $sources " in
-            *' stock '*) timeout_ms=2400000 ;;
-            *) timeout_ms=900000 ;;
-          esac
           echo "sources=$sources" >> "$GITHUB_OUTPUT"
-          echo "timeout_ms=$timeout_ms" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -93,7 +89,6 @@ jobs:
         continue-on-error: true
         env:
           SOURCES: ${{ steps.plan.outputs.sources }}
-          COLLECT_TIMEOUT_MS: ${{ steps.plan.outputs.timeout_ms }}
           SOPHON_DATA_DIR: data
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

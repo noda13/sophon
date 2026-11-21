@@ -282,4 +282,19 @@ describe('resolveTimeoutMs', () => {
     expect(resolveTimeoutMs({})).toBe(DEFAULT_TIMEOUT_MS);
     expect(resolveTimeoutMs({ COLLECT_TIMEOUT_MS: 'abc' })).toBe(DEFAULT_TIMEOUT_MS);
   });
+
+  it('uses the per-source default when COLLECT_TIMEOUT_MS is unset', () => {
+    expect(resolveTimeoutMs({}, 'stock')).toBe(40 * 60 * 1000);
+    expect(resolveTimeoutMs({}, 'tech')).toBe(DEFAULT_TIMEOUT_MS);
+  });
+
+  it('prefers a valid COLLECT_TIMEOUT_MS regardless of source', () => {
+    expect(resolveTimeoutMs({ COLLECT_TIMEOUT_MS: '1000' }, 'stock')).toBe(1000);
+    expect(resolveTimeoutMs({ COLLECT_TIMEOUT_MS: '1000' }, 'tech')).toBe(1000);
+  });
+
+  it('falls back to the per-source default when COLLECT_TIMEOUT_MS is invalid', () => {
+    expect(resolveTimeoutMs({ COLLECT_TIMEOUT_MS: 'abc' }, 'stock')).toBe(40 * 60 * 1000);
+    expect(resolveTimeoutMs({ COLLECT_TIMEOUT_MS: '0' }, 'tech')).toBe(DEFAULT_TIMEOUT_MS);
+  });
 });
