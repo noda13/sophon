@@ -17,6 +17,10 @@ updates:
     # 公開から 3 日たった版だけを提案する。pnpm の minimumReleaseAge（4320 分）と合わせている。
     cooldown:
       default-days: 3
+    # @types/node は実行時の Node（.nvmrc と engines の 24）に合わせる。メジャーを上げるのは Node 本体を上げるときだけ。
+    ignore:
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       minor-and-patch:
         update-types: [minor, patch]
