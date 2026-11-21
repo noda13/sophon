@@ -7,6 +7,8 @@ import type { SourceRegistry } from './core/source';
 
 export const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
 export const ABORT_GRACE_MS = 5000;
+// stock は J-Quants のレート制限に合わせて 1 リクエストずつ進めるため、他より長く取る。
+export const SOURCE_TIMEOUT_MS: Partial<Record<SourceId, number>> = { stock: 40 * 60 * 1000 };
 
 export type SourceOutcome =
   | { source: SourceId; status: Meta['run']['status']; counts: Record<string, number>; errors: string[] }
@@ -44,9 +46,10 @@ export function resolveSourceIds(args: string[]): SourceId[] | null {
   return [...new Set(ids)];
 }
 
-export function resolveTimeoutMs(env: NodeJS.ProcessEnv): number {
+export function resolveTimeoutMs(env: NodeJS.ProcessEnv, source?: SourceId): number {
   const raw = Number(env.COLLECT_TIMEOUT_MS);
-  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_TIMEOUT_MS;
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  return (source && SOURCE_TIMEOUT_MS[source]) || DEFAULT_TIMEOUT_MS;
 }
 
 const errorMessage = (e: unknown): string => (e instanceof Error ? e.message : String(e));
@@ -114,7 +117,6 @@ export async function runSources(
   const env = opts.env ?? process.env;
   const now = opts.now ?? (() => new Date());
   const log = opts.log ?? ((line: string) => console.log(line));
-  const timeoutMs = opts.timeoutMs ?? resolveTimeoutMs(env);
   const abortGraceMs = opts.abortGraceMs ?? ABORT_GRACE_MS;
 
   const outcomes: SourceOutcome[] = [];
@@ -145,7 +147,7 @@ export async function runSources(
     const running = (async () => (await load()).run({ dir, now: now(), env, signal: controller.signal }))();
     let health: RunHealth;
     try {
-      const result = await withTimeout(running, timeoutMs);
+      const result = await withTimeout(running, opts.timeoutMs ?? resolveTimeoutMs(env, id));
       health = finishSafely(handle, env, result.counts, result.errors, result.forceFailed);
     } catch (e) {
       if (e instanceof TimeoutError) {
