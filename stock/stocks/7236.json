@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "7236",
+    "name": "ティラド",
+    "sector33Name": "輸送用機器",
+    "sector33Code": "3700",
+    "sector17Code": "6",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 2",
+    "updatedAt": "2026-11-20T16:58:55.409Z",
+    "snapshots": [
+      {
+        "id": "static-7236",
+        "snapshotAt": "2026-11-20T16:58:55.409Z",
+        "marketCap": 87757295500,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 41.046443171188024,
+        "pbr": 1.6455212821810954
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-7236-2026-1Q",
+      "code": "7236",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-03T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 39733000000,
+      "operatingProfit": 2733000000,
+      "ordinaryProfit": 3011000000,
+      "profit": 2138000000,
+      "totalAssets": 101283000000,
+      "equity": 53331000000,
+      "cashAndEquivalents": 15170000000,
+      "sharesOutstanding": 56617610
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 5,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=67.5, PBR=1.65, PER=41.0 → 対象外"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=4.0%, PBR=1.65 → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=41.0, 時価総額878億 → 対象外"
+    },
+    "dividend": {
+      "score": 5,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り2.44%, NCR=null, PBR=1.65 → 対象外"
+    },
+    "composite": {
+      "score": 2,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 5
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:0, リンチ流:0, 配当・インカム流:5"
+    }
+  }
+}

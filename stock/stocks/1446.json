@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "1446",
+    "name": "キャンディル",
+    "sector33Name": "建設業",
+    "sector33Code": "2050",
+    "sector17Code": "3",
+    "marketSegment": "スタンダード",
+    "scaleCategory": "-",
+    "updatedAt": "2026-11-20T16:58:55.409Z",
+    "snapshots": [
+      {
+        "id": "static-1446",
+        "snapshotAt": "2026-11-20T16:58:55.409Z",
+        "marketCap": 5019491400,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 29.014401156069365,
+        "pbr": 1.6202360877985797
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-1446-2026-3Q",
+      "code": "1446",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-08-07T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 11123000000,
+      "operatingProfit": 406000000,
+      "ordinaryProfit": 402000000,
+      "profit": 173000000,
+      "totalAssets": 6483000000,
+      "equity": 3098000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 9312600
+    },
+    {
+      "id": "static-1446-2026-2Q",
+      "code": "1446",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2026-05-14T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 7717000000,
+      "operatingProfit": 439000000,
+      "ordinaryProfit": 442000000,
+      "profit": 234000000,
+      "totalAssets": 6664000000,
+      "equity": 3144000000,
+      "cashAndEquivalents": 1521196000,
+      "sharesOutstanding": 9302600
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 3,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": 3
+      },
+      "reason": "NCR=null, CNPER=null, 50億円 → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 5,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=47.0, PBR=1.62, PER=29.0 → 対象外"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=5.6%, PBR=1.62 → 対象外"
+    },
+    "lynch": {
+      "score": 18,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 10,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=29.0, 時価総額50億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り3.45%, NCR=null, PBR=1.62 → 対象外"
+    },
+    "composite": {
+      "score": 11,
+      "components": {
+        "kiyohara": 3,
+        "graham": 5,
+        "buffett": 10,
+        "lynch": 18,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:3, グレアム流:5, バフェット流:10, リンチ流:18, 配当・インカム流:18"
+    }
+  }
+}

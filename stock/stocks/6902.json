@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "6902",
+    "name": "デンソー",
+    "sector33Name": "輸送用機器",
+    "sector33Code": "3700",
+    "sector17Code": "6",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Large70",
+    "updatedAt": "2026-11-20T16:58:55.409Z",
+    "snapshots": [
+      {
+        "id": "static-6902",
+        "snapshotAt": "2026-11-20T16:58:55.409Z",
+        "marketCap": 4802230605166.5,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 70.7510954720663,
+        "pbr": 0.9038155682126842
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-6902-2026-1Q",
+      "code": "6902",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-31T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 1913868000000,
+      "operatingProfit": 84178000000,
+      "ordinaryProfit": null,
+      "profit": 67875000000,
+      "totalAssets": 8796049000000,
+      "equity": 5313286000000,
+      "cashAndEquivalents": 1429125000000,
+      "sharesOutstanding": 2507037643
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 20,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 20,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=63.9, PBR=0.90, PER=70.8 → 対象外"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=1.3%, PBR=0.90 → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=70.8, 時価総額48022億 → 対象外"
+    },
+    "dividend": {
+      "score": 5,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り1.41%, NCR=null, PBR=0.90 → 対象外"
+    },
+    "composite": {
+      "score": 5,
+      "components": {
+        "kiyohara": 0,
+        "graham": 20,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 5
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:20, バフェット流:0, リンチ流:0, 配当・インカム流:5"
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "2157",
+    "name": "コシダカホールディングス",
+    "sector33Name": "サービス業",
+    "sector33Code": "9050",
+    "sector17Code": "10",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-20T16:58:55.409Z",
+    "snapshots": [
+      {
+        "id": "static-2157",
+        "snapshotAt": "2026-11-20T16:58:55.409Z",
+        "marketCap": 84193847360,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 15.222174536250225,
+        "pbr": 2.1577653799431045
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-2157-2026-3Q",
+      "code": "2157",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "3Q",
+      "disclosedDate": "2026-07-10T00:00:00.000Z",
+      "periodEndDate": "2026-05-31T00:00:00.000Z",
+      "netSales": 59354000000,
+      "operatingProfit": 7571000000,
+      "ordinaryProfit": 7755000000,
+      "profit": 5531000000,
+      "totalAssets": 76735000000,
+      "equity": 39019000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 82867960
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 24,
+      "components": {
+        "grahamProductScore": 19,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=32.8, PBR=2.16, PER=15.2 → 対象外"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=14.2%, PBR=2.16 → 様子見"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=15.2, 時価総額842億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り6.57%, NCR=null, PBR=2.16 → 様子見"
+    },
+    "composite": {
+      "score": 19,
+      "components": {
+        "kiyohara": 0,
+        "graham": 24,
+        "buffett": 25,
+        "lynch": 22,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:24, バフェット流:25, リンチ流:22, 配当・インカム流:25"
+    }
+  }
+}
