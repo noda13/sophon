@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Article } from '../../../shared/schema/tech';
 import { articleId } from '../../core/rss';
-import { applySummaries, capFreshPerFeed, retainArticles, toArticle } from './articles';
+import { applySummaries, capFreshPerFeed, prioritizeSecurity, retainArticles, toArticle } from './articles';
 
 const article = (id: string, over: Partial<Article> = {}): Article => ({
   id,
@@ -156,5 +156,30 @@ describe('applySummaries', () => {
     });
     expect(n).toBe(1);
     expect(batch[0]).toMatchObject({ summaryJa: '最初', category: 'ai', importance: '高' });
+  });
+});
+
+describe('prioritizeSecurity', () => {
+  it('puts security articles first and keeps the relative order within each group', () => {
+    const list = [
+      article('t1'),
+      article('s1', { category: 'security' }),
+      article('a1', { category: 'ai' }),
+      article('s2', { category: 'security' }),
+      article('t2'),
+    ];
+    expect(prioritizeSecurity(list).map((a) => a.id)).toEqual(['s1', 's2', 't1', 'a1', 't2']);
+  });
+
+  it('returns the same Article objects without mutating the input', () => {
+    const list = [article('t1'), article('s1', { category: 'security' })];
+    const result = prioritizeSecurity(list);
+    expect(result[0]).toBe(list[1]);
+    expect(result[1]).toBe(list[0]);
+    expect(list.map((a) => a.id)).toEqual(['t1', 's1']);
+  });
+
+  it('returns an empty array for an empty input', () => {
+    expect(prioritizeSecurity([])).toEqual([]);
   });
 });

@@ -4,7 +4,7 @@ import { jsonFile, readJson, writeJson, writeJsonBatch, type JsonFile } from '..
 import { detectProvider, generateStructured, LLM_DISABLED_ERROR } from '../../core/llm';
 import { collectFeeds, type FetchFeedOptions } from '../../core/rss';
 import type { CollectorSource, RunContext, RunResult } from '../../core/source';
-import { applySummaries, capFreshPerFeed, MAX_ARTICLES, retainArticles, toArticle } from './articles';
+import { applySummaries, capFreshPerFeed, MAX_ARTICLES, prioritizeSecurity, retainArticles, toArticle } from './articles';
 import { buildDigest, listDigestDates } from './digest';
 import { collectEol, EOL_PRODUCTS, type CollectEolOptions, type EolProduct } from './eol';
 import { TECH_FEEDS, type TechFeed } from './feeds';
@@ -70,7 +70,7 @@ export async function runTech(ctx: RunContext, opts: TechRunOptions = {}): Promi
   if (llm) {
     console.log(`--- LLM (${llm.provider}): Summarize & Classify ---`);
     const batch = await processInBatches(
-      articles,
+      prioritizeSecurity(articles),
       async (items) => {
         const response = await generateStructured(SummaryResponseSchema, buildSummaryPrompt(items), {
           system: SUMMARY_SYSTEM,

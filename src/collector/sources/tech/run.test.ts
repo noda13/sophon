@@ -229,7 +229,7 @@ describe('runTech with an LLM key', () => {
 
     const latest = readLatestDigest();
     expect(latest).toMatchObject({ date: '2026-11-07', overviewJa: '今日の概要' });
-    expect(latest.sections[0]!.highlights).toEqual([{ title: 'Alpha', summaryJa: '要約0', url: 'https://e.com/alpha' }]);
+    expect(latest.sections[0]!.highlights).toEqual([{ title: 'Gamma CVE', summaryJa: '要約0', url: 'https://e.com/gamma' }]);
     expect(readJson(dir, 'digest/2026-11-07.json', DigestSchema, null as never)).toEqual(latest);
     expect(readJson(dir, 'digest/index.json', DigestIndexSchema, null as never)).toEqual({ dates: ['2026-11-07'] });
   });
@@ -283,6 +283,40 @@ describe('runTech with an LLM key', () => {
     const articles = readArticles();
     expect(articles.filter((a) => a.summaryJa === '')).toHaveLength(10);
     expect(articles.filter((a) => a.summaryJa === '').every((a) => a.summaryAttempts === 1)).toBe(true);
+  });
+
+  it('summarizes security-hint articles first when the per-run limit cuts off newer articles', async () => {
+    const manyItems = (prefix: string) =>
+      xml(
+        rss(
+          Array.from({ length: 30 }, (_, i): [string, string, string] => [
+            `${prefix} ${i}`,
+            `https://e.com/${prefix}-${i}`,
+            new Date(Date.UTC(2026, 10, 6, 23, 59 - i)).toUTCString(),
+          ]),
+        ),
+      );
+    server.use(
+      http.get('https://feeds.test/a.xml', () => manyItems('a')),
+      http.get('https://feeds.test/a2.xml', () => manyItems('a2')),
+      http.post(GROQ_URL, async ({ request }) => {
+        const body = (await request.json()) as GroqBody;
+        return isDigestRequest(body) ? digestReply() : summarizeAll(body);
+      }),
+    );
+    const manyFeeds: TechFeed[] = [
+      { url: 'https://feeds.test/a.xml', source: 'feed-a', hint: 'trend' },
+      { url: 'https://feeds.test/a2.xml', source: 'feed-a2', hint: 'trend' },
+      { url: 'https://feeds.test/b.xml', source: 'feed-b', hint: 'security' },
+    ];
+
+    const result = await runTech(ctx(llmEnv), { ...fast, feeds: manyFeeds });
+
+    expect(result.counts).toMatchObject({ summarized: 50, summaryFailed: 0 });
+    const articles = readArticles();
+    expect(articles).toHaveLength(61);
+    expect(articles.find((a) => a.originalTitle === 'Gamma CVE')!.summaryJa).not.toBe('');
+    expect(articles.filter((a) => a.summaryJa === '')).toHaveLength(11);
   });
 
   it('adopts the valid entries when one entry violates an enum', async () => {

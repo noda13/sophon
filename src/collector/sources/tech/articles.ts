@@ -82,6 +82,12 @@ export function retainArticles(
   return [...reserved, ...fillSlots(rest, freshIds, max - reserved.length, opts)].sort(byNewest);
 }
 
+// 要約は 1 回の実行で件数に上限があり、先頭から取られる。tech の目的はセキュリティリスクの把握なので、
+// 投稿頻度の高い feed の新着に押し出されないよう security を先に回す。要約前の category は feed の hint。
+export function prioritizeSecurity(articles: readonly Article[]): Article[] {
+  return [...articles.filter((a) => a.category === 'security'), ...articles.filter((a) => a.category !== 'security')];
+}
+
 /** 範囲外の index と重複した index は捨て、反映した件数を返す。 */
 export function applySummaries(batch: Article[], response: SummaryResponse): number {
   const filled = new Set<number>();
