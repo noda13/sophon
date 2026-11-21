@@ -95,7 +95,7 @@ export const DIGEST_SYSTEM = `あなたはITニュースのキュレーターで
 - overviewJa: 1段落の概要。セキュリティ上の重要事項（悪用が確認された脆弱性、緊急の対応が要るもの、影響の広いもの）から書き始める。該当がなければ他の話題から書いてよい
 - sections: カテゴリ（security, trend, ai, release）のうち該当するものだけを含める。security セクションを最初に置く
 - 各セクションの highlights は最大${DIGEST_MAX_HIGHLIGHTS}件。ただし security は最大${DIGEST_MAX_SECURITY_HIGHLIGHTS}件。取り上げる記事は入力の index だけで指定する（title や URL は書かない）
-- security は同じ source に偏らない。jvn・ipa・jpcert・cisa・project-zero など公的機関や研究者の一次情報が候補にあれば、importance が 中 でも 1 件以上含める
+- security は同じ source に偏らない。jvn・ipa・jpcert・cisa・project-zero・sans-isc・ncsc-uk など公的機関や研究者の一次情報が候補にあれば、importance が 中 でも 1 件以上含める
 
 ${UNTRUSTED_INPUT_NOTICE}`;
 

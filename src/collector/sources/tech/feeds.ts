@@ -27,6 +27,8 @@ export const TECH_FEEDS: readonly TechFeed[] = [
   { url: 'https://www.ipa.go.jp/security/alert-rss.rdf', source: 'ipa', hint: 'security' },
   { url: 'https://googleprojectzero.blogspot.com/feeds/posts/default', source: 'project-zero', hint: 'security' },
   { url: 'https://krebsonsecurity.com/feed/', source: 'krebs', hint: 'security' },
+  { url: 'https://isc.sans.edu/rssfeed.xml', source: 'sans-isc', hint: 'security' },
+  { url: 'https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml', source: 'ncsc-uk', hint: 'security' },
   { url: 'https://nodejs.org/en/feed/blog.xml', source: 'nodejs', hint: 'release' },
   { url: 'https://kubernetes.io/feed.xml', source: 'kubernetes', hint: 'release' },
   { url: 'https://aws.amazon.com/blogs/aws/feed/', source: 'aws', hint: 'release' },
