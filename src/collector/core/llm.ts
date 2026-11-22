@@ -84,7 +84,7 @@ export async function generateStructured<T>(
 
   const timeout = AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   try {
-    const { output } = await generateText({
+    const { output, usage } = await generateText({
       model: createModel(config),
       output: Output.object({ schema }),
       system: opts.system,
@@ -94,6 +94,10 @@ export async function generateStructured<T>(
       ...(opts.maxOutputTokens !== undefined && { maxOutputTokens: opts.maxOutputTokens }),
       abortSignal: opts.signal ? AbortSignal.any([timeout, opts.signal]) : timeout,
     });
+    // Groq の無料枠は日あたりのトークン数（TPD）で止まる。1 回の run の消費を Actions のログから集計できるようにする。
+    console.log(
+      `[llm] ${config.provider}/${config.model} usage: input ${usage.inputTokens ?? '?'}, output ${usage.outputTokens ?? '?'}`,
+    );
     return output;
   } catch (error) {
     logLlmFailure(config, error);

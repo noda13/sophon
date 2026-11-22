@@ -137,6 +137,15 @@ describe('generateStructured', () => {
     expect(model).toBe(DEFAULT_MODELS.groq);
   });
 
+  it('logs the token usage of a successful call', async () => {
+    vi.stubEnv('GROQ_API_KEY', 'groq-key');
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    server.use(http.post(GROQ_URL, () => groqOk()));
+
+    await generateStructured(schema, 'hello');
+    expect(log).toHaveBeenCalledWith(`[llm] groq/${DEFAULT_MODELS.groq} usage: input 1, output 1`);
+  });
+
   it('throws when the response does not match the schema', async () => {
     vi.stubEnv('GROQ_API_KEY', 'k');
     server.use(http.post(GROQ_URL, () => groqOk('{"ok":"yes"}')));
