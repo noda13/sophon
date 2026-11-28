@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "8750",
+    "name": "第一ライフグループ",
+    "sector33Name": "保険業",
+    "sector33Code": "7150",
+    "sector17Code": "16",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Large70",
+    "updatedAt": "2026-11-27T18:12:50.440Z",
+    "snapshots": [
+      {
+        "id": "static-8750",
+        "snapshotAt": "2026-11-27T18:12:50.440Z",
+        "marketCap": 6760785530662.5,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 15.485185492943149,
+        "pbr": 1.5891980772614294
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8750-2026-1Q",
+      "code": "8750",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-07T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 2893002000000,
+      "operatingProfit": null,
+      "ordinaryProfit": 251057000000,
+      "profit": 160065000000,
+      "totalAssets": 76322711000000,
+      "equity": 4573060000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 3601448815
+    },
+    {
+      "id": "static-8750-2026-FY",
+      "code": "8750",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-15T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 11308275000000,
+      "operatingProfit": null,
+      "ordinaryProfit": 753688000000,
+      "profit": 436597000000,
+      "totalAssets": 74159096000000,
+      "equity": 4254212000000,
+      "cashAndEquivalents": 2087588000000,
+      "sharesOutstanding": 3600951015
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 34,
+      "components": {
+        "grahamProductScore": 24,
+        "pbrScore": 5,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=24.6, PBR=1.59, PER=15.5 → 様子見"
+    },
+    "buffett": {
+      "score": 25,
+      "components": {
+        "roeScore": 25,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=10.3%, PBR=1.59 → 様子見"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=15.5, 時価総額67608億 → 対象外"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り6.46%, NCR=null, PBR=1.59 → 様子見"
+    },
+    "composite": {
+      "score": 23,
+      "components": {
+        "kiyohara": 0,
+        "graham": 34,
+        "buffett": 25,
+        "lynch": 22,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:34, バフェット流:25, リンチ流:22, 配当・インカム流:35"
+    }
+  }
+}

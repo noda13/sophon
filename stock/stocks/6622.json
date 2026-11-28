@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "6622",
+    "name": "ダイヘン",
+    "sector33Name": "電気機器",
+    "sector33Code": "3650",
+    "sector17Code": "9",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-27T18:12:50.440Z",
+    "snapshots": [
+      {
+        "id": "static-6622",
+        "snapshotAt": "2026-11-27T18:12:50.440Z",
+        "marketCap": 289419539640,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 20.514569013325772,
+        "pbr": 1.6950296911201435
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-6622-2026-1Q",
+      "code": "6622",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-08-04T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 55507000000,
+      "operatingProfit": 4079000000,
+      "ordinaryProfit": 4733000000,
+      "profit": 2779000000,
+      "totalAssets": 317016000000,
+      "equity": 173390000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 23607976
+    },
+    {
+      "id": "static-6622-2026-FY",
+      "code": "6622",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-05-11T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 237735000000,
+      "operatingProfit": 18778000000,
+      "ordinaryProfit": 20100000000,
+      "profit": 14108000000,
+      "totalAssets": 320175000000,
+      "equity": 170746000000,
+      "cashAndEquivalents": 32626000000,
+      "sharesOutstanding": 23606814
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 23,
+      "components": {
+        "grahamProductScore": 18,
+        "pbrScore": 5,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=34.8, PBR=1.70, PER=20.5 → 対象外"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=8.3%, PBR=1.70 → 対象外"
+    },
+    "lynch": {
+      "score": 8,
+      "components": {
+        "perScore": 8,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=20.5, 時価総額2894億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り4.87%, NCR=null, PBR=1.70 → 対象外"
+    },
+    "composite": {
+      "score": 12,
+      "components": {
+        "kiyohara": 0,
+        "graham": 23,
+        "buffett": 10,
+        "lynch": 8,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:23, バフェット流:10, リンチ流:8, 配当・インカム流:18"
+    }
+  }
+}

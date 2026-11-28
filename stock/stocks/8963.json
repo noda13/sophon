@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "8963",
+    "name": "インヴィンシブル投資法人",
+    "sector33Name": "その他",
+    "sector33Code": "9999",
+    "sector17Code": "99",
+    "marketSegment": "その他",
+    "scaleCategory": "-",
+    "updatedAt": "2026-11-27T18:12:50.440Z",
+    "snapshots": [
+      {
+        "id": "static-8963",
+        "snapshotAt": "2026-11-27T18:12:50.440Z",
+        "marketCap": 474844731300,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 32.238762393916765,
+        "pbr": 1.3457257996225067
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-8963-2026-FY",
+      "code": "8963",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-08-25T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 26789000000,
+      "operatingProfit": 17564000000,
+      "ordinaryProfit": 14730000000,
+      "profit": 14729000000,
+      "totalAssets": 708154000000,
+      "equity": 352854000000,
+      "cashAndEquivalents": 45299000000,
+      "sharesOutstanding": 7646453
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 26,
+      "components": {
+        "grahamProductScore": 14,
+        "pbrScore": 12,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=43.4, PBR=1.35, PER=32.2 → 対象外"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=4.2%, PBR=1.35 → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=32.2, 時価総額4748億 → 対象外"
+    },
+    "dividend": {
+      "score": 18,
+      "components": {
+        "earningsYieldScore": 18,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り3.10%, NCR=null, PBR=1.35 → 対象外"
+    },
+    "composite": {
+      "score": 9,
+      "components": {
+        "kiyohara": 0,
+        "graham": 26,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 18
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:26, バフェット流:0, リンチ流:0, 配当・インカム流:18"
+    }
+  }
+}

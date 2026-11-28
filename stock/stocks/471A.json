@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "471A",
+    "name": "ＮＳグループ",
+    "sector33Name": "その他金融業",
+    "sector33Code": "7200",
+    "sector17Code": "16",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 2",
+    "updatedAt": "2026-11-27T18:12:50.440Z",
+    "snapshots": [
+      {
+        "id": "static-471A",
+        "snapshotAt": "2026-11-27T18:12:50.440Z",
+        "marketCap": 79032126000,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 19.418212776412776,
+        "pbr": 2.9276579366549362
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-471A-2026-2Q",
+      "code": "471A",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2026-08-07T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 16175000000,
+      "operatingProfit": 6096000000,
+      "ordinaryProfit": null,
+      "profit": 4070000000,
+      "totalAssets": 73980000000,
+      "equity": 26995000000,
+      "cashAndEquivalents": 13358000000,
+      "sharesOutstanding": 51253000
+    },
+    {
+      "id": "static-471A-2026-1Q",
+      "code": "471A",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-05-15T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 7942000000,
+      "operatingProfit": 2956000000,
+      "ordinaryProfit": null,
+      "profit": 1965000000,
+      "totalAssets": 75208000000,
+      "equity": 29024000000,
+      "cashAndEquivalents": 14821000000,
+      "sharesOutstanding": 52155600
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 5,
+      "components": {
+        "grahamProductScore": 0,
+        "pbrScore": 0,
+        "perScore": 5,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=56.8, PBR=2.93, PER=19.4 → 対象外"
+    },
+    "buffett": {
+      "score": 40,
+      "components": {
+        "roeScore": 40,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=15.1%, PBR=2.93 → 様子見"
+    },
+    "lynch": {
+      "score": 22,
+      "components": {
+        "perScore": 22,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=19.4, 時価総額790億 → 対象外"
+    },
+    "dividend": {
+      "score": 25,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": -10
+      },
+      "reason": "益回り5.15%, NCR=null, PBR=2.93 → 様子見"
+    },
+    "composite": {
+      "score": 18,
+      "components": {
+        "kiyohara": 0,
+        "graham": 5,
+        "buffett": 40,
+        "lynch": 22,
+        "dividend": 25
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:5, バフェット流:40, リンチ流:22, 配当・インカム流:25"
+    }
+  }
+}

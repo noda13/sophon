@@ -1,0 +1,117 @@
+{
+  "profile": {
+    "code": "4631",
+    "name": "ＤＩＣ",
+    "sector33Name": "化学",
+    "sector33Code": "3200",
+    "sector17Code": "4",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-27T18:12:50.440Z",
+    "snapshots": [
+      {
+        "id": "static-4631",
+        "snapshotAt": "2026-11-27T18:12:50.440Z",
+        "marketCap": 459926536808,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 12.367938709979294,
+        "pbr": 0.8680856537408199
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-4631-2026-2Q",
+      "code": "4631",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "2Q",
+      "disclosedDate": "2026-08-10T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 592983000000,
+      "operatingProfit": 51850000000,
+      "ordinaryProfit": 52308000000,
+      "profit": 37187000000,
+      "totalAssets": 1330726000000,
+      "equity": 529817000000,
+      "cashAndEquivalents": 68233000000,
+      "sharesOutstanding": 94713043
+    },
+    {
+      "id": "static-4631-2026-1Q",
+      "code": "4631",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-05-15T00:00:00.000Z",
+      "periodEndDate": "2026-03-31T00:00:00.000Z",
+      "netSales": 282489000000,
+      "operatingProfit": 24512000000,
+      "ordinaryProfit": 23854000000,
+      "profit": 19194000000,
+      "totalAssets": 1303573000000,
+      "equity": 501880000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 94686829
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 82,
+      "components": {
+        "grahamProductScore": 50,
+        "pbrScore": 20,
+        "perScore": 12,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=10.7, PBR=0.87, PER=12.4 → 強い買い候補"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=7.0%, PBR=0.87 → 対象外"
+    },
+    "lynch": {
+      "score": 38,
+      "components": {
+        "perScore": 38,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=12.4, 時価総額4599億 → 様子見"
+    },
+    "dividend": {
+      "score": 50,
+      "components": {
+        "earningsYieldScore": 50,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り8.09%, NCR=null, PBR=0.87 → 良好"
+    },
+    "composite": {
+      "score": 36,
+      "components": {
+        "kiyohara": 0,
+        "graham": 82,
+        "buffett": 10,
+        "lynch": 38,
+        "dividend": 50
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:82, バフェット流:10, リンチ流:38, 配当・インカム流:50"
+    }
+  }
+}

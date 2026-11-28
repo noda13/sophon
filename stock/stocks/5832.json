@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "5832",
+    "name": "ちゅうぎんフィナンシャルグループ",
+    "sector33Name": "銀行業",
+    "sector33Code": "7050",
+    "sector17Code": "15",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Mid400",
+    "updatedAt": "2026-11-27T18:12:50.440Z",
+    "snapshots": [
+      {
+        "id": "static-5832",
+        "snapshotAt": "2026-11-27T18:12:50.440Z",
+        "marketCap": 628496158344,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 45.28070305072046,
+        "pbr": 0.9332664500821903
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-5832-2026-1Q",
+      "code": "5832",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "1Q",
+      "disclosedDate": "2026-07-30T00:00:00.000Z",
+      "periodEndDate": "2026-06-30T00:00:00.000Z",
+      "netSales": 109640000000,
+      "operatingProfit": null,
+      "ordinaryProfit": 20269000000,
+      "profit": 13880000000,
+      "totalAssets": 11397875000000,
+      "equity": 673437000000,
+      "cashAndEquivalents": null,
+      "sharesOutstanding": 177842716
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 34,
+      "components": {
+        "grahamProductScore": 14,
+        "pbrScore": 20,
+        "perScore": 0,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=42.3, PBR=0.93, PER=45.3 → 様子見"
+    },
+    "buffett": {
+      "score": 0,
+      "components": {
+        "roeScore": 0,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=2.1%, PBR=0.93 → 対象外"
+    },
+    "lynch": {
+      "score": 0,
+      "components": {
+        "perScore": 0,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=45.3, 時価総額6285億 → 対象外"
+    },
+    "dividend": {
+      "score": 5,
+      "components": {
+        "earningsYieldScore": 5,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り2.21%, NCR=null, PBR=0.93 → 対象外"
+    },
+    "composite": {
+      "score": 8,
+      "components": {
+        "kiyohara": 0,
+        "graham": 34,
+        "buffett": 0,
+        "lynch": 0,
+        "dividend": 5
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:34, バフェット流:0, リンチ流:0, 配当・インカム流:5"
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "code": "3191",
+    "name": "ジョイフル本田",
+    "sector33Name": "小売業",
+    "sector33Code": "6100",
+    "sector17Code": "14",
+    "marketSegment": "プライム",
+    "scaleCategory": "TOPIX Small 1",
+    "updatedAt": "2026-11-27T18:12:50.440Z",
+    "snapshots": [
+      {
+        "id": "static-3191",
+        "snapshotAt": "2026-11-27T18:12:50.440Z",
+        "marketCap": 134468806435,
+        "netCash": null,
+        "netCashRatio": null,
+        "cashNeutralPer": null,
+        "per": 14.937659012997111,
+        "pbr": 1.0635157661067085
+      }
+    ]
+  },
+  "history": [
+    {
+      "id": "static-3191-2026-FY",
+      "code": "3191",
+      "fiscalYear": 2026,
+      "typeOfCurrentPeriod": "FY",
+      "disclosedDate": "2026-08-03T00:00:00.000Z",
+      "periodEndDate": "2026-06-20T00:00:00.000Z",
+      "netSales": 132817000000,
+      "operatingProfit": 8732000000,
+      "ordinaryProfit": 9954000000,
+      "profit": 9002000000,
+      "totalAssets": 167672000000,
+      "equity": 126438000000,
+      "cashAndEquivalents": 24974000000,
+      "sharesOutstanding": 60272885
+    }
+  ],
+  "strategies": {
+    "kiyohara": {
+      "score": 0,
+      "components": {
+        "ncrScore": 0,
+        "cnperScore": 0,
+        "sizeBonus": -10
+      },
+      "reason": "NCR=null, CNPER=null, 大型株ペナルティ → 対象外"
+    },
+    "graham": {
+      "score": 63,
+      "components": {
+        "grahamProductScore": 39,
+        "pbrScore": 12,
+        "perScore": 12,
+        "ncrBonus": 0
+      },
+      "reason": "PBR×PER=15.9, PBR=1.06, PER=14.9 → 買い候補"
+    },
+    "buffett": {
+      "score": 10,
+      "components": {
+        "roeScore": 10,
+        "qualityBonus": 0,
+        "valuationPenalty": 0
+      },
+      "reason": "ROE=7.1%, PBR=1.06 → 対象外"
+    },
+    "lynch": {
+      "score": 38,
+      "components": {
+        "perScore": 38,
+        "sizeBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "PER=14.9, 時価総額1345億 → 様子見"
+    },
+    "dividend": {
+      "score": 35,
+      "components": {
+        "earningsYieldScore": 35,
+        "stabilityBonus": 0,
+        "pbrPenalty": 0
+      },
+      "reason": "益回り6.69%, NCR=null, PBR=1.06 → 様子見"
+    },
+    "composite": {
+      "score": 29,
+      "components": {
+        "kiyohara": 0,
+        "graham": 63,
+        "buffett": 10,
+        "lynch": 38,
+        "dividend": 35
+      },
+      "reason": "総合(均等加重): 清原流:0, グレアム流:63, バフェット流:10, リンチ流:38, 配当・インカム流:35"
+    }
+  }
+}
